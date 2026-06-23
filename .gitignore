@@ -1,0 +1,27 @@
+# Unreal Engine
+
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Visual Studio
+
+.vs/
+
+*.VC.db
+*.VC.opendb
+
+# Rider
+
+.idea/
+
+# Build outputs
+
+*.sln
+
+# Visual Studio Config
+.vsconfig
+
+# Unreal Upgrade Logs
+UpgradeLog.htm
