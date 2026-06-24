@@ -41,6 +41,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* InteractAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* JournalAction;
+
 	// Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	USpringArmComponent* CameraBoom;
@@ -56,6 +59,7 @@ public:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Interact();
+	void ShowMemoryJournal();
 	
 	virtual void BeginPlay() override;
 

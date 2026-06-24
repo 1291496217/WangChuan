@@ -87,6 +87,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			ETriggerEvent::Started,
 			this,
 			&AWCCharacter::Interact);
+		EnhancedInput->BindAction(
+			JournalAction,
+			ETriggerEvent::Started,
+			this,
+			&AWCCharacter::ShowMemoryJournal);
 	}
 }
 
@@ -159,4 +164,38 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	void AWCCharacter::HideInteractionPrompt() {
 		GEngine->RemoveOnScreenDebugMessage(1);
+	}
+
+	void AWCCharacter::ShowMemoryJournal() {
+		FString StatusText = TEXT("未完成");
+
+		if (CollectedFragments.Num() >= 3) {
+			StatusText = TEXT("已解锁");
+		}
+
+		FString JournalText = FString::Printf(
+			TEXT(
+				"记忆日志\n\n"
+				"《安静的孩子》\n"
+				"碎片：%d / 3\n"
+				"状态：%s"
+			),
+			CollectedFragments.Num(),
+			*StatusText
+		);
+
+		if (CollectedFragments.Num() >= 3) {
+			JournalText += TEXT(
+				"\n\n"
+				"妈妈....."
+				"我今天也很乖。\n"
+				"要快点来接我哦。"
+			);
+		}
+		
+		GEngine->AddOnScreenDebugMessage(
+			2,
+			8.0f,
+			FColor::Cyan,
+			JournalText);
 	}
