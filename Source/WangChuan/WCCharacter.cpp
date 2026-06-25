@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Controller.h"
 #include "Math/RotationMatrix.h"
+#include "Animation/AnimInstance.h"
 
 // Sets default values
 AWCCharacter::AWCCharacter()
@@ -59,39 +60,57 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	if (UEnhancedInputComponent* EnhancedInput =
-		Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	UEnhancedInputComponent* EnhancedInputComponent =
+		Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	if (EnhancedInputComponent) 
 	{
-		EnhancedInput->BindAction(
-			MoveAction,
-			ETriggerEvent::Triggered,
-			this,
-			&AWCCharacter::Move);
-		EnhancedInput->BindAction(
-			LookAction,
-			ETriggerEvent::Triggered,
-			this,
-			&AWCCharacter::Look);
-		EnhancedInput->BindAction(
-			JumpAction,
-			ETriggerEvent::Triggered,
-			this,
-			&AWCCharacter::Jump);
-		EnhancedInput->BindAction(
-			JumpAction,
-			ETriggerEvent::Completed,
-			this,
-			&AWCCharacter::StopJumping);
-		EnhancedInput->BindAction(
-			InteractAction,
-			ETriggerEvent::Started,
-			this,
-			&AWCCharacter::Interact);
-		EnhancedInput->BindAction(
-			JournalAction,
-			ETriggerEvent::Started,
-			this,
-			&AWCCharacter::ShowMemoryJournal);
+		if (MoveAction) {
+			EnhancedInputComponent->BindAction(
+				MoveAction,
+				ETriggerEvent::Triggered,
+				this,
+				&AWCCharacter::Move);
+		}
+		if (LookAction) {
+			EnhancedInputComponent->BindAction(
+				LookAction,
+				ETriggerEvent::Triggered,
+				this,
+				&AWCCharacter::Look);
+		}
+		if (JumpAction) {
+			EnhancedInputComponent->BindAction(
+				JumpAction,
+				ETriggerEvent::Triggered,
+				this,
+				&AWCCharacter::Jump);
+			EnhancedInputComponent->BindAction(
+				JumpAction,
+				ETriggerEvent::Completed,
+				this,
+				&AWCCharacter::StopJumping);
+		}
+		if (InteractAction) {
+			EnhancedInputComponent->BindAction(
+				InteractAction,
+				ETriggerEvent::Started,
+				this,
+				&AWCCharacter::Interact);
+		}
+		if (JournalAction) {
+			EnhancedInputComponent->BindAction(
+				JournalAction,
+				ETriggerEvent::Started,
+				this,
+				&AWCCharacter::ShowMemoryJournal);
+		}
+		if (AttackAction) {
+			EnhancedInputComponent->BindAction(
+				AttackAction,
+				ETriggerEvent::Started,
+				this,
+				&AWCCharacter::Attack);
+		}
 	}
 }
 
@@ -198,4 +217,44 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			8.0f,
 			FColor::Cyan,
 			JournalText);
+	}
+
+	void AWCCharacter::Attack() {
+		// display attack debug
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				2.0f,
+				FColor::Red,
+				TEXT("Attack")
+			);
+		}
+		// check if Montage exist
+		if (LightAttackMontage == nullptr) {
+			if (GEngine) {
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					2.0f,
+					FColor::Yellow,
+					TEXT("LightAttackMontage is not assigned")
+				);
+			}
+			return;
+		}
+		// get the AnimInstance
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance == nullptr) {
+			if (GEngine) {
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					2.0f,
+					FColor::Yellow,
+					TEXT("AnimInstance is missing")
+				);
+			}
+			return;
+		}
+		// play Montage
+		AnimInstance->Montage_Play(LightAttackMontage);
+		
 	}

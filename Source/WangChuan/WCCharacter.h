@@ -9,6 +9,7 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "Animation/AnimMontage.h"
 #include "InteractionStone.h"
 #include "Interactable.h"
 #include "Containers/Set.h"
@@ -44,6 +45,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* JournalAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* AttackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	UAnimMontage* LightAttackMontage;
+
 	// Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	USpringArmComponent* CameraBoom;
@@ -60,6 +67,7 @@ public:
 	void Look(const FInputActionValue& Value);
 	void Interact();
 	void ShowMemoryJournal();
+	void Attack();
 	
 	virtual void BeginPlay() override;
 
