@@ -26,7 +26,7 @@ public:
 	AWCCharacter();
 
 public:
-	// Input Assets
+	// Input
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputMappingContext* DefaultMappingContext;
 
@@ -48,8 +48,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* AttackAction;
 
+	// Combat
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	UAnimMontage* LightAttackMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float AttackDamage = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float AttackRange = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	FVector AttackBoxHalfSize = FVector(80.0f, 80.0f, 80.0f);
 
 	// Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -69,6 +79,8 @@ public:
 	void ShowMemoryJournal();
 	void Attack();
 	
+	void PerformAttackTrace();
+
 	virtual void BeginPlay() override;
 
 public:	

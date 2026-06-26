@@ -11,6 +11,8 @@
 #include "GameFramework/Controller.h"
 #include "Math/RotationMatrix.h"
 #include "Animation/AnimInstance.h"
+#include "GhostEnemy.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 // Sets default values
@@ -53,7 +55,7 @@ void AWCCharacter::BeginPlay()
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
 				Subsystem->AddMappingContext(
 					DefaultMappingContext, 0);
-			}
+		}
 	}
 	
 }
@@ -239,8 +241,14 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 				TEXT("Attack")
 			);
 		}
-		// check if Montage exist
-		if (LightAttackMontage == nullptr) {
+		if (LightAttackMontage) {
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+			if (AnimInstance) {
+				AnimInstance->Montage_Play(LightAttackMontage);
+			}
+		}
+		else {
 			if (GEngine) {
 				GEngine->AddOnScreenDebugMessage(
 					-1,
@@ -249,22 +257,64 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 					TEXT("LightAttackMontage is not assigned")
 				);
 			}
-			return;
 		}
-		// get the AnimInstance
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance == nullptr) {
-			if (GEngine) {
+
+		PerformAttackTrace();
+	}
+
+	void AWCCharacter::PerformAttackTrace() {
+
+		FVector ForwardVector = GetActorForwardVector(); // Direction
+
+		FVector Start = GetActorLocation() // Start point
+			+ FVector(0.0f, 0.0f, 40.0f)
+			+ ForwardVector * 60.0f;
+
+		FVector End = Start + ForwardVector * AttackRange; // End point
+
+		TArray<AActor*> ActorsToIgnore; // Ignore player it self 
+		ActorsToIgnore.Add(this); 
+
+		FHitResult HitResult;
+
+		bool bHit = UKismetSystemLibrary::BoxTraceSingle( // only return the first thing hit
+			this,
+			Start,
+			End,
+			AttackBoxHalfSize,
+			GetActorRotation(),
+			UEngineTypes::ConvertToTraceType(ECC_Visibility), // Trace Channel
+			false,
+			ActorsToIgnore,
+			EDrawDebugTrace::ForDuration, // Display the Box Trace 
+			HitResult,
+			true,
+			FLinearColor::Red,
+			FLinearColor::Green,
+			2.0f
+		);
+
+		if (bHit) {
+			AActor* HitActor = HitResult.GetActor();
+
+			if (HitActor) {
+				FString HitMessage = FString::Printf(
+					TEXT("Hit Actor: %s"),
+					*HitActor->GetName()
+				);
 				GEngine->AddOnScreenDebugMessage(
 					-1,
 					2.0f,
-					FColor::Yellow,
-					TEXT("AnimInstance is missing")
+					FColor::Green,
+					HitMessage
 				);
 			}
-			return;
+
+			AGhostEnemy* GhostEnemy = Cast<AGhostEnemy>(HitActor);
+
+			if (GhostEnemy) {
+				GhostEnemy->TakeHit(AttackDamage);
+			}
 		}
-		// play Montage
-		AnimInstance->Montage_Play(LightAttackMontage);
-		
 	}
+
