@@ -13,6 +13,7 @@
 #include "Animation/AnimInstance.h"
 #include "GhostEnemy.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "TimerManager.h"
 
 
 // Sets default values
@@ -232,15 +233,12 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 
 	void AWCCharacter::Attack() {
-		// display attack debug
-		if (GEngine) {
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				2.0f,
-				FColor::Red,
-				TEXT("Attack")
-			);
+
+		if (bIsAttacking) {
+			return;
 		}
+		bIsAttacking = true;
+
 		if (LightAttackMontage) {
 			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 
@@ -260,6 +258,14 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		PerformAttackTrace();
+
+		GetWorldTimerManager().SetTimer(
+			AttackTimerHandle,
+			this,
+			&AWCCharacter::EndAttack,
+			AttackDuration,
+			false
+		);
 	}
 
 	void AWCCharacter::PerformAttackTrace() {
@@ -316,5 +322,9 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 				GhostEnemy->TakeHit(AttackDamage);
 			}
 		}
+	}
+
+	void AWCCharacter::EndAttack() {
+		bIsAttacking = false;
 	}
 

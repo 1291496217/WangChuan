@@ -61,6 +61,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	FVector AttackBoxHalfSize = FVector(80.0f, 80.0f, 80.0f);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float AttackDuration = 0.8f;
+
+	bool bIsAttacking = false;
+
+	FTimerHandle AttackTimerHandle;
+
 	// Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	USpringArmComponent* CameraBoom;
@@ -80,6 +87,8 @@ public:
 	void Attack();
 	
 	void PerformAttackTrace();
+
+	void EndAttack();
 
 	virtual void BeginPlay() override;
 
