@@ -3,6 +3,7 @@
 
 #include "WCCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -10,6 +11,7 @@
 #include "GameFramework/Controller.h"
 #include "Math/RotationMatrix.h"
 #include "Animation/AnimInstance.h"
+
 
 // Sets default values
 AWCCharacter::AWCCharacter()
@@ -30,6 +32,14 @@ AWCCharacter::AWCCharacter()
 	CameraBoom->bUsePawnControlRotation = true; // 鼠标旋转控制SpringArm旋转
 	FollowCamera->bUsePawnControlRotation = false; // 只让Boom旋转，Camera跟着Boom
 
+	// Do not rotate the character directly with the controller
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+	// Rotate the character toward movement direction.
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	// Roate speed
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 }
 
 // Called when the game starts or when spawned
