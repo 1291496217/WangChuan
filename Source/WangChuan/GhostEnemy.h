@@ -21,6 +21,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+public: 
+	virtual void Tick(float DeltaTime) override;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* EnemyMesh;
@@ -43,10 +46,26 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Feedback")
 	float KnockbackDistance = 40.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
+	float ChaseRange = 600.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
+	float AttackRange = 120.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
+	float MoveSpeed = 120.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
+	float AttackCooldown = 1.5f;
+
+	bool bCanAttackPlayer = true;
+
 	UPROPERTY()
 	UMaterialInstanceDynamic* DynamicMaterial; // change enemy's color in runtime
 
 	FTimerHandle HitFeedbackTimerHandle;
+
+	FTimerHandle EnemyAttackCooldownTimerHandle;
 
 public:	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
@@ -60,4 +79,12 @@ protected:
 	void ResetHitFeedback();
 
 	void ApplyKnockback();
+
+	void UpdateEnemyBehavior(float DeltaTime);
+
+	void MoveTowardPlayer(APawn* PlayerPawn, float DeltaTime);
+
+	void TryAttackPlayer();
+
+	void ResetEnemyAttack();
 };

@@ -9,7 +9,7 @@
 // Sets default values
 AGhostEnemy::AGhostEnemy()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	EnemyMesh = CreateDefaultSubobject
 		<UStaticMeshComponent>(TEXT("EnemyMesh"));
@@ -65,6 +65,7 @@ void AGhostEnemy::TakeHit(float DamageAmount) {
 
 void AGhostEnemy::Die() {
 	GetWorldTimerManager().ClearTimer(HitFeedbackTimerHandle);
+	GetWorldTimerManager().ClearTimer(EnemyAttackCooldownTimerHandle);
 	Destroy();
 }
 
@@ -123,4 +124,107 @@ void AGhostEnemy::ApplyKnockback() {
 
 	SetActorLocation(NewLocation);
 }
+
+// **********Enemy Behavior**********
+
+void AGhostEnemy::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+
+	UpdateEnemyBehavior(DeltaTime);
+}
+
+// If player in attack range, attack, don't move
+// Else if player in chase range, move toward player.
+// Else, do nothing. 
+void AGhostEnemy::UpdateEnemyBehavior(float DeltaTime) {
+	APlayerController* PlayerController =
+		GetWorld()->GetFirstPlayerController();
+
+	if (PlayerController == nullptr) {
+		return;
+	}
+
+	APawn* PlayerPawn = PlayerController->GetPawn();
+
+	if (PlayerPawn == nullptr) {
+		return;
+	}
+
+	float DistanceToPlayer = FVector::Dist(
+		GetActorLocation(),
+		PlayerPawn->GetActorLocation()
+	);
+
+	if (DistanceToPlayer <= AttackRange) {
+		TryAttackPlayer();
+		return;
+	}
+
+	if (DistanceToPlayer <= ChaseRange) {
+		MoveTowardPlayer(PlayerPawn, DeltaTime);
+	}
+}
+
+// move toward player's location, face toward player
+void AGhostEnemy::MoveTowardPlayer(APawn* PlayerPawn, float DeltaTime) {
+	if (PlayerPawn == nullptr) {
+		return;
+	}
+	FVector Direction = PlayerPawn->
+		GetActorLocation() - GetActorLocation();
+
+	Direction.Z = 0.0f;
+
+	if (Direction.IsNearlyZero()) {
+		return;
+	}
+
+	Direction.Normalize();
+
+	FVector NewLocation =
+		GetActorLocation()
+		+ Direction * MoveSpeed * DeltaTime;
+
+	SetActorLocation(NewLocation);
+
+	FRotator NewRotation = Direction.Rotation();
+
+	SetActorRotation(
+		FRotator(
+			0.0f,
+			NewRotation.Yaw,
+			0.0f
+		)
+	);
+}
+
+void AGhostEnemy::TryAttackPlayer() {
+	if (!bCanAttackPlayer) {
+		return;
+	}
+
+	bCanAttackPlayer = false;
+
+	if (GEngine) {
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			1.5f,
+			FColor::Orange,
+			TEXT("Player Hit")
+		);
+	}
+
+	GetWorldTimerManager().SetTimer(
+		EnemyAttackCooldownTimerHandle,
+		this,
+		&AGhostEnemy::ResetEnemyAttack,
+		AttackCooldown,
+		false
+	);
+}
+
+void AGhostEnemy::ResetEnemyAttack() {
+	bCanAttackPlayer = true;
+}
+
 
