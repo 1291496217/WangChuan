@@ -3,6 +3,7 @@
 
 #include "GhostEnemy.h"
 #include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/Engine.h"
 
 // Sets default values
@@ -23,6 +24,17 @@ void AGhostEnemy::BeginPlay()
 	Super::BeginPlay();
 
 	Health = MaxHealth;
+
+	if (EnemyMesh) {
+		DynamicMaterial = EnemyMesh->CreateAndSetMaterialInstanceDynamic(0);
+
+		if (DynamicMaterial) {
+			DynamicMaterial->SetVectorParameterValue(
+				TEXT("BaseColor"),
+				NormalColor
+			);
+		}
+	}
 	
 }
 
@@ -42,20 +54,73 @@ void AGhostEnemy::TakeHit(float DamageAmount) {
 			HitMessage
 		);
 	}
+
+	ShowHitFeedback();
+	ApplyKnockback();
+
 	if (Health <= 0.0f) {
 		Die();
 	}
 }
 
 void AGhostEnemy::Die() {
-	if (GEngine) {
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.0f,
-			FColor::Purple,
-			TEXT("Ghost Defeated")
+	GetWorldTimerManager().ClearTimer(HitFeedbackTimerHandle);
+	Destroy();
+}
+
+void AGhostEnemy::ShowHitFeedback() {
+	if (DynamicMaterial) {
+		DynamicMaterial->SetVectorParameterValue(
+			TEXT("BaseColor"),
+			HitColor
 		);
 	}
-	Destroy();
+	GetWorldTimerManager().ClearTimer(HitFeedbackTimerHandle);
+
+	GetWorldTimerManager().SetTimer(
+		HitFeedbackTimerHandle,
+		this,
+		&AGhostEnemy::ResetHitFeedback,
+		HitFlashDuration,
+		false
+	);
+}
+
+void AGhostEnemy::ResetHitFeedback() {
+	if (DynamicMaterial) {
+		DynamicMaterial->SetVectorParameterValue(
+			TEXT("BaseColor"),
+			NormalColor
+		);
+	}
+}
+
+void AGhostEnemy::ApplyKnockback() {
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+
+	if (PlayerController == nullptr) {
+		return;
+	}
+
+	APawn* PlayerPawn = PlayerController->GetPawn();
+
+	if (PlayerPawn == nullptr) {
+		return;
+	}
+
+	FVector KnockbackDirection =
+		GetActorLocation() - PlayerPawn->GetActorLocation();
+	KnockbackDirection.Z = 0.0f;
+
+	if (KnockbackDirection.IsNearlyZero()) {
+		return;
+	}
+
+	KnockbackDirection.Normalize();
+
+	FVector NewLocation =
+		GetActorLocation() + KnockbackDirection * KnockbackDistance;
+
+	SetActorLocation(NewLocation);
 }
 
