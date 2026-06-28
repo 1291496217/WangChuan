@@ -2,7 +2,8 @@
 
 
 #include "GhostEnemy.h"
-#include "Components/StaticMeshComponent.h"
+#include "Components/SceneComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/Engine.h"
 
@@ -11,9 +12,13 @@ AGhostEnemy::AGhostEnemy()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	SceneRoot = CreateDefaultSubobject
+		<USceneComponent>(TEXT("SceneRoot"));
+	RootComponent = SceneRoot;
+
 	EnemyMesh = CreateDefaultSubobject
-		<UStaticMeshComponent>(TEXT("EnemyMesh"));
-	RootComponent = EnemyMesh;
+		<USkeletalMeshComponent>(TEXT("EnemyMesh"));
+	EnemyMesh->SetupAttachment(SceneRoot);
 
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
@@ -141,12 +146,14 @@ void AGhostEnemy::UpdateEnemyBehavior(float DeltaTime) {
 		GetWorld()->GetFirstPlayerController();
 
 	if (PlayerController == nullptr) {
+		bIsMoving = false;
 		return;
 	}
 
 	APawn* PlayerPawn = PlayerController->GetPawn();
 
 	if (PlayerPawn == nullptr) {
+		bIsMoving = false;
 		return;
 	}
 
@@ -156,13 +163,18 @@ void AGhostEnemy::UpdateEnemyBehavior(float DeltaTime) {
 	);
 
 	if (DistanceToPlayer <= AttackRange) {
+		bIsMoving = false;
 		TryAttackPlayer();
 		return;
 	}
 
 	if (DistanceToPlayer <= ChaseRange) {
+		bIsMoving = true;
 		MoveTowardPlayer(PlayerPawn, DeltaTime);
+		return;
 	}
+
+	bIsMoving = false;
 }
 
 // move toward player's location, face toward player
@@ -227,4 +239,7 @@ void AGhostEnemy::ResetEnemyAttack() {
 	bCanAttackPlayer = true;
 }
 
+bool AGhostEnemy::GetIsMoving() const {
+	return bIsMoving;
+}
 

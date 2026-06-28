@@ -7,7 +7,8 @@
 #include "TimerManager.h"
 #include "GhostEnemy.generated.h"
 
-class UStaticMeshComponent;
+class USceneComponent;
+class USkeletalMeshComponent;
 class UMaterialInstanceDynamic;
 
 UCLASS()
@@ -26,7 +27,10 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UStaticMeshComponent* EnemyMesh;
+	USceneComponent* SceneRoot;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USkeletalMeshComponent* EnemyMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float MaxHealth = 100.0f;
@@ -58,6 +62,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
 	float AttackCooldown = 1.5f;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
+	bool bIsMoving = false;
+
 	bool bCanAttackPlayer = true;
 
 	UPROPERTY()
@@ -70,6 +77,9 @@ protected:
 public:	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void TakeHit(float DamageAmount);
+
+	UFUNCTION(BlueprintPure, Category = "Animation")
+	bool GetIsMoving() const;
 
 protected:
 	void Die();
