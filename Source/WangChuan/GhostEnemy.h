@@ -60,16 +60,22 @@ protected:
 	float AttackRange = 120.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
-	float MoveSpeed = 120.0f;
+	float AttackCooldown = 1.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
-	float AttackCooldown = 1.5f;
+	float EnemyAttackDuration = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
+	float MoveSpeed = 120.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
 	bool bIsMoving = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
 	bool bIsDead = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
+	bool bIsAttacking = false;
 
 	bool bCanAttackPlayer = true;
 
@@ -79,6 +85,8 @@ protected:
 	FTimerHandle HitFeedbackTimerHandle;
 
 	FTimerHandle EnemyAttackCooldownTimerHandle;
+
+	FTimerHandle EnemyAttackDurationTimerHanlde;
 
 	FTimerHandle DeathTimerHandle;
 
@@ -91,6 +99,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Animation")
 	bool GetIsDead() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation")
+	bool GetIsAttacking() const;
 
 protected:
 	void Die();
@@ -108,6 +119,8 @@ protected:
 	void MoveTowardPlayer(APawn* PlayerPawn, float DeltaTime);
 
 	void TryAttackPlayer();
+
+	void EndEnemyAttack();
 
 	void ResetEnemyAttack();
 

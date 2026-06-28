@@ -78,16 +78,20 @@ void AGhostEnemy::Die() {
 	}
 	bIsDead = true;
 	bIsMoving = false;
+	bIsAttacking = false;
 	bCanAttackPlayer = false;
 
-	GetWorldTimerManager().ClearTimer(HitFeedbackTimerHandle);
-	GetWorldTimerManager().ClearTimer(EnemyAttackCooldownTimerHandle);
+	GetWorldTimerManager().ClearTimer(
+		HitFeedbackTimerHandle);
+	GetWorldTimerManager().ClearTimer(
+		EnemyAttackCooldownTimerHandle);
+	GetWorldTimerManager().ClearTimer(
+		EnemyAttackDurationTimerHanlde);
 	
 	// Enemy can't block player after death;
 	if (EnemyMesh) { 
 		EnemyMesh->SetCollisionEnabled(
-			ECollisionEnabled::NoCollision
-		);
+			ECollisionEnabled::NoCollision);
 	}
 
 	GetWorldTimerManager().SetTimer(
@@ -179,6 +183,11 @@ void AGhostEnemy::UpdateEnemyBehavior(float DeltaTime) {
 		return;
 	}
 
+	if (bIsAttacking) {
+		bIsMoving = false;
+		return;
+	}
+
 	APlayerController* PlayerController =
 		GetWorld()->GetFirstPlayerController();
 
@@ -256,7 +265,13 @@ void AGhostEnemy::TryAttackPlayer() {
 		return;
 	}
 
+	if (!bCanAttackPlayer) {
+		return;
+	}
+
 	bCanAttackPlayer = false;
+	bIsAttacking = true;
+	bIsMoving = false;
 
 	if (GEngine) {
 		GEngine->AddOnScreenDebugMessage(
@@ -266,7 +281,15 @@ void AGhostEnemy::TryAttackPlayer() {
 			TEXT("Player Hit")
 		);
 	}
-
+	// attack anim finish
+	GetWorldTimerManager().SetTimer(
+		EnemyAttackDurationTimerHanlde,
+		this,
+		&AGhostEnemy::EndEnemyAttack,
+		EnemyAttackDuration,
+		false
+	);
+	// attack cooldown finish
 	GetWorldTimerManager().SetTimer(
 		EnemyAttackCooldownTimerHandle,
 		this,
@@ -276,7 +299,17 @@ void AGhostEnemy::TryAttackPlayer() {
 	);
 }
 
+void AGhostEnemy::EndEnemyAttack() { // End attack anim 
+	if (bIsDead) {
+		return;
+	}
+	bIsAttacking = false;
+}
+
 void AGhostEnemy::ResetEnemyAttack() {
+	if (bIsDead) {
+		return;
+	}
 	bCanAttackPlayer = true;
 }
 
@@ -286,5 +319,9 @@ bool AGhostEnemy::GetIsMoving() const {
 
 bool AGhostEnemy::GetIsDead() const {
 	return bIsDead;
+}
+
+bool AGhostEnemy::GetIsAttacking() const {
+	return bIsAttacking;
 }
 
