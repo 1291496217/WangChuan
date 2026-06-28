@@ -38,6 +38,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	float Health = 100.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat") 
+	float DeathDestroyDelay = 2.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Feedback")
 	FLinearColor NormalColor = FLinearColor::White;
 
@@ -65,6 +68,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
 	bool bIsMoving = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
+	bool bIsDead = false;
+
 	bool bCanAttackPlayer = true;
 
 	UPROPERTY()
@@ -74,6 +80,8 @@ protected:
 
 	FTimerHandle EnemyAttackCooldownTimerHandle;
 
+	FTimerHandle DeathTimerHandle;
+
 public:	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void TakeHit(float DamageAmount);
@@ -81,8 +89,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation")
 	bool GetIsMoving() const;
 
+	UFUNCTION(BlueprintPure, Category = "Animation")
+	bool GetIsDead() const;
+
 protected:
 	void Die();
+
+	void FinishDeath();
 
 	void ShowHitFeedback();
 
@@ -97,4 +110,5 @@ protected:
 	void TryAttackPlayer();
 
 	void ResetEnemyAttack();
+
 };

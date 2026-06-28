@@ -44,6 +44,10 @@ void AGhostEnemy::BeginPlay()
 }
 
 void AGhostEnemy::TakeHit(float DamageAmount) {
+	if (bIsDead) {
+		return;
+	}
+	
 	Health -= DamageAmount;
 
 	if (GEngine) {
@@ -51,7 +55,6 @@ void AGhostEnemy::TakeHit(float DamageAmount) {
 			TEXT("Ghost Hit! Health: %.0f"),
 			Health
 		);
-
 		GEngine->AddOnScreenDebugMessage(
 			-1,
 			2.0f,
@@ -60,17 +63,46 @@ void AGhostEnemy::TakeHit(float DamageAmount) {
 		);
 	}
 
+	if (Health <= 0) { // If the last hit kill the enemy, no Feedback
+		Die();
+		return;
+	}
+
 	ShowHitFeedback();
 	ApplyKnockback();
-
-	if (Health <= 0.0f) {
-		Die();
-	}
 }
 
 void AGhostEnemy::Die() {
+	if (bIsDead) {
+		return;
+	}
+	bIsDead = true;
+	bIsMoving = false;
+	bCanAttackPlayer = false;
+
 	GetWorldTimerManager().ClearTimer(HitFeedbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(EnemyAttackCooldownTimerHandle);
+	
+	// Enemy can't block player after death;
+	if (EnemyMesh) { 
+		EnemyMesh->SetCollisionEnabled(
+			ECollisionEnabled::NoCollision
+		);
+	}
+
+	GetWorldTimerManager().SetTimer(
+		DeathTimerHandle,
+		this,
+		&AGhostEnemy::FinishDeath,
+		DeathDestroyDelay,
+		false
+	);
+}
+
+void AGhostEnemy::FinishDeath() {
+	GetWorldTimerManager().ClearTimer(
+		DeathTimerHandle
+	);
 	Destroy();
 }
 
@@ -142,6 +174,11 @@ void AGhostEnemy::Tick(float DeltaTime) {
 // Else if player in chase range, move toward player.
 // Else, do nothing. 
 void AGhostEnemy::UpdateEnemyBehavior(float DeltaTime) {
+	if (bIsDead) {
+		bIsMoving = false;
+		return;
+	}
+
 	APlayerController* PlayerController =
 		GetWorld()->GetFirstPlayerController();
 
@@ -211,6 +248,10 @@ void AGhostEnemy::MoveTowardPlayer(APawn* PlayerPawn, float DeltaTime) {
 }
 
 void AGhostEnemy::TryAttackPlayer() {
+	if (bIsDead) {
+		return;
+	}
+
 	if (!bCanAttackPlayer) {
 		return;
 	}
@@ -241,5 +282,9 @@ void AGhostEnemy::ResetEnemyAttack() {
 
 bool AGhostEnemy::GetIsMoving() const {
 	return bIsMoving;
+}
+
+bool AGhostEnemy::GetIsDead() const {
+	return bIsDead;
 }
 
