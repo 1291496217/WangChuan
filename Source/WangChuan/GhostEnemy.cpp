@@ -285,7 +285,7 @@ void AGhostEnemy::TryAttackPlayer() {
 	bIsAttacking = true;
 	bIsMoving = false;
 
-	DealDamageToPlayer();
+	//DealDamageToPlayer();
 
 	// attack anim finish
 	GetWorldTimerManager().SetTimer(
@@ -319,18 +319,6 @@ void AGhostEnemy::ResetEnemyAttack() {
 	bCanAttackPlayer = true;
 }
 
-bool AGhostEnemy::GetIsMoving() const {
-	return bIsMoving;
-}
-
-bool AGhostEnemy::GetIsDead() const {
-	return bIsDead;
-}
-
-bool AGhostEnemy::GetIsAttacking() const {
-	return bIsAttacking;
-}
-
 void AGhostEnemy::DealDamageToPlayer() {
 	APlayerController* PlayerController =
 		GetWorld()->GetFirstPlayerController(); // find player controller
@@ -353,5 +341,45 @@ void AGhostEnemy::DealDamageToPlayer() {
 	}
 
 	PlayerCharacter->ReceiveDamage(EnemyAttackDamage); // call it
+}
+
+void AGhostEnemy::OnEnemyAttackHit() {
+	if (bIsDead) {
+		return;
+	}
+	if (!bIsAttacking) {
+		return;
+	}
+
+	// Distance to player protection
+	APlayerController* PlayerController = 
+		GetWorld()->GetFirstPlayerController();
+	if (PlayerController == nullptr) {
+		return;
+	}
+	APawn* PlayerPawn = PlayerController->GetPawn();
+	if (PlayerPawn == nullptr) {
+		return;
+	}
+	float DistanceToPlayer = FVector::Dist(
+		GetActorLocation(), PlayerPawn->GetActorLocation()
+	);
+	if (DistanceToPlayer > AttackRange) {
+		return;
+	}
+
+	DealDamageToPlayer();
+}
+
+bool AGhostEnemy::GetIsMoving() const {
+	return bIsMoving;
+}
+
+bool AGhostEnemy::GetIsDead() const {
+	return bIsDead;
+}
+
+bool AGhostEnemy::GetIsAttacking() const {
+	return bIsAttacking;
 }
 

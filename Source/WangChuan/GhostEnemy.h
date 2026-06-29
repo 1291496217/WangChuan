@@ -97,6 +97,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void TakeHit(float DamageAmount);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void OnEnemyAttackHit();
+
 	UFUNCTION(BlueprintPure, Category = "Animation")
 	bool GetIsMoving() const;
 
