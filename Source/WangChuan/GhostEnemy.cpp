@@ -204,6 +204,17 @@ void AGhostEnemy::UpdateEnemyBehavior(float DeltaTime) {
 		return;
 	}
 
+	AWCCharacter* PlayerCharacter = Cast<AWCCharacter>(PlayerPawn);
+
+	if (PlayerCharacter == nullptr) {
+		bIsMoving = false;
+		return;
+	}
+	if (PlayerCharacter->GetIsDead()) {
+		bIsMoving = false;
+		return;
+	}
+
 	float DistanceToPlayer = FVector::Dist(
 		GetActorLocation(),
 		PlayerPawn->GetActorLocation()

@@ -62,7 +62,6 @@ void AWCCharacter::BeginPlay()
 					DefaultMappingContext, 0);
 		}
 	}
-	
 }
 
 // Called every frame
@@ -238,11 +237,9 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 //*****************Combat********************
 	void AWCCharacter::Attack() {
-
 		if (bIsDead) {
 			return;
 		}
-
 		if (bIsAttacking) {
 			return;
 		}
@@ -376,6 +373,15 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		bIsDead = true;
+
+		GetCharacterMovement()->StopMovementImmediately();
+
+		APlayerController* PlayerController =
+			Cast<APlayerController>(GetController());
+
+		if (PlayerController) {
+			DisableInput(PlayerController);
+		}
 
 		if (GEngine) {
 			GEngine->AddOnScreenDebugMessage(
