@@ -2,6 +2,7 @@
 
 
 #include "GhostEnemy.h"
+#include "WCCharacter.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -273,14 +274,8 @@ void AGhostEnemy::TryAttackPlayer() {
 	bIsAttacking = true;
 	bIsMoving = false;
 
-	if (GEngine) {
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			1.5f,
-			FColor::Orange,
-			TEXT("Player Hit")
-		);
-	}
+	DealDamageToPlayer();
+
 	// attack anim finish
 	GetWorldTimerManager().SetTimer(
 		EnemyAttackDurationTimerHanlde,
@@ -323,5 +318,29 @@ bool AGhostEnemy::GetIsDead() const {
 
 bool AGhostEnemy::GetIsAttacking() const {
 	return bIsAttacking;
+}
+
+void AGhostEnemy::DealDamageToPlayer() {
+	APlayerController* PlayerController =
+		GetWorld()->GetFirstPlayerController(); // find player controller
+
+	if (PlayerController == nullptr) {
+		return;
+	}
+
+	APawn* PlayerPawn = PlayerController->GetPawn(); // find player pawn
+
+	if (PlayerPawn == nullptr) {
+		return;
+	}
+
+	AWCCharacter* PlayerCharacter =
+		Cast<AWCCharacter>(PlayerPawn); // cast to AWCCharacter
+
+	if (PlayerCharacter == nullptr) {
+		return;
+	}
+
+	PlayerCharacter->ReceiveDamage(EnemyAttackDamage); // call it
 }
 

@@ -66,6 +66,9 @@ protected:
 	float EnemyAttackDuration = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
+	float EnemyAttackDamage = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
 	float MoveSpeed = 120.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
@@ -120,8 +123,11 @@ protected:
 
 	void TryAttackPlayer();
 
+	void DealDamageToPlayer();
+
 	void EndEnemyAttack();
 
 	void ResetEnemyAttack();
+
 
 };

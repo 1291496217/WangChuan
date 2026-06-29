@@ -49,6 +49,10 @@ AWCCharacter::AWCCharacter()
 void AWCCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Health = MaxHealth;
+	bIsDead = false;
+
 	// 游戏开始 -》找到玩家 -》找到Enhanced Input -》加载IMC Default
 	if (APlayerController* PlayerController =
 		Cast<APlayerController>(GetController())) {
@@ -232,7 +236,12 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			JournalText);
 	}
 
+//*****************Combat********************
 	void AWCCharacter::Attack() {
+
+		if (bIsDead) {
+			return;
+		}
 
 		if (bIsAttacking) {
 			return;
@@ -328,3 +337,52 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		bIsAttacking = false;
 	}
 
+	void AWCCharacter::ReceiveDamage(float DamageAmount) {
+		if (bIsDead) {
+			return;
+		}
+
+		Health -= DamageAmount;
+
+		if (GEngine) {
+			FString HealthMessage = FString::Printf(
+				TEXT("Player Health: %.0f"),
+				Health
+			);
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				2.0f,
+				FColor::Red,
+				HealthMessage
+			);
+		}
+
+		if (Health <= 0.0f) {
+			Die();
+		}
+	}
+
+	float AWCCharacter::GetHealth() const {
+		return Health;
+	}
+
+	bool AWCCharacter::GetIsDead() const {
+		return bIsDead;
+	}
+
+	void AWCCharacter::Die() {
+		if (bIsDead) {
+			return;
+		}
+
+		bIsDead = true;
+
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				5.0f,
+				FColor::Purple,
+				TEXT("Player Defeated")
+			);
+		}
+	}

@@ -64,6 +64,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float AttackDuration = 0.8f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float MaxHealth = 100.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	float Health = 100.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bIsDead = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ReceiveDamage(float DamageAmount);
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	float GetHealth() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	bool GetIsDead() const;
+
 	bool bIsAttacking = false;
 
 	FTimerHandle AttackTimerHandle;
@@ -89,6 +107,8 @@ public:
 	void PerformAttackTrace();
 
 	void EndAttack();
+
+	void Die();
 
 	virtual void BeginPlay() override;
 
