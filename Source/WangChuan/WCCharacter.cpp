@@ -322,10 +322,17 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 				);
 			}
 
-			AGhostEnemy* GhostEnemy = Cast<AGhostEnemy>(HitActor);
+			AGhostEnemy* GhostEnemy = 
+				Cast<AGhostEnemy>(HitActor);
 
 			if (GhostEnemy) {
-				GhostEnemy->TakeHit(AttackDamage);
+				FVector HitDirection = GetActorForwardVector();
+
+				GhostEnemy->TakeHit(
+					AttackDamage,
+					HitDirection,
+					AttackKnockbackStrength
+				);
 			}
 		}
 	}

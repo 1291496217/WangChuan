@@ -53,7 +53,10 @@ public:
 	UAnimMontage* LightAttackMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	float AttackDamage = 25.0f;
+	float AttackDamage = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float AttackKnockbackStrength = 80.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float AttackRange = 200.0f;

@@ -103,7 +103,11 @@ protected:
 
 public:	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void TakeHit(float DamageAmount);
+	void TakeHit(
+		float DamageAmount,
+		FVector HitDirection,
+		float KnockbackStrength
+	);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void OnEnemyAttackHit();
@@ -129,7 +133,10 @@ protected:
 
 	void ResetHitFeedback();
 
-	void ApplyKnockback();
+	void ApplyKnockback(
+		FVector KnockbackDirection, 
+		float KnockbackStrength
+	);
 
 	void StartHitReaction();
 

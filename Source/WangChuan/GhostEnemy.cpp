@@ -44,7 +44,11 @@ void AGhostEnemy::BeginPlay()
 	
 }
 
-void AGhostEnemy::TakeHit(float DamageAmount) {
+void AGhostEnemy::TakeHit(
+	float DamageAmount,
+	FVector HitDirection,
+	float KnockbackStrength) {
+
 	if (bIsDead) {
 		return;
 	}
@@ -64,14 +68,17 @@ void AGhostEnemy::TakeHit(float DamageAmount) {
 		);
 	}
 
-	if (Health <= 0) { // If the last hit kill the enemy, no Feedback
+	if (Health <= 0.0f) { // If the last hit kill the enemy, no Feedback
 		Die();
 		return;
 	}
 
 	//ShowHitFeedback();
 	StartHitReaction();
-	ApplyKnockback();
+	ApplyKnockback(
+		HitDirection,
+		KnockbackStrength
+	);
 }
 
 void AGhostEnemy::Die() {
@@ -171,21 +178,14 @@ void AGhostEnemy::EndHitReaction() {
 	bIsHitReacting = false;
 }
 
-void AGhostEnemy::ApplyKnockback() {
-	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+void AGhostEnemy::ApplyKnockback(
+	FVector KnockbackDirection,
+	float KnockbackStrength) {
 
-	if (PlayerController == nullptr) {
+	if (bIsDead) {
 		return;
 	}
 
-	APawn* PlayerPawn = PlayerController->GetPawn();
-
-	if (PlayerPawn == nullptr) {
-		return;
-	}
-
-	FVector KnockbackDirection =
-		GetActorLocation() - PlayerPawn->GetActorLocation();
 	KnockbackDirection.Z = 0.0f;
 
 	if (KnockbackDirection.IsNearlyZero()) {
@@ -194,8 +194,9 @@ void AGhostEnemy::ApplyKnockback() {
 
 	KnockbackDirection.Normalize();
 
-	FVector NewLocation =
-		GetActorLocation() + KnockbackDirection * KnockbackDistance;
+	FVector NewLocation = GetActorLocation()
+		+ KnockbackDirection
+		* KnockbackStrength;
 
 	SetActorLocation(NewLocation);
 }
