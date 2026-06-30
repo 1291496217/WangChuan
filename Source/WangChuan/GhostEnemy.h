@@ -51,6 +51,9 @@ protected:
 	float HitFlashDuration = 0.15f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Feedback")
+	float HitReactionDuration = 0.4f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Feedback")
 	float KnockbackDistance = 40.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
@@ -80,12 +83,17 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
 	bool bIsAttacking = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
+	bool bIsHitReacting = false;
+
 	bool bCanAttackPlayer = true;
 
 	UPROPERTY()
 	UMaterialInstanceDynamic* DynamicMaterial; // change enemy's color in runtime
 
 	FTimerHandle HitFeedbackTimerHandle;
+
+	FTimerHandle HitReactionTimeHandle;
 
 	FTimerHandle EnemyAttackCooldownTimerHandle;
 
@@ -109,6 +117,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation")
 	bool GetIsAttacking() const;
 
+	UFUNCTION(BlueprintPure, Category = "Animation")
+	bool GetIsHitReacting() const;
+
 protected:
 	void Die();
 
@@ -119,6 +130,10 @@ protected:
 	void ResetHitFeedback();
 
 	void ApplyKnockback();
+
+	void StartHitReaction();
+
+	void EndHitReaction();
 
 	void UpdateEnemyBehavior(float DeltaTime);
 

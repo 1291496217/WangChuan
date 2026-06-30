@@ -69,7 +69,8 @@ void AGhostEnemy::TakeHit(float DamageAmount) {
 		return;
 	}
 
-	ShowHitFeedback();
+	//ShowHitFeedback();
+	StartHitReaction();
 	ApplyKnockback();
 }
 
@@ -81,6 +82,7 @@ void AGhostEnemy::Die() {
 	bIsMoving = false;
 	bIsAttacking = false;
 	bCanAttackPlayer = false;
+	bIsHitReacting = false;
 
 	GetWorldTimerManager().ClearTimer(
 		HitFeedbackTimerHandle);
@@ -88,6 +90,8 @@ void AGhostEnemy::Die() {
 		EnemyAttackCooldownTimerHandle);
 	GetWorldTimerManager().ClearTimer(
 		EnemyAttackDurationTimerHanlde);
+	GetWorldTimerManager().ClearTimer(
+		HitReactionTimeHandle);
 	
 	// Enemy can't block player after death;
 	if (EnemyMesh) { 
@@ -138,6 +142,35 @@ void AGhostEnemy::ResetHitFeedback() {
 	}
 }
 
+void AGhostEnemy::StartHitReaction() {
+	if (bIsDead) {
+		return;
+	}
+
+	bIsHitReacting = true;
+	bIsMoving = false;
+	bIsAttacking = false;
+
+	GetWorldTimerManager().ClearTimer(HitReactionTimeHandle);
+
+	GetWorldTimerManager().ClearTimer(EnemyAttackDurationTimerHanlde);
+
+	GetWorldTimerManager().SetTimer(
+		HitReactionTimeHandle,
+		this,
+		&AGhostEnemy::EndHitReaction,
+		HitReactionDuration,
+		false
+	);
+}
+
+void AGhostEnemy::EndHitReaction() {
+	if (bIsDead) {
+		return;
+	}
+	bIsHitReacting = false;
+}
+
 void AGhostEnemy::ApplyKnockback() {
 	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
 
@@ -179,7 +212,13 @@ void AGhostEnemy::Tick(float DeltaTime) {
 // Else if player in chase range, move toward player.
 // Else, do nothing. 
 void AGhostEnemy::UpdateEnemyBehavior(float DeltaTime) {
+	// Dead > Hit Reaction > Attack > Move
 	if (bIsDead) {
+		bIsMoving = false;
+		return;
+	}
+
+	if (bIsHitReacting) {
 		bIsMoving = false;
 		return;
 	}
@@ -273,6 +312,10 @@ void AGhostEnemy::TryAttackPlayer() {
 		return;
 	}
 
+	if (bIsHitReacting) {
+		return;
+	}
+
 	if (!bCanAttackPlayer) {
 		return;
 	}
@@ -347,6 +390,11 @@ void AGhostEnemy::OnEnemyAttackHit() {
 	if (bIsDead) {
 		return;
 	}
+
+	if (bIsHitReacting) {
+		return;
+	}
+
 	if (!bIsAttacking) {
 		return;
 	}
@@ -354,16 +402,31 @@ void AGhostEnemy::OnEnemyAttackHit() {
 	// Distance to player protection
 	APlayerController* PlayerController = 
 		GetWorld()->GetFirstPlayerController();
+
 	if (PlayerController == nullptr) {
 		return;
 	}
+
 	APawn* PlayerPawn = PlayerController->GetPawn();
+
 	if (PlayerPawn == nullptr) {
 		return;
 	}
+
+	AWCCharacter* PlayerCharacter = Cast<AWCCharacter>(PlayerPawn);
+
+	if (PlayerCharacter == nullptr) {
+		return;
+	}
+
+	if (PlayerCharacter->GetIsDead()) {
+		return;
+	}
+
 	float DistanceToPlayer = FVector::Dist(
 		GetActorLocation(), PlayerPawn->GetActorLocation()
 	);
+
 	if (DistanceToPlayer > AttackRange) {
 		return;
 	}
@@ -383,3 +446,6 @@ bool AGhostEnemy::GetIsAttacking() const {
 	return bIsAttacking;
 }
 
+bool AGhostEnemy::GetIsHitReacting() const {
+	return bIsHitReacting;
+}
