@@ -81,6 +81,13 @@ void AGhostEnemy::TakeHit(
 	);
 }
 
+void AGhostEnemy::ClearCombatTimers() {
+	GetWorldTimerManager().ClearTimer(HitFeedbackTimerHandle);
+	GetWorldTimerManager().ClearTimer(HitReactionTimerHandle);
+	GetWorldTimerManager().ClearTimer(EnemyAttackCooldownTimerHandle);
+	GetWorldTimerManager().ClearTimer(EnemyAttackDurationTimerHandle);
+}
+
 void AGhostEnemy::Die() {
 	if (bIsDead) {
 		return;
@@ -91,14 +98,7 @@ void AGhostEnemy::Die() {
 	bCanAttackPlayer = false;
 	bIsHitReacting = false;
 
-	GetWorldTimerManager().ClearTimer(
-		HitFeedbackTimerHandle);
-	GetWorldTimerManager().ClearTimer(
-		EnemyAttackCooldownTimerHandle);
-	GetWorldTimerManager().ClearTimer(
-		EnemyAttackDurationTimerHanlde);
-	GetWorldTimerManager().ClearTimer(
-		HitReactionTimeHandle);
+	ClearCombatTimers();
 	
 	// Enemy can't block player after death;
 	if (EnemyMesh) { 
@@ -122,6 +122,8 @@ void AGhostEnemy::FinishDeath() {
 	Destroy();
 }
 
+/* Legacy Color feedback
+* 
 void AGhostEnemy::ShowHitFeedback() {
 	if (DynamicMaterial) {
 		DynamicMaterial->SetVectorParameterValue(
@@ -148,7 +150,7 @@ void AGhostEnemy::ResetHitFeedback() {
 		);
 	}
 }
-
+*/
 void AGhostEnemy::StartHitReaction() {
 	if (bIsDead) {
 		return;
@@ -158,12 +160,12 @@ void AGhostEnemy::StartHitReaction() {
 	bIsMoving = false;
 	bIsAttacking = false;
 
-	GetWorldTimerManager().ClearTimer(HitReactionTimeHandle);
+	GetWorldTimerManager().ClearTimer(HitReactionTimerHandle);
 
-	GetWorldTimerManager().ClearTimer(EnemyAttackDurationTimerHanlde);
+	GetWorldTimerManager().ClearTimer(EnemyAttackDurationTimerHandle);
 
 	GetWorldTimerManager().SetTimer(
-		HitReactionTimeHandle,
+		HitReactionTimerHandle,
 		this,
 		&AGhostEnemy::EndHitReaction,
 		HitReactionDuration,
@@ -201,6 +203,70 @@ void AGhostEnemy::ApplyKnockback(
 	SetActorLocation(NewLocation);
 }
 
+AWCCharacter* AGhostEnemy::GetPlayerCharacter() const {
+	UWorld* World = GetWorld();
+
+	if (World == nullptr) {
+		return nullptr;
+	}
+
+	APlayerController* PlayerController =
+		World->GetFirstPlayerController();
+
+	if (PlayerController == nullptr) {
+		return nullptr;
+	}
+
+	APawn* PlayerPawn = PlayerController->GetPawn();
+
+	if (PlayerPawn == nullptr) {
+		return nullptr;
+	}
+
+	return Cast<AWCCharacter>(PlayerPawn);
+}
+
+bool AGhostEnemy::IsPlayerValidAndAlive() const {
+	AWCCharacter* PlayerCharacter = GetPlayerCharacter();
+
+	if (PlayerCharacter == nullptr) {
+		return false;
+	}
+
+	if (PlayerCharacter->GetIsDead()) {
+		return false;
+	}
+	return true;
+}
+
+bool AGhostEnemy::CanUpdateBehavior() const {
+	if (bIsDead) {
+		return false;
+	}
+	if (bIsHitReacting) {
+		return false;
+	}
+	if (bIsAttacking) {
+		return false;
+	}
+	return true;
+}
+
+bool AGhostEnemy::CanStartAttack() const {
+	if (bIsDead) {
+		return false;
+	}
+	if (bIsHitReacting) {
+		return false;
+	}
+	if (bIsAttacking) {
+		return false;
+	}
+	if (!bCanAttackPlayer) {
+		return false;
+	}
+	return true;
+}
 // **********Enemy Behavior**********
 
 void AGhostEnemy::Tick(float DeltaTime) {
@@ -214,50 +280,26 @@ void AGhostEnemy::Tick(float DeltaTime) {
 // Else, do nothing. 
 void AGhostEnemy::UpdateEnemyBehavior(float DeltaTime) {
 	// Dead > Hit Reaction > Attack > Move
-	if (bIsDead) {
+	if (!CanUpdateBehavior()) {
 		bIsMoving = false;
 		return;
 	}
 
-	if (bIsHitReacting) {
+	if (!IsPlayerValidAndAlive()) {
 		bIsMoving = false;
 		return;
 	}
 
-	if (bIsAttacking) {
-		bIsMoving = false;
-		return;
-	}
-
-	APlayerController* PlayerController =
-		GetWorld()->GetFirstPlayerController();
-
-	if (PlayerController == nullptr) {
-		bIsMoving = false;
-		return;
-	}
-
-	APawn* PlayerPawn = PlayerController->GetPawn();
-
-	if (PlayerPawn == nullptr) {
-		bIsMoving = false;
-		return;
-	}
-
-	AWCCharacter* PlayerCharacter = Cast<AWCCharacter>(PlayerPawn);
+	AWCCharacter* PlayerCharacter = GetPlayerCharacter();
 
 	if (PlayerCharacter == nullptr) {
-		bIsMoving = false;
-		return;
-	}
-	if (PlayerCharacter->GetIsDead()) {
 		bIsMoving = false;
 		return;
 	}
 
 	float DistanceToPlayer = FVector::Dist(
 		GetActorLocation(),
-		PlayerPawn->GetActorLocation()
+		PlayerCharacter->GetActorLocation()
 	);
 
 	if (DistanceToPlayer <= AttackRange) {
@@ -268,7 +310,7 @@ void AGhostEnemy::UpdateEnemyBehavior(float DeltaTime) {
 
 	if (DistanceToPlayer <= ChaseRange) {
 		bIsMoving = true;
-		MoveTowardPlayer(PlayerPawn, DeltaTime);
+		MoveTowardPlayer(PlayerCharacter, DeltaTime);
 		return;
 	}
 
@@ -309,19 +351,7 @@ void AGhostEnemy::MoveTowardPlayer(APawn* PlayerPawn, float DeltaTime) {
 }
 
 void AGhostEnemy::TryAttackPlayer() {
-	if (bIsDead) {
-		return;
-	}
-
-	if (bIsHitReacting) {
-		return;
-	}
-
-	if (!bCanAttackPlayer) {
-		return;
-	}
-
-	if (!bCanAttackPlayer) {
+	if (!CanStartAttack()) {
 		return;
 	}
 
@@ -333,7 +363,7 @@ void AGhostEnemy::TryAttackPlayer() {
 
 	// attack anim finish
 	GetWorldTimerManager().SetTimer(
-		EnemyAttackDurationTimerHanlde,
+		EnemyAttackDurationTimerHandle,
 		this,
 		&AGhostEnemy::EndEnemyAttack,
 		EnemyAttackDuration,
@@ -364,27 +394,17 @@ void AGhostEnemy::ResetEnemyAttack() {
 }
 
 void AGhostEnemy::DealDamageToPlayer() {
-	APlayerController* PlayerController =
-		GetWorld()->GetFirstPlayerController(); // find player controller
-
-	if (PlayerController == nullptr) {
-		return;
-	}
-
-	APawn* PlayerPawn = PlayerController->GetPawn(); // find player pawn
-
-	if (PlayerPawn == nullptr) {
-		return;
-	}
-
-	AWCCharacter* PlayerCharacter =
-		Cast<AWCCharacter>(PlayerPawn); // cast to AWCCharacter
+	AWCCharacter* PlayerCharacter = GetPlayerCharacter();
 
 	if (PlayerCharacter == nullptr) {
 		return;
 	}
 
-	PlayerCharacter->ReceiveDamage(EnemyAttackDamage); // call it
+	if (PlayerCharacter->GetIsDead()) {
+		return;
+	}
+
+	PlayerCharacter->ReceiveDamage(EnemyAttackDamage);
 }
 
 void AGhostEnemy::OnEnemyAttackHit() {
@@ -400,21 +420,7 @@ void AGhostEnemy::OnEnemyAttackHit() {
 		return;
 	}
 
-	// Distance to player protection
-	APlayerController* PlayerController = 
-		GetWorld()->GetFirstPlayerController();
-
-	if (PlayerController == nullptr) {
-		return;
-	}
-
-	APawn* PlayerPawn = PlayerController->GetPawn();
-
-	if (PlayerPawn == nullptr) {
-		return;
-	}
-
-	AWCCharacter* PlayerCharacter = Cast<AWCCharacter>(PlayerPawn);
+	AWCCharacter* PlayerCharacter = GetPlayerCharacter();
 
 	if (PlayerCharacter == nullptr) {
 		return;
@@ -425,7 +431,8 @@ void AGhostEnemy::OnEnemyAttackHit() {
 	}
 
 	float DistanceToPlayer = FVector::Dist(
-		GetActorLocation(), PlayerPawn->GetActorLocation()
+		GetActorLocation(), 
+		PlayerCharacter->GetActorLocation()
 	);
 
 	if (DistanceToPlayer > AttackRange) {

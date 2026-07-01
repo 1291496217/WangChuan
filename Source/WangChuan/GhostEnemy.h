@@ -10,6 +10,7 @@
 class USceneComponent;
 class USkeletalMeshComponent;
 class UMaterialInstanceDynamic;
+class AWCCharacter;
 
 UCLASS()
 class WANGCHUAN_API AGhostEnemy : public AActor
@@ -53,9 +54,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Feedback")
 	float HitReactionDuration = 0.4f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Feedback")
-	float KnockbackDistance = 40.0f;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
 	float ChaseRange = 600.0f;
 
@@ -93,11 +91,11 @@ protected:
 
 	FTimerHandle HitFeedbackTimerHandle;
 
-	FTimerHandle HitReactionTimeHandle;
+	FTimerHandle HitReactionTimerHandle;
 
 	FTimerHandle EnemyAttackCooldownTimerHandle;
 
-	FTimerHandle EnemyAttackDurationTimerHanlde;
+	FTimerHandle EnemyAttackDurationTimerHandle;
 
 	FTimerHandle DeathTimerHandle;
 
@@ -125,14 +123,24 @@ public:
 	bool GetIsHitReacting() const;
 
 protected:
+	// Combat state
 	void Die();
 
 	void FinishDeath();
 
-	void ShowHitFeedback();
+	void ClearCombatTimers();
 
-	void ResetHitFeedback();
+	// Player helper
+	AWCCharacter* GetPlayerCharacter() const;
 
+	bool IsPlayerValidAndAlive() const;
+
+	// Enemy behavior helper
+	bool CanUpdateBehavior() const;
+
+	bool CanStartAttack() const;
+
+	// Reaction
 	void ApplyKnockback(
 		FVector KnockbackDirection, 
 		float KnockbackStrength
@@ -142,6 +150,11 @@ protected:
 
 	void EndHitReaction();
 
+	// Legacy color feedback. currently replaced by hit reaction animation.
+	//void ShowHitFeedback();
+	//void ResetHitFeedback();
+
+	// Enemy behavior 
 	void UpdateEnemyBehavior(float DeltaTime);
 
 	void MoveTowardPlayer(APawn* PlayerPawn, float DeltaTime);
@@ -153,6 +166,4 @@ protected:
 	void EndEnemyAttack();
 
 	void ResetEnemyAttack();
-
-
 };
