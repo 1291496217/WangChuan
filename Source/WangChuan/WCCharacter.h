@@ -15,18 +15,54 @@
 #include "Containers/Set.h"
 #include "WCCharacter.generated.h"
 
-
 UCLASS()
-class WANGCHUAN_API AWCCharacter : public ACharacter 
+class WANGCHUAN_API AWCCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AWCCharacter();
 
+protected:
+	virtual void BeginPlay() override;
+
 public:
-	// Input
+	virtual void Tick(float DeltaTime) override;
+
+	virtual void SetupPlayerInputComponent(
+		class UInputComponent* PlayerInputComponent
+	) override;
+
+	// Combat Public API
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ReceiveDamage(float DamageAmount);
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	float GetHealth() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	bool GetIsDead() const;
+
+	// Interaction Public API
+	IInteractable* CurrentInteractable;
+
+	TSet<int32> CollectedFragments;
+
+	FString CurrentPrompt;
+
+	void ShowInteractionPrompt(const FString& Prompt);
+
+	void HideInteractionPrompt();
+
+protected:
+	// Camera
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	USpringArmComponent* CameraBoom;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	UCameraComponent* FollowCamera;
+
+	// Input Assets
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputMappingContext* DefaultMappingContext;
 
@@ -38,7 +74,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* JumpAction;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* InteractAction;
 
@@ -48,7 +84,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* AttackAction;
 
-	// Combat
+	// Combat Settings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	UAnimMontage* LightAttackMontage;
 
@@ -76,59 +112,39 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool bIsDead = false;
 
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void ReceiveDamage(float DamageAmount);
-
-	UFUNCTION(BlueprintPure, Category = "Combat")
-	float GetHealth() const;
-
-	UFUNCTION(BlueprintPure, Category = "Combat")
-	bool GetIsDead() const;
-
 	bool bIsAttacking = false;
 
 	FTimerHandle AttackTimerHandle;
 
-	// Camera
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
-	USpringArmComponent* CameraBoom;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
-	UCameraComponent* FollowCamera;
-
-	// Interaction
-	IInteractable* CurrentInteractable;
-
 	// Input Functions
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	void Move(const FInputActionValue& Value);
+
 	void Look(const FInputActionValue& Value);
+
 	void Interact();
+
 	void ShowMemoryJournal();
+
 	void Attack();
-	
+
+	// Combat Functions
 	void PerformAttackTrace();
+
+	void HandleAttackHit(AActor* HitActor);
+
+	void PlayLightAttackMontage();
+
+	void StartAttackTimer();
 
 	void EndAttack();
 
 	void Die();
 
-	virtual void BeginPlay() override;
+	void ShowAttackHitDebug(AActor* HitActor);
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	// Helper Functions
+	bool CanAct() const;
 
-public: 
-	TSet<int32> CollectedFragments;
-
-public:
-	FString CurrentPrompt;
-
-void ShowInteractionPrompt(const FString& Prompt);
-
-void HideInteractionPrompt();
 
 };
-
 

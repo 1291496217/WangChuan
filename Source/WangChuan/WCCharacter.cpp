@@ -237,41 +237,20 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 //*****************Combat********************
 	void AWCCharacter::Attack() {
-		if (bIsDead) {
+		if (!CanAct()) {
 			return;
 		}
 		if (bIsAttacking) {
 			return;
 		}
+
 		bIsAttacking = true;
 
-		if (LightAttackMontage) {
-			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-
-			if (AnimInstance) {
-				AnimInstance->Montage_Play(LightAttackMontage);
-			}
-		}
-		else {
-			if (GEngine) {
-				GEngine->AddOnScreenDebugMessage(
-					-1,
-					2.0f,
-					FColor::Yellow,
-					TEXT("LightAttackMontage is not assigned")
-				);
-			}
-		}
+		PlayLightAttackMontage();
 
 		PerformAttackTrace();
 
-		GetWorldTimerManager().SetTimer(
-			AttackTimerHandle,
-			this,
-			&AWCCharacter::EndAttack,
-			AttackDuration,
-			false
-		);
+		StartAttackTimer();
 	}
 
 	void AWCCharacter::PerformAttackTrace() {
@@ -309,31 +288,9 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		if (bHit) {
 			AActor* HitActor = HitResult.GetActor();
 
-			if (HitActor) {
-				FString HitMessage = FString::Printf(
-					TEXT("Hit Actor: %s"),
-					*HitActor->GetName()
-				);
-				GEngine->AddOnScreenDebugMessage(
-					-1,
-					2.0f,
-					FColor::Green,
-					HitMessage
-				);
-			}
+			ShowAttackHitDebug(HitActor);
 
-			AGhostEnemy* GhostEnemy = 
-				Cast<AGhostEnemy>(HitActor);
-
-			if (GhostEnemy) {
-				FVector HitDirection = GetActorForwardVector();
-
-				GhostEnemy->TakeHit(
-					AttackDamage,
-					HitDirection,
-					AttackKnockbackStrength
-				);
-			}
+			HandleAttackHit(HitActor);
 		}
 	}
 
@@ -347,6 +304,10 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		Health -= DamageAmount;
+
+		if (Health < 0.0f) {
+			Health = 0.0f;
+		}
 
 		if (GEngine) {
 			FString HealthMessage = FString::Printf(
@@ -380,6 +341,9 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		bIsDead = true;
+		bIsAttacking = false;
+
+		GetWorldTimerManager().ClearTimer(AttackTimerHandle);
 
 		GetCharacterMovement()->StopMovementImmediately();
 
@@ -398,4 +362,83 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 				TEXT("Player Defeated")
 			);
 		}
+	}
+
+	bool AWCCharacter::CanAct() const {
+		if (bIsDead) {
+			return false;
+		}
+		return true;
+	}
+
+	void AWCCharacter::PlayLightAttackMontage() {
+		if (LightAttackMontage == nullptr) {
+			if (GEngine) {
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					2.0f,
+					FColor::Yellow,
+					TEXT("LightAttackMontage is not assigned")
+				);
+			}
+			return;
+		}
+
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+		if (AnimInstance == nullptr) {
+			return;
+		}
+
+		AnimInstance->Montage_Play(LightAttackMontage);
+	}
+
+	void AWCCharacter::StartAttackTimer() {
+		GetWorldTimerManager().SetTimer(
+			AttackTimerHandle,
+			this,
+			&AWCCharacter::EndAttack,
+			AttackDuration,
+			false
+		);
+	}
+
+	void AWCCharacter::HandleAttackHit(AActor* HitActor) {
+		if (HitActor == nullptr) {
+			return;
+		}
+
+		AGhostEnemy* GhostEnemy =
+			Cast<AGhostEnemy>(HitActor);
+
+		if (GhostEnemy == nullptr) {
+			return;
+		}
+
+		FVector HitDirection = GetActorForwardVector();
+
+		GhostEnemy->TakeHit(
+			AttackDamage,
+			HitDirection,
+			AttackKnockbackStrength
+		);
+	}
+
+	void AWCCharacter::ShowAttackHitDebug(AActor* HitActor) {
+		if (HitActor == nullptr) {
+			return;
+		}
+		if (GEngine == nullptr) {
+			return;
+		}
+		FString HitMessage = FString::Printf(
+			TEXT("Hit Actor: %s"),
+			*HitActor->GetName()
+		);
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			2.0f,
+			FColor::Green,
+			HitMessage
+		);
 	}
