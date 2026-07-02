@@ -43,6 +43,8 @@ AWCCharacter::AWCCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	// Roate speed
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
+
+	bShowAttackDebug = false;
 }
 
 // Called when the game starts or when spawned
@@ -277,7 +279,9 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			UEngineTypes::ConvertToTraceType(ECC_Visibility), // Trace Channel
 			false,
 			ActorsToIgnore,
-			EDrawDebugTrace::ForDuration, // Display the Box Trace 
+			bShowAttackDebug 
+			? EDrawDebugTrace::ForDuration 
+			: EDrawDebugTrace::None,
 			HitResult,
 			true,
 			FLinearColor::Red,
@@ -425,6 +429,9 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 
 	void AWCCharacter::ShowAttackHitDebug(AActor* HitActor) {
+		if (!bShowAttackDebug) {
+			return;
+		}
 		if (HitActor == nullptr) {
 			return;
 		}

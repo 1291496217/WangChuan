@@ -25,3 +25,6 @@ Saved/
 
 # Unreal Upgrade Logs
 UpgradeLog.htm
+# Large local UE assets
+Content/Weapon_Pack/Map/Weapons_Kit_BuiltData.uasset
+Content/Weapon_Pack/Textures/HDRI/HDRI_Epic_Courtyard_Daylight.uasset

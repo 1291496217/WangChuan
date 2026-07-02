@@ -112,6 +112,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool bIsDead = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Debug")
+	bool bShowAttackDebug;
+
 	bool bIsAttacking = false;
 
 	FTimerHandle AttackTimerHandle;
