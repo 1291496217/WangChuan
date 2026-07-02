@@ -14,6 +14,7 @@
 #include "GhostEnemy.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
+#include "Blueprint/UserWidget.h"
 
 
 // Sets default values
@@ -55,13 +56,28 @@ void AWCCharacter::BeginPlay()
 	Health = MaxHealth;
 	bIsDead = false;
 
-	// 游戏开始 -》找到玩家 -》找到Enhanced Input -》加载IMC Default
 	if (APlayerController* PlayerController =
 		Cast<APlayerController>(GetController())) {
 		if (UEnhancedInputLocalPlayerSubsystem * Subsystem =
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
 				Subsystem->AddMappingContext(
 					DefaultMappingContext, 0);
+		}
+	}
+
+	if (PlayerHUDClass) {
+		APlayerController* PlayerController =
+			Cast<APlayerController>(GetController());
+
+		if (PlayerController) {
+			PlayerHUDWidget = CreateWidget<UUserWidget>(
+				PlayerController,
+				PlayerHUDClass
+			);
+
+			if (PlayerHUDWidget) {
+				PlayerHUDWidget->AddToViewport();
+			}
 		}
 	}
 }
@@ -333,6 +349,13 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	float AWCCharacter::GetHealth() const {
 		return Health;
+	}
+
+	float AWCCharacter::GetHealthPercent() const {
+		if (MaxHealth <= 0.0f) {
+			return 0.0f;
+		}
+		return Health / MaxHealth;
 	}
 
 	bool AWCCharacter::GetIsDead() const {

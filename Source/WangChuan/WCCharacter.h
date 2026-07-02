@@ -13,6 +13,7 @@
 #include "InteractionStone.h"
 #include "Interactable.h"
 #include "Containers/Set.h"
+#include "Blueprint/UserWidget.h"
 #include "WCCharacter.generated.h"
 
 UCLASS()
@@ -39,6 +40,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	float GetHealth() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	float GetHealthPercent() const;
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	bool GetIsDead() const;
@@ -118,6 +122,13 @@ protected:
 	bool bIsAttacking = false;
 
 	FTimerHandle AttackTimerHandle;
+
+	// UI
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI") 
+	TSubclassOf<UUserWidget> PlayerHUDClass;
+
+	UPROPERTY()
+	UUserWidget* PlayerHUDWidget;
 
 	// Input Functions
 	void Move(const FInputActionValue& Value);
