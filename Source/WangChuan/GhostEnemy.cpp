@@ -5,7 +5,10 @@
 #include "WCCharacter.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/WidgetComponent.h"
+#include "EnemyHealthBarWidget.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Math/UnrealMathUtility.h"
 #include "Engine/Engine.h"
 
 // Sets default values
@@ -20,6 +23,21 @@ AGhostEnemy::AGhostEnemy()
 	EnemyMesh = CreateDefaultSubobject
 		<USkeletalMeshComponent>(TEXT("EnemyMesh"));
 	EnemyMesh->SetupAttachment(SceneRoot);
+
+	HealthWidgetComponent = CreateDefaultSubobject
+		<UWidgetComponent>(TEXT("HealthWidgetComponent")
+	);
+	HealthWidgetComponent->SetupAttachment(SceneRoot);
+
+	HealthWidgetComponent->SetRelativeLocation(
+		FVector(0.0f, 0.0f, 100.0f)
+	);
+
+	HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+
+	HealthWidgetComponent->SetDrawSize(
+		FVector2D(120.0f, 12.0f)
+	);
 
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
@@ -41,6 +59,17 @@ void AGhostEnemy::BeginPlay()
 			);
 		}
 	}
+
+	if (HealthWidgetComponent) {
+		UEnemyHealthBarWidget* HealthWidget =
+			Cast<UEnemyHealthBarWidget>(
+				HealthWidgetComponent->GetUserWidgetObject()
+			);
+		
+		if (HealthWidget) {
+			HealthWidget->SetEnemyOwner(this);
+		}
+	}
 	
 }
 
@@ -55,6 +84,7 @@ void AGhostEnemy::TakeHit(
 	
 	Health -= DamageAmount;
 
+	/*
 	if (GEngine) {
 		FString HitMessage = FString::Printf(
 			TEXT("Ghost Hit! Health: %.0f"),
@@ -67,7 +97,7 @@ void AGhostEnemy::TakeHit(
 			HitMessage
 		);
 	}
-
+	*/
 	if (Health <= 0.0f) { // If the last hit kill the enemy, no Feedback
 		Die();
 		return;
@@ -456,4 +486,15 @@ bool AGhostEnemy::GetIsAttacking() const {
 
 bool AGhostEnemy::GetIsHitReacting() const {
 	return bIsHitReacting;
+}
+
+float AGhostEnemy::GetHealth() const {
+	return Health;
+}
+
+float AGhostEnemy::GetHealthPercent() const {
+	if (MaxHealth <= 0.0f) {
+		return 0.0f;
+	}
+	return FMath::Clamp(Health / MaxHealth, 0.0f, 1.0f);;
 }

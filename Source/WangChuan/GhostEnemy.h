@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "TimerManager.h"
+#include "Components/WidgetComponent.h"
 #include "GhostEnemy.generated.h"
 
 class USceneComponent;
@@ -32,6 +33,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USkeletalMeshComponent* EnemyMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UWidgetComponent* HealthWidgetComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float MaxHealth = 100.0f;
@@ -109,6 +113,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void OnEnemyAttackHit();
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	float GetHealthPercent() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	float GetHealth() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation")
 	bool GetIsMoving() const;

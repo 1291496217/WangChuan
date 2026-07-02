@@ -329,6 +329,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			Health = 0.0f;
 		}
 
+		/*
 		if (GEngine) {
 			FString HealthMessage = FString::Printf(
 				TEXT("Player Health: %.0f"),
@@ -341,7 +342,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 				HealthMessage
 			);
 		}
-
+		*/
 		if (Health <= 0.0f) {
 			Die();
 		}
