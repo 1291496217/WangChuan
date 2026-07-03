@@ -89,24 +89,12 @@ void AGhostEnemy::TakeHit(
 	
 	Health -= DamageAmount;
 
-	/*
-	if (GEngine) {
-		FString HitMessage = FString::Printf(
-			TEXT("Ghost Hit! Health: %.0f"),
-			Health
-		);
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.0f,
-			FColor::Red,
-			HitMessage
-		);
-	}
-	*/
 	if (Health <= 0.0f) { // If the last hit kill the enemy, no Feedback
 		Die();
 		return;
 	}
+
+	PlayEvilGhostHurtSound();
 
 	//ShowHitFeedback();
 	StartHitReaction();
@@ -485,8 +473,11 @@ void AGhostEnemy::OnEnemyAttackHit() {
 	);
 
 	if (DistanceToPlayer > AttackRange) {
+		PlayEvilGhostAttackWhiffSound();
 		return;
 	}
+
+	PlayEvilGhostAttackHitSound();
 
 	DealDamageToPlayer();
 }
@@ -565,3 +556,50 @@ void AGhostEnemy::UpdateHealthWidgetFacingCamera() {
 		)
 	);
 }
+
+void AGhostEnemy::PlayEvilGhostAttackHitSound() {
+	USoundBase* SelectedSound = nullptr;
+
+	int32 RandomIndex = FMath::RandRange(0, 1);
+
+	if (RandomIndex == 0) {
+		SelectedSound = EvilGhostAttackHitSound01;
+	}
+	else {
+		SelectedSound = EvilGhostAttackHitSound02;
+	}
+
+	if (SelectedSound == nullptr) {
+		return;
+	}
+
+	UGameplayStatics::PlaySoundAtLocation(
+		this,
+		SelectedSound,
+		GetActorLocation()
+	);
+}
+
+void AGhostEnemy::PlayEvilGhostAttackWhiffSound() {
+	if (EvilGhostAttackWhiffSound == nullptr) {
+		return;
+	}
+	UGameplayStatics::PlaySoundAtLocation(
+		this,
+		EvilGhostAttackWhiffSound,
+		GetActorLocation()
+	);
+}
+
+void AGhostEnemy::PlayEvilGhostHurtSound() {
+	if (EvilGhostHurtSound == nullptr) {
+		return;
+	}
+	UGameplayStatics::PlaySoundAtLocation(
+		this,
+		EvilGhostHurtSound,
+		GetActorLocation()
+	);
+}
+
+

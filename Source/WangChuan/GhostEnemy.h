@@ -92,6 +92,18 @@ protected:
 	bool bCanAttackPlayer = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
+	USoundBase* EvilGhostAttackHitSound01;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
+	USoundBase* EvilGhostAttackHitSound02;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
+	USoundBase* EvilGhostAttackWhiffSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
+	USoundBase* EvilGhostHurtSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* EvilGhostDeathSound;
 
 	UPROPERTY()
@@ -168,7 +180,7 @@ protected:
 	//void ShowHitFeedback();
 	//void ResetHitFeedback();
 
-	// helper
+	// UI
 	void UpdateHealthWidgetFacingCamera();
 
 	// Enemy behavior 
@@ -183,4 +195,9 @@ protected:
 	void EndEnemyAttack();
 
 	void ResetEnemyAttack();
+
+	// Audio
+	void PlayEvilGhostAttackHitSound();
+	void PlayEvilGhostAttackWhiffSound();
+	void PlayEvilGhostHurtSound();
 };
