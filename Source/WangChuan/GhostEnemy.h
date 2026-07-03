@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "TimerManager.h"
 #include "Components/WidgetComponent.h"
+#include "Sound/SoundBase.h"
 #include "GhostEnemy.generated.h"
 
 class USceneComponent;
@@ -89,6 +90,9 @@ protected:
 	bool bIsHitReacting = false;
 
 	bool bCanAttackPlayer = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
+	USoundBase* EvilGhostDeathSound;
 
 	UPROPERTY()
 	UMaterialInstanceDynamic* DynamicMaterial; // change enemy's color in runtime

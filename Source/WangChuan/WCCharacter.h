@@ -14,6 +14,7 @@
 #include "Interactable.h"
 #include "Containers/Set.h"
 #include "Blueprint/UserWidget.h"
+#include "Sound/SoundBase.h"
 #include "WCCharacter.generated.h"
 
 UCLASS()
@@ -123,6 +124,15 @@ protected:
 
 	FTimerHandle AttackTimerHandle;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
+	USoundBase* AttackHitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
+	USoundBase* AttackWhiffSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
+	USoundBase* PlayerDeathSound;
+
 	// UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI") 
 	TSubclassOf<UUserWidget> PlayerHUDClass;
@@ -144,7 +154,7 @@ protected:
 	// Combat Functions
 	void PerformAttackTrace();
 
-	void HandleAttackHit(AActor* HitActor);
+	bool HandleAttackHit(AActor* HitActor);
 
 	void PlayLightAttackMontage();
 
@@ -158,6 +168,10 @@ protected:
 
 	// Helper Functions
 	bool CanAct() const;
+
+	void PlayAttackHitSound();
+
+	void PlayAttackWhiffSound();
 
 
 };

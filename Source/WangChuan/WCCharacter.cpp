@@ -13,6 +13,7 @@
 #include "Animation/AnimInstance.h"
 #include "GhostEnemy.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Blueprint/UserWidget.h"
 
@@ -310,8 +311,17 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 			ShowAttackHitDebug(HitActor);
 
-			HandleAttackHit(HitActor);
+			bool bHitEnemy = HandleAttackHit(HitActor);
+
+			if (bHitEnemy) {
+				PlayAttackHitSound();
+			}
+			else {
+				PlayAttackWhiffSound();
+			}
+			return;
 		}
+		PlayAttackWhiffSound();
 	}
 
 	void AWCCharacter::EndAttack() {
@@ -348,6 +358,34 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 	}
 
+	// Combat Audios
+	void AWCCharacter::PlayAttackHitSound() {
+		if (AttackHitSound == nullptr) {
+			return;
+		}
+
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			AttackHitSound,
+			GetActorLocation()
+		);
+	}
+
+	void AWCCharacter::PlayAttackWhiffSound() {
+		if (AttackWhiffSound == nullptr) {
+			return;
+		}
+
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			AttackWhiffSound,
+			GetActorLocation()
+		);
+	}
+
+	
+
+//*******************HELPER**********************************
 	float AWCCharacter::GetHealth() const {
 		return Health;
 	}
@@ -370,6 +408,13 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsDead = true;
 		bIsAttacking = false;
+
+		if (PlayerDeathSound) {
+			UGameplayStatics::PlaySound2D(
+				this,
+				PlayerDeathSound
+			);
+		}
 
 		GetWorldTimerManager().ClearTimer(AttackTimerHandle);
 
@@ -431,16 +476,16 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		);
 	}
 
-	void AWCCharacter::HandleAttackHit(AActor* HitActor) {
+	bool AWCCharacter::HandleAttackHit(AActor* HitActor) {
 		if (HitActor == nullptr) {
-			return;
+			return false;
 		}
 
 		AGhostEnemy* GhostEnemy =
 			Cast<AGhostEnemy>(HitActor);
 
 		if (GhostEnemy == nullptr) {
-			return;
+			return false;
 		}
 
 		FVector HitDirection = GetActorForwardVector();
@@ -450,6 +495,8 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			HitDirection,
 			AttackKnockbackStrength
 		);
+
+		return true;
 	}
 
 	void AWCCharacter::ShowAttackHitDebug(AActor* HitActor) {

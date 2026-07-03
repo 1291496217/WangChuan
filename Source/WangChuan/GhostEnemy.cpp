@@ -9,6 +9,7 @@
 #include "EnemyHealthBarWidget.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Math/UnrealMathUtility.h"
+#include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
 
 // Sets default values
@@ -131,6 +132,14 @@ void AGhostEnemy::Die() {
 	bIsAttacking = false;
 	bCanAttackPlayer = false;
 	bIsHitReacting = false;
+
+	if (EvilGhostDeathSound) {
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			EvilGhostDeathSound,
+			GetActorLocation()
+		);
+	}
 
 	ClearCombatTimers();
 	
