@@ -30,15 +30,19 @@ AGhostEnemy::AGhostEnemy()
 	HealthWidgetComponent->SetupAttachment(SceneRoot);
 
 	HealthWidgetComponent->SetRelativeLocation(
-		FVector(0.0f, 0.0f, 100.0f)
+		FVector(0.0f, 0.0f, 200.0f)
 	);
 
-	HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
 
 	HealthWidgetComponent->SetDrawSize(
-		FVector2D(120.0f, 12.0f)
+		FVector2D(220.0f, 18.0f)
 	);
 
+	HealthWidgetComponent->SetRelativeScale3D(
+		FVector(0.25f, 0.25f, 0.25f)
+	);
+	
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
 }
@@ -130,6 +134,10 @@ void AGhostEnemy::Die() {
 
 	ClearCombatTimers();
 	
+	if (HealthWidgetComponent) {
+		HealthWidgetComponent->SetVisibility(false);
+	}
+
 	// Enemy can't block player after death;
 	if (EnemyMesh) { 
 		EnemyMesh->SetCollisionEnabled(
@@ -303,6 +311,8 @@ void AGhostEnemy::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
 	UpdateEnemyBehavior(DeltaTime);
+
+	UpdateHealthWidgetFacingCamera();
 }
 
 // If player in attack range, attack, don't move
@@ -497,4 +507,52 @@ float AGhostEnemy::GetHealthPercent() const {
 		return 0.0f;
 	}
 	return FMath::Clamp(Health / MaxHealth, 0.0f, 1.0f);;
+}
+
+void AGhostEnemy::UpdateHealthWidgetFacingCamera() {
+	if (HealthWidgetComponent == nullptr) {
+		return;
+	}
+
+	UWorld* World = GetWorld();
+
+	if (World == nullptr) {
+		return;
+	}
+
+	APlayerController* PlayerController =
+		World->GetFirstPlayerController();
+
+	if (PlayerController == nullptr) {
+		return;
+	}
+
+	FVector CameraLocation;
+	FRotator CameraRotation;
+
+	PlayerController->GetPlayerViewPoint(
+		CameraLocation,
+		CameraRotation
+	);
+
+	FVector WidgetLocation =
+		HealthWidgetComponent->GetComponentLocation();
+
+	FVector DirectionToCamera =
+		CameraLocation - WidgetLocation;
+
+	if (DirectionToCamera.IsNearlyZero()) {
+		return;
+	}
+
+	FRotator LookAtRotation =
+		DirectionToCamera.Rotation();
+
+	HealthWidgetComponent->SetWorldRotation(
+		FRotator(
+			0.0f,
+			LookAtRotation.Yaw,
+			0.0f
+		)
+	);
 }

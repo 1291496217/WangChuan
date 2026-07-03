@@ -164,6 +164,9 @@ protected:
 	//void ShowHitFeedback();
 	//void ResetHitFeedback();
 
+	// helper
+	void UpdateHealthWidgetFacingCamera();
+
 	// Enemy behavior 
 	void UpdateEnemyBehavior(float DeltaTime);
 
