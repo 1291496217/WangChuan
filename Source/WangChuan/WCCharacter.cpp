@@ -311,7 +311,8 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 			ShowAttackHitDebug(HitActor);
 
-			bool bHitEnemy = HandleAttackHit(HitActor);
+			bool bHitEnemy = HandleAttackHit(
+				HitActor, HitResult);
 
 			if (bHitEnemy) {
 				PlayAttackHitSound();
@@ -382,8 +383,6 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			GetActorLocation()
 		);
 	}
-
-	
 
 //*******************HELPER**********************************
 	float AWCCharacter::GetHealth() const {
@@ -476,7 +475,8 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		);
 	}
 
-	bool AWCCharacter::HandleAttackHit(AActor* HitActor) {
+	bool AWCCharacter::HandleAttackHit(
+		AActor* HitActor, const FHitResult& HitResult) {
 		if (HitActor == nullptr) {
 			return false;
 		}
@@ -495,6 +495,8 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			HitDirection,
 			AttackKnockbackStrength
 		);
+
+		PlayAttackHitEffect(HitResult);
 
 		return true;
 	}
@@ -518,5 +520,30 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			2.0f,
 			FColor::Green,
 			HitMessage
+		);
+	}
+
+	void AWCCharacter::PlayAttackHitEffect(
+		const FHitResult& HitResult) {
+		if (AttackHitEffect == nullptr) {
+			return;
+		}
+
+		FVector SpawnLocation = HitResult.ImpactPoint;
+
+		if (SpawnLocation.IsNearlyZero()) {
+			SpawnLocation = HitResult.Location;
+		}
+
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			AttackHitEffect,
+			SpawnLocation,
+			FRotator::ZeroRotator,
+			FVector(
+				AttackHitEffectScale,
+				AttackHitEffectScale,
+				AttackHitEffectScale
+			)
 		);
 	}

@@ -15,6 +15,7 @@
 #include "Containers/Set.h"
 #include "Blueprint/UserWidget.h"
 #include "Sound/SoundBase.h"
+#include "Particles/ParticleSystem.h"
 #include "WCCharacter.generated.h"
 
 UCLASS()
@@ -133,6 +134,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* PlayerDeathSound;
 
+	// VFX
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX|Combat")
+	UParticleSystem* AttackHitEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX|Combat")
+	float AttackHitEffectScale = 0.4f;
+
 	// UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI") 
 	TSubclassOf<UUserWidget> PlayerHUDClass;
@@ -154,7 +162,7 @@ protected:
 	// Combat Functions
 	void PerformAttackTrace();
 
-	bool HandleAttackHit(AActor* HitActor);
+	bool HandleAttackHit(AActor* HitActor, const FHitResult& HitResult);
 
 	void PlayLightAttackMontage();
 
@@ -172,6 +180,8 @@ protected:
 	void PlayAttackHitSound();
 
 	void PlayAttackWhiffSound();
+
+	void PlayAttackHitEffect(const FHitResult& HitResult);
 
 
 };
