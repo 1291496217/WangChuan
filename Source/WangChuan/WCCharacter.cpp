@@ -16,6 +16,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Blueprint/UserWidget.h"
+#include "Camera/PlayerCameraManager.h"
 
 
 // Sets default values
@@ -78,6 +79,22 @@ void AWCCharacter::BeginPlay()
 
 			if (PlayerHUDWidget) {
 				PlayerHUDWidget->AddToViewport();
+			}
+		}
+	}
+
+	if (PlayerHitFlashWidgetClass) {
+		APlayerController* PlayerController =
+			Cast<APlayerController>(GetController());
+
+		if (PlayerController) {
+			PlayerHitFlashWidget = CreateWidget<UPlayerHitFlashWidget>(
+				PlayerController,
+				PlayerHitFlashWidgetClass
+			);
+
+			if (PlayerHitFlashWidget) {
+				PlayerHitFlashWidget->AddToViewport(10);
 			}
 		}
 	}
@@ -340,23 +357,12 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			Health = 0.0f;
 		}
 
-		/*
-		if (GEngine) {
-			FString HealthMessage = FString::Printf(
-				TEXT("Player Health: %.0f"),
-				Health
-			);
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				2.0f,
-				FColor::Red,
-				HealthMessage
-			);
-		}
-		*/
+		PlayPlayerHitFeedback();
+
 		if (Health <= 0.0f) {
 			Die();
 		}
+
 	}
 
 	// Combat Audios
@@ -546,4 +552,24 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 				AttackHitEffectScale
 			)
 		);
+	}
+
+	void AWCCharacter::PlayPlayerHitFeedback() {
+		if (PlayerHitFlashWidget) {
+			PlayerHitFlashWidget->PlayHitFlash();
+		}
+
+		if (HitCameraShakeClass) {
+			APlayerController* PlayerController =
+				Cast<APlayerController>(GetController());
+
+			if (PlayerController &&
+				PlayerController->PlayerCameraManager) {
+
+				PlayerController->PlayerCameraManager->StartCameraShake(
+					HitCameraShakeClass
+				);
+			}
+		}
+
 	}

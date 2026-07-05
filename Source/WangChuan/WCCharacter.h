@@ -14,8 +14,10 @@
 #include "Interactable.h"
 #include "Containers/Set.h"
 #include "Blueprint/UserWidget.h"
+#include "PlayerHitFlashWidget.h"
 #include "Sound/SoundBase.h"
 #include "Particles/ParticleSystem.h"
+#include "Camera/CameraShakeBase.h"
 #include "WCCharacter.generated.h"
 
 UCLASS()
@@ -67,6 +69,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCameraComponent* FollowCamera;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Feedback")
+	TSubclassOf<UCameraShakeBase> HitCameraShakeClass;
 
 	// Input Assets
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -148,6 +153,12 @@ protected:
 	UPROPERTY()
 	UUserWidget* PlayerHUDWidget;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UPlayerHitFlashWidget> PlayerHitFlashWidgetClass;
+
+	UPROPERTY()
+	UPlayerHitFlashWidget* PlayerHitFlashWidget;
+
 	// Input Functions
 	void Move(const FInputActionValue& Value);
 
@@ -183,6 +194,7 @@ protected:
 
 	void PlayAttackHitEffect(const FHitResult& HitResult);
 
+	void PlayPlayerHitFeedback();
 
 };
 
