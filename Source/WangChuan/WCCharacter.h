@@ -139,6 +139,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* PlayerDeathSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
+	USoundBase* PlayerHurtSound;
+
 	// VFX
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX|Combat")
 	UParticleSystem* AttackHitEffect;

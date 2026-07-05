@@ -2,6 +2,8 @@
 
 
 #include "WCCharacter.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
@@ -357,11 +359,12 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			Health = 0.0f;
 		}
 
-		PlayPlayerHitFeedback();
-
 		if (Health <= 0.0f) {
 			Die();
+			return;
 		}
+
+		PlayPlayerHitFeedback();
 
 	}
 
@@ -424,6 +427,8 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		GetWorldTimerManager().ClearTimer(AttackTimerHandle);
 
 		GetCharacterMovement()->StopMovementImmediately();
+		GetCharacterMovement()->Velocity = FVector::ZeroVector;
+		GetCharacterMovement()->DisableMovement();
 
 		APlayerController* PlayerController =
 			Cast<APlayerController>(GetController());
@@ -432,13 +437,25 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			DisableInput(PlayerController);
 		}
 
-		if (GEngine) {
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				5.0f,
-				FColor::Purple,
-				TEXT("Player Defeated")
+		// Ragdoll
+		GetCapsuleComponent()->SetCollisionEnabled(
+			ECollisionEnabled::NoCollision
+		);
+
+		USkeletalMeshComponent* CharacterMesh = GetMesh();
+
+		if (CharacterMesh) {
+			CharacterMesh->SetCollisionProfileName(
+				TEXT("Ragdoll")
 			);
+
+			CharacterMesh->SetCollisionEnabled(
+				ECollisionEnabled::QueryAndPhysics
+			);
+
+			CharacterMesh->SetSimulatePhysics(true);
+
+			CharacterMesh->WakeAllRigidBodies();
 		}
 	}
 
@@ -555,6 +572,13 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 
 	void AWCCharacter::PlayPlayerHitFeedback() {
+		if (PlayerHurtSound) {
+			UGameplayStatics::PlaySound2D(
+				this,
+				PlayerHurtSound
+			);
+		}
+
 		if (PlayerHitFlashWidget) {
 			PlayerHitFlashWidget->PlayHitFlash();
 		}
