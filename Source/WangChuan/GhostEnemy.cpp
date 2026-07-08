@@ -10,6 +10,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Math/UnrealMathUtility.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Engine/Engine.h"
 
 // Sets default values
@@ -376,6 +377,8 @@ void AGhostEnemy::MoveTowardPlayer(APawn* PlayerPawn, float DeltaTime) {
 
 	SetActorLocation(NewLocation);
 
+	SnapToGround();
+
 	FRotator NewRotation = Direction.Rotation();
 
 	SetActorRotation(
@@ -600,6 +603,49 @@ void AGhostEnemy::PlayEvilGhostHurtSound() {
 		EvilGhostHurtSound,
 		GetActorLocation()
 	);
+}
+
+// Movement
+void AGhostEnemy::SnapToGround() {
+	FVector ActorLocation = GetActorLocation();
+
+	FVector TraceStart = ActorLocation + FVector(
+		0.0f,
+		0.0f,
+		GroundTraceStartHeight
+	);
+
+	FVector TraceEnd = ActorLocation - FVector(
+		0.0f,
+		0.0f,
+		GroundTraceEndDepth
+	);
+
+	TArray<AActor*> ActorToIgnore;
+	ActorToIgnore.Add(this);
+
+	FHitResult HitResult;
+
+	bool bHitGround = UKismetSystemLibrary::LineTraceSingle(
+		this,
+		TraceStart,
+		TraceEnd,
+		UEngineTypes::ConvertToTraceType(ECC_Visibility),
+		false,
+		ActorToIgnore,
+		EDrawDebugTrace::None,
+		HitResult,
+		true
+	);
+
+	if (!bHitGround) {
+		return;
+	}
+
+	FVector NewLocation = ActorLocation;
+	NewLocation.Z = HitResult.ImpactPoint.Z + GroundOffset;
+
+	SetActorLocation(NewLocation);
 }
 
 

@@ -77,6 +77,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Behavior")
 	float MoveSpeed = 120.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float GroundTraceStartHeight = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float GroundTraceEndDepth = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float GroundOffset = 0.0f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
 	bool bIsMoving = false;
 
@@ -200,4 +209,6 @@ protected:
 	void PlayEvilGhostAttackHitSound();
 	void PlayEvilGhostAttackWhiffSound();
 	void PlayEvilGhostHurtSound();
+
+	void SnapToGround();
 };
