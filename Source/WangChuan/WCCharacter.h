@@ -95,6 +95,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* AttackAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* HeavyAttackAction;
+
 	// Combat Settings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	UAnimMontage* LightAttackMontage;
@@ -129,6 +132,24 @@ protected:
 	bool bIsAttacking = false;
 
 	FTimerHandle AttackTimerHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
+	UAnimMontage* HeavyAttackMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
+	float HeavyAttackDamage = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
+	float HeavyAttackRange = 80.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
+	FVector HeavyAttackBoxHalfSize = FVector(20.0f, 70.0f, 80.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
+	float HeavyAttackDuration = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
+	float HeavyAttackKnockbackStrength = 250.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* AttackHitSound;
@@ -173,8 +194,12 @@ protected:
 
 	void Attack();
 
+	void HeavyAttack();
+
 	// Combat Functions
 	void PerformAttackTrace();
+
+	void PerformHeavyAttackTrace();
 
 	bool HandleAttackHit(AActor* HitActor, const FHitResult& HitResult);
 

@@ -165,6 +165,13 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 				this,
 				&AWCCharacter::Attack);
 		}
+		if (HeavyAttackAction) {
+			EnhancedInputComponent->BindAction(
+				HeavyAttackAction,
+				ETriggerEvent::Started,
+				this,
+				&AWCCharacter::HeavyAttack);
+		}
 	}
 }
 
@@ -291,6 +298,37 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		StartAttackTimer();
 	}
 
+	void AWCCharacter::HeavyAttack() {
+		if (!CanAct()) {
+			return;
+		}
+
+		if (bIsAttacking) {
+			return;
+		}
+
+		bIsAttacking = true;
+
+		UAnimInstance* AnimInstance =
+			GetMesh()
+			? GetMesh()->GetAnimInstance()
+			: nullptr;
+
+		if (AnimInstance && HeavyAttackMontage) {
+			AnimInstance->Montage_Play(HeavyAttackMontage);
+		}
+
+		PerformHeavyAttackTrace();
+
+		GetWorldTimerManager().SetTimer(
+			AttackTimerHandle,
+			this,
+			&AWCCharacter::EndAttack,
+			HeavyAttackDuration,
+			false
+		);
+	}
+
 	void AWCCharacter::PerformAttackTrace() {
 
 		FVector ForwardVector = GetActorForwardVector(); // Direction
@@ -342,6 +380,72 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			return;
 		}
 		PlayAttackWhiffSound();
+	}
+
+	void AWCCharacter::PerformHeavyAttackTrace()
+	{
+		FVector Start = GetActorLocation() + GetActorForwardVector() * 50.0f;
+		FVector End = Start + GetActorForwardVector() * HeavyAttackRange;
+
+		TArray<AActor*> ActorsToIgnore;
+		ActorsToIgnore.Add(this);
+
+		FHitResult HitResult;
+
+		EDrawDebugTrace::Type DebugType = bShowAttackDebug
+			? EDrawDebugTrace::ForDuration
+			: EDrawDebugTrace::None;
+
+		bool bHit = UKismetSystemLibrary::BoxTraceSingle(
+			GetWorld(),
+			Start,
+			End,
+			HeavyAttackBoxHalfSize,
+			GetActorRotation(),
+			UEngineTypes::ConvertToTraceType(ECC_Visibility),
+			false,
+			ActorsToIgnore,
+			DebugType,
+			HitResult,
+			true
+		);
+
+		bool bHitEnemy = false;
+
+		if (bHit)
+		{
+			ShowAttackHitDebug(HitResult.GetActor());
+
+			AGhostEnemy* GhostEnemy = Cast<AGhostEnemy>(HitResult.GetActor());
+			if (GhostEnemy)
+			{
+				FVector HitDirection = GetActorForwardVector();
+
+				GhostEnemy->TakeHit(
+					HeavyAttackDamage,
+					HitDirection,
+					HeavyAttackKnockbackStrength
+				);
+
+				PlayAttackHitEffect(HitResult);
+				bHitEnemy = true;
+			}
+		}
+
+		if (bHitEnemy)
+		{
+			if (AttackHitSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, AttackHitSound, GetActorLocation());
+			}
+		}
+		else
+		{
+			if (AttackWhiffSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, AttackWhiffSound, GetActorLocation());
+			}
+		}
 	}
 
 	void AWCCharacter::EndAttack() {
