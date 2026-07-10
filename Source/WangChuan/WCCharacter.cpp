@@ -291,11 +291,29 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		bIsAttacking = true;
 		bHasProcessedAttackHit = false;
 
-		CurrentAttackData = LightAttackData;
+		EnterCombatState();
 
-		PlayLightAttackMontage();
+		const int32 ComboIndex = CurrentLightComboIndex;
+
+		CurrentAttackData = GetLightComboAttackData(ComboIndex);
+
+		const FName SectionName = GetLightComboSectionName(ComboIndex);
+
+		CurrentAttackMontage = LightAttackMontage;
+		PlayLightAttackMontage(SectionName);
 
 		StartAttackTimer(CurrentAttackData.Duration);
+
+		AdvancedLightCombo();
+
+		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
+		GetWorldTimerManager().SetTimer(
+			ComboResetTimerHandle,
+			this,
+			&AWCCharacter::ResetLightCombo,
+			ComboResetTime,
+			false
+		);
 	}
 
 	void AWCCharacter::HeavyAttack() {
@@ -310,12 +328,18 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		bIsAttacking = true;
 		bHasProcessedAttackHit = false;
 
+		EnterCombatState();
+
+		ResetLightCombo();
+
 		CurrentAttackData = HeavyAttackData;
 
 		UAnimInstance* AnimInstance =
 			GetMesh()
 			? GetMesh()->GetAnimInstance()
 			: nullptr;
+
+		CurrentAttackMontage = HeavyAttackMontage;
 
 		if (AnimInstance && HeavyAttackMontage) {
 			AnimInstance->Montage_Play(HeavyAttackMontage);
@@ -408,8 +432,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 
 	void AWCCharacter::EndAttack() {
+		StopCurrentAttackMontage();
+
 		bIsAttacking = false;
 		bHasProcessedAttackHit = false;
+		CurrentAttackMontage = nullptr;
 	}
 
 	void AWCCharacter::ReceiveDamage(float DamageAmount) {
@@ -457,7 +484,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		);
 	}
 
-//*******************HELPER**********************************
+//*******************Getters**********************************
 	float AWCCharacter::GetHealth() const {
 		return Health;
 	}
@@ -472,6 +499,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	bool AWCCharacter::GetIsDead() const {
 		return bIsDead;
 	}
+
+	bool AWCCharacter::GetIsInCombat() const {
+		return bIsInCombat;
+	}
+
 
 	void AWCCharacter::Die() {
 		if (bIsDead) {
@@ -490,6 +522,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
+		GetWorldTimerManager().ClearTimer(CombatIdleTimerHandle);
+		
+		CurrentLightComboIndex = 0;
+		bIsInCombat = false;
 
 		GetCharacterMovement()->StopMovementImmediately();
 		GetCharacterMovement()->Velocity = FVector::ZeroVector;
@@ -531,26 +568,21 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		return true;
 	}
 
-	void AWCCharacter::PlayLightAttackMontage() {
+	void AWCCharacter::PlayLightAttackMontage(FName SectionName) {
 		if (LightAttackMontage == nullptr) {
-			if (GEngine) {
-				GEngine->AddOnScreenDebugMessage(
-					-1,
-					2.0f,
-					FColor::Yellow,
-					TEXT("LightAttackMontage is not assigned")
-				);
-			}
 			return;
 		}
 
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		UAnimInstance* AnimInstance = GetMesh()
+			? GetMesh()->GetAnimInstance()
+			: nullptr;
 
 		if (AnimInstance == nullptr) {
 			return;
 		}
 
 		AnimInstance->Montage_Play(LightAttackMontage);
+		AnimInstance->Montage_JumpToSection(SectionName, LightAttackMontage);
 	}
 
 	void AWCCharacter::StartAttackTimer(float Duration) {
@@ -634,5 +666,74 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 				);
 			}
 		}
+	}
 
+	// Combo Helpers
+	void AWCCharacter::ResetLightCombo() {
+		CurrentLightComboIndex = 0;
+
+		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
+	}
+
+	FName AWCCharacter::GetLightComboSectionName(int32 ComboIndex) const {
+		switch (ComboIndex) {
+		case 0:
+			return FName(TEXT("Light_1"));
+		case 1:
+			return FName(TEXT("Light_2"));
+		case 2:
+			return FName(TEXT("Light_3"));
+		case 3:
+			return FName(TEXT("Light_4"));
+		default:
+			return FName(TEXT("Light_1"));
+		}
+	}
+
+	FPlayerAttackData AWCCharacter::GetLightComboAttackData(int32 ComboIndex) const {
+		if (LightComboAttackData.IsValidIndex(ComboIndex)) {
+			return LightComboAttackData[ComboIndex];
+		}
+
+		return LightAttackData;
+	}
+
+	void AWCCharacter::AdvancedLightCombo() {
+		CurrentLightComboIndex++;
+
+		if (CurrentLightComboIndex >= MaxLightComboIndex) {
+			CurrentLightComboIndex = 0;
+		}
+	}
+
+	void AWCCharacter::StopCurrentAttackMontage(float BlendOutTime) {
+		UAnimInstance* AnimInstance = GetMesh()
+			? GetMesh()->GetAnimInstance()
+			: nullptr;
+
+		if (AnimInstance == nullptr || CurrentAttackMontage == nullptr) {
+			return;
+		}
+		if (AnimInstance->Montage_IsPlaying(CurrentAttackMontage)) {
+			AnimInstance->Montage_Stop(BlendOutTime, CurrentAttackMontage);
+		}
+	}
+
+	void AWCCharacter::EnterCombatState() {
+		bIsInCombat = true;
+
+		GetWorldTimerManager().ClearTimer(CombatIdleTimerHandle);
+		GetWorldTimerManager().SetTimer(
+			CombatIdleTimerHandle,
+			this,
+			&AWCCharacter::ExitCombatState,
+			CombatIdleDuration,
+			false
+		);
+	}
+
+	void AWCCharacter::ExitCombatState() {
+		bIsInCombat = false;
+
+		GetWorldTimerManager().ClearTimer(CombatIdleTimerHandle);
 	}

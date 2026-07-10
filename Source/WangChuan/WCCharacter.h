@@ -75,6 +75,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void OnPlayerAttackHitNotify();
 
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	bool GetIsInCombat() const;
+
 	// Interaction Public API
 	IInteractable* CurrentInteractable;
 
@@ -138,6 +141,19 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool bHasProcessedAttackHit = false;
 
+	void StopCurrentAttackMontage(float BlendOutTime = 0.05f);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	UAnimMontage* CurrentAttackMontage = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bIsInCombat = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float CombatIdleDuration = 3.0f;
+
+	FTimerHandle CombatIdleTimerHandle;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Debug")
 	bool bShowAttackDebug;
 
@@ -156,6 +172,20 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack Data")
 	FPlayerAttackData CurrentAttackData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Light Combo")
+	int32 MaxLightComboIndex = 4;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Light Combo")
+	int32 CurrentLightComboIndex = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Light Combo")
+	TArray<FPlayerAttackData> LightComboAttackData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Light Combo")
+	float ComboResetTime = 1.2f;
+
+	FTimerHandle ComboResetTimerHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* AttackHitSound;
@@ -206,7 +236,7 @@ protected:
 
 	void PerformCurrentAttackTrace();
 
-	void PlayLightAttackMontage();
+	void PlayLightAttackMontage(FName SectionName);
 
 	void StartAttackTimer(float Duration);
 
@@ -215,6 +245,10 @@ protected:
 	void Die();
 
 	void ShowAttackHitDebug(AActor* HitActor);
+
+	void EnterCombatState();
+
+	void ExitCombatState();
 
 	// Helper Functions
 	bool CanAct() const;
@@ -227,5 +261,13 @@ protected:
 
 	void PlayPlayerHitFeedback();
 
+	// Combo Helper
+	void ResetLightCombo();
+
+	FName GetLightComboSectionName(int32 ComboIndex) const;
+
+	FPlayerAttackData GetLightComboAttackData(int32 ComboIndex) const;
+
+	void AdvancedLightCombo();
 };
 
