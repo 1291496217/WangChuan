@@ -20,6 +20,27 @@
 #include "Camera/CameraShakeBase.h"
 #include "WCCharacter.generated.h"
 
+USTRUCT(BlueprintType)
+struct FPlayerAttackData 
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float Damage = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float Range = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	FVector BoxHalfSize = FVector(10.0f, 60.0f, 70.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float Duration = 0.8f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float KnockbackStrength = 100.0f;
+};
+
 UCLASS()
 class WANGCHUAN_API AWCCharacter : public ACharacter
 {
@@ -103,21 +124,6 @@ protected:
 	UAnimMontage* LightAttackMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	float AttackDamage = 10.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	float AttackKnockbackStrength = 80.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	float AttackRange = 200.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	FVector AttackBoxHalfSize = FVector(80.0f, 80.0f, 80.0f);
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	float AttackDuration = 0.8f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float MaxHealth = 100.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
@@ -136,20 +142,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
 	UAnimMontage* HeavyAttackMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
-	float HeavyAttackDamage = 25.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack Data")
+	FPlayerAttackData LightAttackData;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
-	float HeavyAttackRange = 80.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack Data")
+	FPlayerAttackData HeavyAttackData;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
-	FVector HeavyAttackBoxHalfSize = FVector(20.0f, 70.0f, 80.0f);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
-	float HeavyAttackDuration = 1.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Attack")
-	float HeavyAttackKnockbackStrength = 250.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack Data")
+	FPlayerAttackData CurrentAttackData;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* AttackHitSound;
@@ -197,15 +197,12 @@ protected:
 	void HeavyAttack();
 
 	// Combat Functions
-	void PerformAttackTrace();
 
-	void PerformHeavyAttackTrace();
-
-	bool HandleAttackHit(AActor* HitActor, const FHitResult& HitResult);
+	void PerformCurrentAttackTrace();
 
 	void PlayLightAttackMontage();
 
-	void StartAttackTimer();
+	void StartAttackTimer(float Duration);
 
 	void EndAttack();
 

@@ -20,7 +20,6 @@
 #include "Blueprint/UserWidget.h"
 #include "Camera/PlayerCameraManager.h"
 
-
 // Sets default values
 AWCCharacter::AWCCharacter()
 {
@@ -290,12 +289,14 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		bIsAttacking = true;
+		
+		CurrentAttackData = LightAttackData;
 
 		PlayLightAttackMontage();
 
-		PerformAttackTrace();
+		PerformCurrentAttackTrace();
 
-		StartAttackTimer();
+		StartAttackTimer(CurrentAttackData.Duration);
 	}
 
 	void AWCCharacter::HeavyAttack() {
@@ -309,6 +310,8 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsAttacking = true;
 
+		CurrentAttackData = HeavyAttackData;
+
 		UAnimInstance* AnimInstance =
 			GetMesh()
 			? GetMesh()->GetAnimInstance()
@@ -318,74 +321,19 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			AnimInstance->Montage_Play(HeavyAttackMontage);
 		}
 
-		PerformHeavyAttackTrace();
+		PerformCurrentAttackTrace();
 
-		GetWorldTimerManager().SetTimer(
-			AttackTimerHandle,
-			this,
-			&AWCCharacter::EndAttack,
-			HeavyAttackDuration,
-			false
-		);
+		StartAttackTimer(CurrentAttackData.Duration);
 	}
 
-	void AWCCharacter::PerformAttackTrace() {
+	void AWCCharacter::PerformCurrentAttackTrace() {
+		FVector ForwardVector = GetActorForwardVector();
 
-		FVector ForwardVector = GetActorForwardVector(); // Direction
-
-		FVector Start = GetActorLocation() // Start point
+		FVector Start = GetActorLocation()
 			+ FVector(0.0f, 0.0f, 40.0f)
 			+ ForwardVector * 60.0f;
 
-		FVector End = Start + ForwardVector * AttackRange; // End point
-
-		TArray<AActor*> ActorsToIgnore; // Ignore player it self 
-		ActorsToIgnore.Add(this); 
-
-		FHitResult HitResult;
-
-		bool bHit = UKismetSystemLibrary::BoxTraceSingle( // only return the first thing hit
-			this,
-			Start,
-			End,
-			AttackBoxHalfSize,
-			GetActorRotation(),
-			UEngineTypes::ConvertToTraceType(ECC_Visibility), // Trace Channel
-			false,
-			ActorsToIgnore,
-			bShowAttackDebug 
-			? EDrawDebugTrace::ForDuration 
-			: EDrawDebugTrace::None,
-			HitResult,
-			true,
-			FLinearColor::Red,
-			FLinearColor::Green,
-			2.0f
-		);
-
-		if (bHit) {
-			AActor* HitActor = HitResult.GetActor();
-
-			ShowAttackHitDebug(HitActor);
-
-			bool bHitEnemy = HandleAttackHit(
-				HitActor, HitResult);
-
-			if (bHitEnemy) {
-				PlayAttackHitSound();
-			}
-			else {
-				PlayAttackWhiffSound();
-			}
-			return;
-		}
-		PlayAttackWhiffSound();
-	}
-
-	void AWCCharacter::PerformHeavyAttackTrace()
-	{
-		FVector Start = GetActorLocation() + GetActorForwardVector() * 50.0f;
-		FVector End = Start + GetActorForwardVector() * HeavyAttackRange;
+		FVector End = Start + ForwardVector * CurrentAttackData.Range;
 
 		TArray<AActor*> ActorsToIgnore;
 		ActorsToIgnore.Add(this);
@@ -397,54 +345,51 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			: EDrawDebugTrace::None;
 
 		bool bHit = UKismetSystemLibrary::BoxTraceSingle(
-			GetWorld(),
+			this,
 			Start,
 			End,
-			HeavyAttackBoxHalfSize,
+			CurrentAttackData.BoxHalfSize,
 			GetActorRotation(),
 			UEngineTypes::ConvertToTraceType(ECC_Visibility),
 			false,
 			ActorsToIgnore,
 			DebugType,
 			HitResult,
-			true
+			true,
+			FLinearColor::Red,
+			FLinearColor::Green,
+			2.0f
 		);
 
 		bool bHitEnemy = false;
 
-		if (bHit)
-		{
-			ShowAttackHitDebug(HitResult.GetActor());
+		if (bHit) {
+			AActor* HitActor = HitResult.GetActor();
 
-			AGhostEnemy* GhostEnemy = Cast<AGhostEnemy>(HitResult.GetActor());
-			if (GhostEnemy)
-			{
+			ShowAttackHitDebug(HitActor);
+
+			AGhostEnemy* GhostEnemy = Cast<AGhostEnemy>(HitActor);
+
+			if (GhostEnemy) {
 				FVector HitDirection = GetActorForwardVector();
 
 				GhostEnemy->TakeHit(
-					HeavyAttackDamage,
+					CurrentAttackData.Damage,
 					HitDirection,
-					HeavyAttackKnockbackStrength
+					CurrentAttackData.KnockbackStrength
 				);
 
 				PlayAttackHitEffect(HitResult);
+
 				bHitEnemy = true;
 			}
 		}
 
-		if (bHitEnemy)
-		{
-			if (AttackHitSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, AttackHitSound, GetActorLocation());
-			}
+		if (bHitEnemy) {
+			PlayAttackHitSound();
 		}
-		else
-		{
-			if (AttackWhiffSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, AttackWhiffSound, GetActorLocation());
-			}
+		else {
+			PlayAttackWhiffSound();
 		}
 	}
 
@@ -592,40 +537,14 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		AnimInstance->Montage_Play(LightAttackMontage);
 	}
 
-	void AWCCharacter::StartAttackTimer() {
+	void AWCCharacter::StartAttackTimer(float Duration) {
 		GetWorldTimerManager().SetTimer(
 			AttackTimerHandle,
 			this,
 			&AWCCharacter::EndAttack,
-			AttackDuration,
+			Duration,
 			false
 		);
-	}
-
-	bool AWCCharacter::HandleAttackHit(
-		AActor* HitActor, const FHitResult& HitResult) {
-		if (HitActor == nullptr) {
-			return false;
-		}
-
-		AGhostEnemy* GhostEnemy =
-			Cast<AGhostEnemy>(HitActor);
-
-		if (GhostEnemy == nullptr) {
-			return false;
-		}
-
-		FVector HitDirection = GetActorForwardVector();
-
-		GhostEnemy->TakeHit(
-			AttackDamage,
-			HitDirection,
-			AttackKnockbackStrength
-		);
-
-		PlayAttackHitEffect(HitResult);
-
-		return true;
 	}
 
 	void AWCCharacter::ShowAttackHitDebug(AActor* HitActor) {
