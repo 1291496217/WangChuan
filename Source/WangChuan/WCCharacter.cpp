@@ -289,12 +289,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		bIsAttacking = true;
-		
+		bHasProcessedAttackHit = false;
+
 		CurrentAttackData = LightAttackData;
 
 		PlayLightAttackMontage();
-
-		PerformCurrentAttackTrace();
 
 		StartAttackTimer(CurrentAttackData.Duration);
 	}
@@ -309,6 +308,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		bIsAttacking = true;
+		bHasProcessedAttackHit = false;
 
 		CurrentAttackData = HeavyAttackData;
 
@@ -320,8 +320,6 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		if (AnimInstance && HeavyAttackMontage) {
 			AnimInstance->Montage_Play(HeavyAttackMontage);
 		}
-
-		PerformCurrentAttackTrace();
 
 		StartAttackTimer(CurrentAttackData.Duration);
 	}
@@ -393,8 +391,25 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 	}
 
+	void AWCCharacter::OnPlayerAttackHitNotify() {
+		if (!CanAct()) {
+			return;
+		}
+		if (!bIsAttacking) {
+			return;
+		}
+		if (bHasProcessedAttackHit) {
+			return;
+		}
+
+		bHasProcessedAttackHit = true;
+
+		PerformCurrentAttackTrace();
+	}
+
 	void AWCCharacter::EndAttack() {
 		bIsAttacking = false;
+		bHasProcessedAttackHit = false;
 	}
 
 	void AWCCharacter::ReceiveDamage(float DamageAmount) {
@@ -465,6 +480,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsDead = true;
 		bIsAttacking = false;
+		bHasProcessedAttackHit = false;
 
 		if (PlayerDeathSound) {
 			UGameplayStatics::PlaySound2D(

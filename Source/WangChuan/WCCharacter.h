@@ -72,6 +72,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	bool GetIsDead() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void OnPlayerAttackHitNotify();
+
 	// Interaction Public API
 	IInteractable* CurrentInteractable;
 
@@ -131,6 +134,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool bIsDead = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bHasProcessedAttackHit = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Debug")
 	bool bShowAttackDebug;
