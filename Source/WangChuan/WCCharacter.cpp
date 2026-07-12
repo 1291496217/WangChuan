@@ -285,11 +285,19 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			return;
 		}
 		if (bIsAttacking) {
+			if (bCanBufferLightAttack) {
+				bHasBufferedLightAttack = true;
+			}
 			return;
 		}
 
 		bIsAttacking = true;
 		bHasProcessedAttackHit = false;
+		bCanBufferLightAttack = false;
+		bHasBufferedLightAttack = false;
+
+		GetWorldTimerManager().ClearTimer(ComboWindowOpenTimerHandle);
+		GetWorldTimerManager().ClearTimer(ComboWindowCloseTimerHandle);
 
 		EnterCombatState();
 
@@ -297,12 +305,27 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		CurrentAttackData = GetLightComboAttackData(ComboIndex);
 
+		bIsCurrentAttackFinisher = (ComboIndex == MaxLightComboIndex - 1);
+
 		const FName SectionName = GetLightComboSectionName(ComboIndex);
 
 		CurrentAttackMontage = LightAttackMontage;
 		PlayLightAttackMontage(SectionName);
 
 		StartAttackTimer(CurrentAttackData.Duration);
+
+		const float WindowOpenTime =
+			FMath::Clamp(CurrentAttackData.Duration * ComboWindowOpenRatio,
+				0.0f,
+				CurrentAttackData.Duration);
+
+		GetWorldTimerManager().SetTimer(
+			ComboWindowOpenTimerHandle,
+			this,
+			&AWCCharacter::OpenLightComboWindow,
+			WindowOpenTime,
+			false
+		);
 
 		AdvancedLightCombo();
 
@@ -327,9 +350,10 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsAttacking = true;
 		bHasProcessedAttackHit = false;
+		bIsCurrentAttackFinisher = false;
 
+		ClearLightComboBuffer();
 		EnterCombatState();
-
 		ResetLightCombo();
 
 		CurrentAttackData = HeavyAttackData;
@@ -401,14 +425,21 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 					CurrentAttackData.KnockbackStrength
 				);
 
-				PlayAttackHitEffect(HitResult);
+				if (bIsCurrentAttackFinisher) {
+					PlayComboFinisherFeedback(HitResult);
+				}
+				else {
+					PlayAttackHitEffect(HitResult);
+				}
 
 				bHitEnemy = true;
 			}
 		}
 
 		if (bHitEnemy) {
-			PlayAttackHitSound();
+			if (!bIsCurrentAttackFinisher) {
+				PlayAttackHitSound();
+			}
 		}
 		else {
 			PlayAttackWhiffSound();
@@ -437,6 +468,18 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		bIsAttacking = false;
 		bHasProcessedAttackHit = false;
 		CurrentAttackMontage = nullptr;
+
+		bCanBufferLightAttack = false;
+		GetWorldTimerManager().ClearTimer(ComboWindowOpenTimerHandle);
+		GetWorldTimerManager().ClearTimer(ComboWindowCloseTimerHandle);
+
+		if (bHasBufferedLightAttack) {
+			ConsumeBufferedLightAttack();
+		}
+		else {
+			bHasBufferedLightAttack = false;
+			bIsCurrentAttackFinisher = false;
+		}
 	}
 
 	void AWCCharacter::ReceiveDamage(float DamageAmount) {
@@ -513,6 +556,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		bIsDead = true;
 		bIsAttacking = false;
 		bHasProcessedAttackHit = false;
+		bIsCurrentAttackFinisher = false;
 
 		if (PlayerDeathSound) {
 			UGameplayStatics::PlaySound2D(
@@ -524,7 +568,8 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		GetWorldTimerManager().ClearTimer(AttackTimerHandle);
 		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
 		GetWorldTimerManager().ClearTimer(CombatIdleTimerHandle);
-		
+		ClearLightComboBuffer();
+
 		CurrentLightComboIndex = 0;
 		bIsInCombat = false;
 
@@ -668,11 +713,49 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 	}
 
+	void AWCCharacter::PlayComboFinisherFeedback(const FHitResult& HitResult) {
+		if (ComboFinisherHitSound) {
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				ComboFinisherHitSound,
+				HitResult.ImpactPoint
+			);
+		}
+		else {
+			PlayAttackHitSound();
+		}
+
+		if (ComboFinisherHitEffect) {
+			UGameplayStatics::SpawnEmitterAtLocation(
+				GetWorld(),
+				ComboFinisherHitEffect,
+				HitResult.ImpactPoint,
+				HitResult.ImpactNormal.Rotation()
+			);
+		}
+		else {
+			PlayAttackHitEffect(HitResult);
+		}
+
+		if (ComboFinisherCameraShakeClass) {
+			APlayerController* PlayerController =
+				Cast<APlayerController>(GetController());
+
+			if (PlayerController && PlayerController->PlayerCameraManager) {
+				PlayerController->PlayerCameraManager->StartCameraShake(
+					ComboFinisherCameraShakeClass
+				);
+			}
+		}
+	}
+
 	// Combo Helpers
 	void AWCCharacter::ResetLightCombo() {
 		CurrentLightComboIndex = 0;
 
 		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
+
+		ClearLightComboBuffer();
 	}
 
 	FName AWCCharacter::GetLightComboSectionName(int32 ComboIndex) const {
@@ -736,4 +819,46 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		bIsInCombat = false;
 
 		GetWorldTimerManager().ClearTimer(CombatIdleTimerHandle);
+	}
+
+	// Combo Window / Input Buffer
+	void AWCCharacter::OpenLightComboWindow() {
+		if (!CanAct()) {
+			return;
+		}
+
+		if (!bIsAttacking) {
+			return;
+		}
+
+		bCanBufferLightAttack = true;
+	}
+
+	void AWCCharacter::CloseLightComboWindow() {
+		bCanBufferLightAttack = false;
+	}
+
+	void AWCCharacter::ClearLightComboBuffer() {
+		bCanBufferLightAttack = false;
+		bHasBufferedLightAttack = false;
+
+		GetWorldTimerManager().ClearTimer(ComboWindowOpenTimerHandle);
+		GetWorldTimerManager().ClearTimer(ComboWindowCloseTimerHandle);
+	}
+
+	void AWCCharacter::ConsumeBufferedLightAttack() {
+		if (!CanAct()) {
+			ClearLightComboBuffer();
+			return;
+		}
+
+		if (!bHasBufferedLightAttack) {
+			ClearLightComboBuffer();
+			return;
+		}
+
+		bHasBufferedLightAttack = false;
+		bCanBufferLightAttack = false;
+
+		Attack();
 	}

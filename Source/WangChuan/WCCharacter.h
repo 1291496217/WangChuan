@@ -187,6 +187,30 @@ protected:
 
 	FTimerHandle ComboResetTimerHandle;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Light Combo")
+	bool bCanBufferLightAttack = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat| Light Combo")
+	bool bHasBufferedLightAttack = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Light Combo")
+	float ComboWindowOpenRatio = 0.55f;
+	
+	FTimerHandle ComboWindowOpenTimerHandle;
+	FTimerHandle ComboWindowCloseTimerHandle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Light Combo")
+	bool bIsCurrentAttackFinisher = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Finisher Feedback")
+	USoundBase* ComboFinisherHitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Finisher Feedback")
+	TSubclassOf<UCameraShakeBase> ComboFinisherCameraShakeClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Finisher Feedback")
+	UParticleSystem* ComboFinisherHitEffect;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* AttackHitSound;
 
@@ -261,6 +285,8 @@ protected:
 
 	void PlayPlayerHitFeedback();
 
+	void PlayComboFinisherFeedback(const FHitResult& HitResult);
+
 	// Combo Helper
 	void ResetLightCombo();
 
@@ -269,5 +295,13 @@ protected:
 	FPlayerAttackData GetLightComboAttackData(int32 ComboIndex) const;
 
 	void AdvancedLightCombo();
+
+	void OpenLightComboWindow();
+
+	void CloseLightComboWindow();
+
+	void ConsumeBufferedLightAttack();
+
+	void ClearLightComboBuffer();
 };
 
