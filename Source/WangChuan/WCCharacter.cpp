@@ -293,6 +293,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsAttacking = true;
 		bHasProcessedAttackHit = false;
+		bIsCurrentAttackHeavy = false;
 		bCanBufferLightAttack = false;
 		bHasBufferedLightAttack = false;
 
@@ -350,6 +351,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsAttacking = true;
 		bHasProcessedAttackHit = false;
+		bIsCurrentAttackHeavy = true;
 		bIsCurrentAttackFinisher = false;
 
 		ClearLightComboBuffer();
@@ -425,11 +427,17 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 					CurrentAttackData.KnockbackStrength
 				);
 
-				if (bIsCurrentAttackFinisher) {
+				if (bIsCurrentAttackHeavy) {
+					PlayHeavyAttackHitFeedback(HitResult);
+					ApplyHitStop(GhostEnemy, HeavyHitStopDuration);
+				}
+				else if (bIsCurrentAttackFinisher) {
 					PlayComboFinisherFeedback(HitResult);
+					ApplyHitStop(GhostEnemy, FinisherHitStopDuration);
 				}
 				else {
 					PlayAttackHitEffect(HitResult);
+					ApplyHitStop(GhostEnemy, LightHitStopDuration);
 				}
 
 				bHitEnemy = true;
@@ -437,7 +445,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		if (bHitEnemy) {
-			if (!bIsCurrentAttackFinisher) {
+			if (!bIsCurrentAttackFinisher && !bIsCurrentAttackHeavy) {
 				PlayAttackHitSound();
 			}
 		}
@@ -467,6 +475,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsAttacking = false;
 		bHasProcessedAttackHit = false;
+		bIsCurrentAttackHeavy = false;
 		CurrentAttackMontage = nullptr;
 
 		bCanBufferLightAttack = false;
@@ -556,7 +565,10 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		bIsDead = true;
 		bIsAttacking = false;
 		bHasProcessedAttackHit = false;
+		bIsCurrentAttackHeavy = false;
 		bIsCurrentAttackFinisher = false;
+
+		EndHitStop();
 
 		if (PlayerDeathSound) {
 			UGameplayStatics::PlaySound2D(
@@ -749,6 +761,43 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 	}
 
+	void AWCCharacter::PlayHeavyAttackHitFeedback(const FHitResult& HitResult) {
+		if (HeavyAttackHitSound) {
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				HeavyAttackHitSound,
+				HitResult.ImpactPoint
+			);
+		}
+		else {
+			PlayAttackHitSound();
+		}
+
+		if (HeavyAttackHitEffect) {
+			UGameplayStatics::SpawnEmitterAtLocation(
+				GetWorld(),
+				HeavyAttackHitEffect,
+				HitResult.ImpactPoint,
+				HitResult.ImpactNormal.Rotation()
+			);
+		}
+		else {
+			PlayAttackHitEffect(HitResult);
+		}
+
+		if (HeavyAttackCameraShakeClass) {
+			APlayerController* PlayerController =
+				Cast<APlayerController>(GetController());
+
+			if (PlayerController && PlayerController->PlayerCameraManager) {
+				PlayerController->PlayerCameraManager->StartCameraShake(
+					HeavyAttackCameraShakeClass
+				);
+			}
+		}
+	}
+
+
 	// Combo Helpers
 	void AWCCharacter::ResetLightCombo() {
 		CurrentLightComboIndex = 0;
@@ -861,4 +910,42 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		bCanBufferLightAttack = false;
 
 		Attack();
+	}
+
+	void AWCCharacter::ApplyHitStop(AActor* HitActor, float Duration) {
+		if (!bEnableHitStop) {
+			return;
+		}
+		if (Duration <= 0.0f) {
+			return;
+		}
+		if (HitActor == nullptr) {
+			return;
+		}
+		EndHitStop(); // clear previous hit stop
+
+		HitStopTargetActor = HitActor;
+
+		CustomTimeDilation = HitStopTimeDilation;
+		HitActor->CustomTimeDilation = HitStopTimeDilation;
+
+		GetWorldTimerManager().SetTimer(
+			HitStopTimerHandle,
+			this,
+			&AWCCharacter::EndHitStop,
+			Duration,
+			false
+		);
+	}
+
+	void AWCCharacter::EndHitStop() {
+		CustomTimeDilation = 1.0f;
+
+		if (HitStopTargetActor.IsValid()) {
+			HitStopTargetActor->CustomTimeDilation = 1.0f;
+		}
+
+		HitStopTargetActor = nullptr;
+
+		GetWorldTimerManager().ClearTimer(HitStopTimerHandle);
 	}

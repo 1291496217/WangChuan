@@ -154,6 +154,9 @@ protected:
 
 	FTimerHandle CombatIdleTimerHandle;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bIsCurrentAttackHeavy = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Debug")
 	bool bShowAttackDebug;
 
@@ -210,6 +213,35 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Finisher Feedback")
 	UParticleSystem* ComboFinisherHitEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Feedback")
+	USoundBase* HeavyAttackHitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Feedback")
+	TSubclassOf<UCameraShakeBase> HeavyAttackCameraShakeClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Heavy Feedback")
+	UParticleSystem* HeavyAttackHitEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Hit Stop")
+	bool bEnableHitStop = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Hit Stop")
+	float LightHitStopDuration = 0.035f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Hit Stop")
+	float FinisherHitStopDuration = 0.055f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Hit Stop")
+	float HeavyHitStopDuration = 0.065f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Hit Stop")
+	float HitStopTimeDilation = 0.05f;
+
+	FTimerHandle HitStopTimerHandle;
+
+	UPROPERTY()
+	TWeakObjectPtr<AActor> HitStopTargetActor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* AttackHitSound;
@@ -287,6 +319,8 @@ protected:
 
 	void PlayComboFinisherFeedback(const FHitResult& HitResult);
 
+	void PlayHeavyAttackHitFeedback(const FHitResult& HitResult);
+
 	// Combo Helper
 	void ResetLightCombo();
 
@@ -303,5 +337,9 @@ protected:
 	void ConsumeBufferedLightAttack();
 
 	void ClearLightComboBuffer();
+
+	void ApplyHitStop(AActor* HitActor, float Duration);
+
+	void EndHitStop();
 };
 
