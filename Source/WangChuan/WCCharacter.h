@@ -20,6 +20,8 @@
 #include "Camera/CameraShakeBase.h"
 #include "WCCharacter.generated.h"
 
+class AGhostEnemy;
+
 USTRUCT(BlueprintType)
 struct FPlayerAttackData 
 {
@@ -124,6 +126,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* HeavyAttackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* LockOnAction;
 
 	// Combat Settings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
@@ -240,6 +245,24 @@ protected:
 
 	FTimerHandle HitStopTimerHandle;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Lock On")
+	bool bIsLockedOn = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Lock On")
+	AGhostEnemy* CurrentLockOnTarget = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Lock On")
+	float LockOnRadius = 1500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Lock On")
+	float LockOnBreakDistance = 2000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Lock On")
+	float LockOnRotationInterpSpeed = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Lock On")
+	float LockOnMinCameraDot = 0.2f;
+
 	UPROPERTY()
 	TWeakObjectPtr<AActor> HitStopTargetActor;
 
@@ -289,7 +312,6 @@ protected:
 	void HeavyAttack();
 
 	// Combat Functions
-
 	void PerformCurrentAttackTrace();
 
 	void PlayLightAttackMontage(FName SectionName);
@@ -341,5 +363,20 @@ protected:
 	void ApplyHitStop(AActor* HitActor, float Duration);
 
 	void EndHitStop();
+
+	// LockOn Functions
+	void ToggleLockOn();
+
+	void LockOnToTarget();
+
+	void UnlockTarget();
+
+	void UpdateLockOn(float DeltaTime);
+
+	AGhostEnemy* FindBestLockOnTarget() const;
+
+	bool IsLockOnTargetValid() const;
+
+	void FaceLockOnTargetInstantly();
 };
 

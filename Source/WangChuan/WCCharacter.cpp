@@ -23,7 +23,6 @@
 // Sets default values
 AWCCharacter::AWCCharacter()
 {
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	// 创建SpringArm组件
@@ -106,6 +105,8 @@ void AWCCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	UpdateLockOn(DeltaTime);
+
 }
 
 // Called to bind functionality to input
@@ -170,6 +171,14 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 				ETriggerEvent::Started,
 				this,
 				&AWCCharacter::HeavyAttack);
+		}
+		if (LockOnAction) {
+			EnhancedInputComponent->BindAction(
+				LockOnAction,
+				ETriggerEvent::Started,
+				this,
+				&AWCCharacter::ToggleLockOn
+			);
 		}
 	}
 }
@@ -293,6 +302,9 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsAttacking = true;
 		bHasProcessedAttackHit = false;
+
+		FaceLockOnTargetInstantly();
+
 		bIsCurrentAttackHeavy = false;
 		bCanBufferLightAttack = false;
 		bHasBufferedLightAttack = false;
@@ -351,6 +363,9 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsAttacking = true;
 		bHasProcessedAttackHit = false;
+
+		FaceLockOnTargetInstantly();
+
 		bIsCurrentAttackHeavy = true;
 		bIsCurrentAttackFinisher = false;
 
@@ -564,6 +579,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsDead = true;
 		bIsAttacking = false;
+		UnlockTarget();
 		bHasProcessedAttackHit = false;
 		bIsCurrentAttackHeavy = false;
 		bIsCurrentAttackFinisher = false;
@@ -948,4 +964,221 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		HitStopTargetActor = nullptr;
 
 		GetWorldTimerManager().ClearTimer(HitStopTimerHandle);
+	}
+
+//**********************Lock On********************************
+	void AWCCharacter::ToggleLockOn() {
+		if (!CanAct()) {
+			return;
+		}
+		if (bIsLockedOn) {
+			UnlockTarget();
+			return;
+		}
+		LockOnToTarget();
+	}
+
+	void AWCCharacter::LockOnToTarget() {
+		AGhostEnemy* Target = FindBestLockOnTarget();
+
+		if (Target == nullptr) {
+			if (GEngine && bShowAttackDebug) {
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					1.5f,
+					FColor::Yellow,
+					TEXT("No Lock-on target found")
+				);
+			}
+			return;
+		}
+
+		CurrentLockOnTarget = Target;
+		bIsLockedOn = true;
+
+		bUseControllerRotationYaw = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+
+		if (GEngine && bShowAttackDebug) 
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				1.5f,
+				FColor::Green,
+				TEXT("Locked On")
+			);
+		}
+	} 
+
+	void AWCCharacter::UnlockTarget()
+	{
+		CurrentLockOnTarget = nullptr;
+		bIsLockedOn = false;
+
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+
+		if (GEngine && bShowAttackDebug)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				1.0f,
+				FColor::Cyan,
+				TEXT("Lock-On Released")
+			);
+		}
+	}
+
+	bool AWCCharacter::IsLockOnTargetValid() const
+	{
+		if (!bIsLockedOn || CurrentLockOnTarget == nullptr) {
+			return false;
+		}
+		if (!IsValid(CurrentLockOnTarget)) {
+			return false;
+		}
+		if (CurrentLockOnTarget->GetIsDead()) {
+			return false;
+		}
+
+		const float Distance = FVector::Dist(
+			GetActorLocation(), 
+			CurrentLockOnTarget->GetActorLocation());
+
+		if (Distance > LockOnBreakDistance) {
+			return false;
+		}
+		
+		return true;
+	}
+
+	void AWCCharacter::UpdateLockOn(float DeltaTime) {
+		if (!bIsLockedOn) {
+			return;
+		}
+
+		if (!IsLockOnTargetValid()) {
+			UnlockTarget();
+			return;
+		}
+
+		if (Controller == nullptr || CurrentLockOnTarget == nullptr) {
+			return;
+		}
+
+		FVector TargetLocation = CurrentLockOnTarget->GetActorLocation();
+		FVector PlayerLocation = GetActorLocation();
+
+		FVector DirectionToTarget = TargetLocation - PlayerLocation;
+		DirectionToTarget.Z = 0.0f;
+
+		if (DirectionToTarget.IsNearlyZero()) {
+			return;
+		}
+
+		const FRotator TargetRotation = DirectionToTarget.Rotation();
+
+		const FRotator CurrentRotation = GetActorRotation();
+
+		const FRotator NewRotation = FMath::RInterpTo(
+			CurrentRotation,
+			TargetRotation,
+			DeltaTime,
+			LockOnRotationInterpSpeed
+		);
+
+		SetActorRotation(FRotator(0.0f, NewRotation.Yaw, 0.0f));
+
+		FRotator ControlRotation = Controller->GetControlRotation();
+		ControlRotation.Yaw = NewRotation.Yaw;
+		Controller->SetControlRotation(ControlRotation);
+	}
+
+	AGhostEnemy* AWCCharacter::FindBestLockOnTarget() const
+	{
+		UWorld* World = GetWorld();
+
+		if (World == nullptr) {
+			return nullptr;
+		}
+
+		TArray<AActor*> FoundEnemies;
+		UGameplayStatics::GetAllActorsOfClass(
+			World,
+			AGhostEnemy::StaticClass(),
+			FoundEnemies
+		);
+
+		AGhostEnemy* BestTarget = nullptr;
+		float BestScore = TNumericLimits<float>::Max();
+
+		FVector PlayerLocation = GetActorLocation();
+
+		FVector CameraForward = GetActorForwardVector();
+
+		if (FollowCamera)
+		{
+			CameraForward = FollowCamera->GetForwardVector();
+		}
+
+		for (AActor* Actor : FoundEnemies) {
+			AGhostEnemy* Enemy = Cast<AGhostEnemy>(Actor);
+
+			if (Enemy == nullptr) 
+			{
+				continue;
+			}
+			if (!IsValid(Enemy))
+			{
+				continue;
+			}
+			if (Enemy->GetIsDead())
+			{
+				continue;
+			}
+
+			FVector ToEnemy = Enemy->GetActorLocation() - PlayerLocation;
+			const float Distance = ToEnemy.Size();
+
+			if (Distance > LockOnRadius)
+			{
+				continue;
+			}
+
+			ToEnemy.Normalize();
+
+			const float CameraDot = FVector::DotProduct(CameraForward, ToEnemy);
+
+			if (CameraDot < LockOnMinCameraDot) {
+				continue;
+			}
+
+			const float Score = Distance * (1.0f - CameraDot + 0.1f);
+
+			if (Score < BestScore) {
+				BestScore = Score;
+				BestTarget = Enemy;
+			}
+		}
+
+		return BestTarget;
+	}
+
+	void AWCCharacter::FaceLockOnTargetInstantly()
+	{
+		if (!bIsLockedOn || CurrentLockOnTarget == nullptr) {
+			return;
+		}
+
+		FVector DirectionToTarget =
+			CurrentLockOnTarget->GetActorLocation() - GetActorLocation();
+
+		DirectionToTarget.Z = 0.0f;
+
+		if (DirectionToTarget.IsNearlyZero())
+		{
+			return;
+		}
+
+		SetActorRotation(DirectionToTarget.Rotation());
 	}
