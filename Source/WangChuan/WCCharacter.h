@@ -80,6 +80,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	bool GetIsInCombat() const;
 
+	UFUNCTION(BlueprintPure, Category = "Combat|Lock On")
+	bool GetIsLockedOn() const;
+
 	// Interaction Public API
 	IInteractable* CurrentInteractable;
 
@@ -262,6 +265,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Lock On")
 	float LockOnMinCameraDot = 0.2f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Lock On")
+	float NormalWalkSpeed = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Lock On")
+	float LockOnWalkSpeed = 300.0f;
 
 	UPROPERTY()
 	TWeakObjectPtr<AActor> HitStopTargetActor;

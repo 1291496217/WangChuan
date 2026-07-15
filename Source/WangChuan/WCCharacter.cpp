@@ -54,6 +54,7 @@ AWCCharacter::AWCCharacter()
 void AWCCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	NormalWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 
 	Health = MaxHealth;
 	bIsDead = false;
@@ -571,6 +572,10 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		return bIsInCombat;
 	}
 
+	bool AWCCharacter::GetIsLockedOn() const {
+		return bIsLockedOn;
+	}
+
 
 	void AWCCharacter::Die() {
 		if (bIsDead) {
@@ -998,6 +1003,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bUseControllerRotationYaw = true;
 		GetCharacterMovement()->bOrientRotationToMovement = false;
+		GetCharacterMovement()->MaxWalkSpeed = LockOnWalkSpeed;
 
 		if (GEngine && bShowAttackDebug) 
 		{
@@ -1017,6 +1023,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bUseControllerRotationYaw = false;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->MaxWalkSpeed = NormalWalkSpeed;
 
 		if (GEngine && bShowAttackDebug)
 		{
