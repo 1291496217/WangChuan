@@ -15,12 +15,15 @@
 #include "Containers/Set.h"
 #include "Blueprint/UserWidget.h"
 #include "PlayerHitFlashWidget.h"
+#include "StoryTypes.h"
 #include "Sound/SoundBase.h"
 #include "Particles/ParticleSystem.h"
 #include "Camera/CameraShakeBase.h"
 #include "WCCharacter.generated.h"
 
 class AGhostEnemy;
+class AWCStoryNPC;
+class UDialogueWidget;
 
 USTRUCT(BlueprintType)
 struct FPlayerAttackData 
@@ -93,6 +96,27 @@ public:
 	void ShowInteractionPrompt(const FString& Prompt);
 
 	void HideInteractionPrompt();
+
+	// Dialogue Public API
+
+	/*
+	* 打开统一 Dialogue UI。
+	* 
+	* 返回 true 表示成功进入对话。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	bool StartDialogue(
+		AWCStoryNPC* StoryNPC, 
+		const FDialogueSequence& DialogueSequence);
+
+	/*
+	* 关闭当前 Dialogue UI 并恢复正常控制。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	void EndDialogue();
+
+	UFUNCTION(BlueprintPure, Category = "Dialogue")
+	bool GetIsInDialogue() const;
 
 protected:
 	// Camera
@@ -307,6 +331,30 @@ protected:
 	UPROPERTY()
 	UPlayerHitFlashWidget* PlayerHitFlashWidget;
 
+	/*
+	* WBP_Dialogue's blueprint class.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|Dialogue")
+	TSubclassOf<UDialogueWidget>DialogueWidgetClass;
+
+	/*
+	* 当前正在显示的 Dialogue Widget。
+	*/
+	UPROPERTY()
+	UDialogueWidget* ActiveDialogueWidget = nullptr;
+
+	/*
+	* 当前正在与玩家对话的 NPC。
+	*/
+	UPROPERTY()
+	AWCStoryNPC* ActiveDialogueNPC = nullptr;
+
+	/*
+	* 玩家是否正在 Conversation Mode。
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	bool bIsInDialogue = false;
+
 	// Input Functions
 	void Move(const FInputActionValue& Value);
 
@@ -319,6 +367,10 @@ protected:
 	void Attack();
 
 	void HeavyAttack();
+
+	void HandleJumpStarted();
+
+	void HandleJumpCompleted();
 
 	// Combat Functions
 	void PerformCurrentAttackTrace();

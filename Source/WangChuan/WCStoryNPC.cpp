@@ -7,6 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Engine/Engine.h"
+#include "Kismet/GameplayStatics.h"
 #include "WCCharacter.h"
 
 // Sets default values
@@ -49,65 +50,51 @@ AWCStoryNPC::AWCStoryNPC()
 void AWCStoryNPC::Interact()
 {
 	const FDialogueSequence CurrentDialogue = GetCurrentDialogueSequence();
-
-	if (!GEngine)
-	{
-		return;
-	}
 	
 	// 验证 Blueprint 中是否配置了当前阶段对话。
-	if (CurrentDialogue.Lines.Num() == 0) {
-		const FString WarningMessage =
-			FString::Printf(
-				TEXT(
-					"%s\n"
-					"Story Stage: %d\n"
-					"No dialogue configured for this stage."
-				),
-				*NPCDisplayName.ToString(),
-				CurrentStoryStage
+	if (CurrentDialogue.Lines.Num() == 0)
+	{
+		if (GEngine)
+		{
+			const FString WarningMessage =
+				FString::Printf(
+					TEXT(
+						"%s: No dialogue configured "
+						"for Story Stage %d."
+					),
+					*NPCDisplayName.ToString(),
+					CurrentStoryStage
+				);
+
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				5.0f,
+				FColor::Red,
+				WarningMessage
 			);
+		}
+		return;
+	}
+	AWCCharacter* Player = Cast<AWCCharacter>(
+		UGameplayStatics::GetPlayerCharacter(
+			this,
+			0
+		)
+	);
 
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			5.0f,
-			FColor::Red,
-			WarningMessage
-		);
-
+	if (!Player)
+	{
 		return;
 	}
 
-	// Day1 临时将所有对话合并成一条 Debug Message
-	FString DialogueDebugMessage =
-		FString::Printf(
-			TEXT(
-				"%s\n"
-				"Story Stage: %d\n"
-			),
-			*NPCDisplayName.ToString(),
-			CurrentStoryStage
-		);
-
-	for (const FDialogueLine& DialogueLine : CurrentDialogue.Lines)
+	if (Player->GetIsDead())
 	{
-		const FString Speaker =
-			DialogueLine.SpeakerName.IsEmpty()
-			? NPCDisplayName.ToString()
-			: DialogueLine.SpeakerName.ToString();
-
-		DialogueDebugMessage += FString::Printf(
-			TEXT("%s: %s\n"),
-			*Speaker,
-			*DialogueLine.DialogueText.ToString()
-		);
+		return;
 	}
 
-	GEngine->AddOnScreenDebugMessage(
-		-1,
-		8.0f,
-		FColor::Cyan,
-		DialogueDebugMessage
+	Player->StartDialogue(
+		this,
+		CurrentDialogue
 	);
 }
 

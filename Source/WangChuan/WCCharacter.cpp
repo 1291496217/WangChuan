@@ -14,10 +14,12 @@
 #include "Math/RotationMatrix.h"
 #include "Animation/AnimInstance.h"
 #include "GhostEnemy.h"
+#include "WCStoryNPC.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Blueprint/UserWidget.h"
+#include "DialogueWidget.h"
 #include "Camera/PlayerCameraManager.h"
 
 // Sets default values
@@ -136,14 +138,14 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		if (JumpAction) {
 			EnhancedInputComponent->BindAction(
 				JumpAction,
-				ETriggerEvent::Triggered,
+				ETriggerEvent::Started,
 				this,
-				&AWCCharacter::Jump);
+				&AWCCharacter::HandleJumpStarted);
 			EnhancedInputComponent->BindAction(
 				JumpAction,
 				ETriggerEvent::Completed,
 				this,
-				&AWCCharacter::StopJumping);
+				&AWCCharacter::HandleJumpCompleted);
 		}
 		if (InteractAction) {
 			EnhancedInputComponent->BindAction(
@@ -186,6 +188,10 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	void AWCCharacter::Move(const FInputActionValue & Value)
 	{
+		if (!CanAct()) {
+			return;
+		}
+
 		FVector2D MovementVector =
 			Value.Get<FVector2D>();
 
@@ -217,9 +223,28 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 	}
 
+	void AWCCharacter::HandleJumpStarted() 
+	{
+		if (!CanAct())
+		{
+			return;
+		}
+
+		Jump();
+	}
+
+	void AWCCharacter::HandleJumpCompleted()
+	{
+		StopJumping();
+	}
+
 	void AWCCharacter::Look(
 		const FInputActionValue & Value)
 	{
+		if (!CanAct())
+		{
+			return;
+		}
 		FVector2D LookAxisVector =
 			Value.Get<FVector2D>();
 
@@ -235,6 +260,36 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	void AWCCharacter::Interact()
 	{
+		/*
+		* 对话已经打开时，
+		* E 键用于推进当前对话。
+		*/
+		if (bIsInDialogue)
+		{
+			if (ActiveDialogueWidget)
+			{
+				ActiveDialogueWidget->AdvanceDialogue();
+			}
+
+			return;
+		}
+
+		/*
+		* 玩家死亡等状态下不能开始交互。
+		*/
+		if (!CanAct())
+		{
+			return;
+		}
+
+		/*
+		* 避免攻击动作途中打开对话。
+		*/
+		if (bIsAttacking)
+		{
+			return;
+		}
+
 		if (CurrentInteractable)
 		{
 			CurrentInteractable->Interact();
@@ -255,7 +310,13 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		GEngine->RemoveOnScreenDebugMessage(1);
 	}
 
-	void AWCCharacter::ShowMemoryJournal() {
+	void AWCCharacter::ShowMemoryJournal() 
+	{
+		if (!CanAct())
+		{
+			return;
+		}
+
 		FString StatusText = TEXT("未完成");
 
 		if (CollectedFragments.Num() >= 3) {
@@ -287,6 +348,198 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			8.0f,
 			FColor::Cyan,
 			JournalText);
+	}
+
+	bool AWCCharacter::StartDialogue(
+		AWCStoryNPC* StoryNPC,
+		const FDialogueSequence& DialogueSequence)
+	{
+		if (bIsDead)
+		{
+			return false;
+		}
+
+		if (bIsInDialogue)
+		{
+			return false;
+		}
+
+		if (!StoryNPC)
+		{
+			return false;
+		}
+
+		if (DialogueSequence.Lines.Num() == 0)
+		{
+			return false;
+		}
+
+		if (!DialogueWidgetClass)
+		{
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					4.0f,
+					FColor::Red,
+					TEXT("DialogueWidgetClass is not assigned.")
+				);
+			}
+			return false;
+		}
+
+		APlayerController* PlayerController =
+			Cast<APlayerController>(GetController());
+
+		if (!PlayerController)
+		{
+			return false;
+		}
+
+		UDialogueWidget* NewDialogueWidget =
+			CreateWidget<UDialogueWidget>(
+				PlayerController,
+				DialogueWidgetClass
+			);
+
+		if (!NewDialogueWidget)
+		{
+			return false;
+		}
+
+		/*
+		* 对话开始前解除锁定。
+		*/
+		if (bIsLockedOn)
+		{
+			UnlockTarget();
+		}
+
+		bIsInDialogue = true;
+
+		ActiveDialogueNPC = StoryNPC;
+		ActiveDialogueWidget = NewDialogueWidget;
+
+		/*
+		* 停止玩家当前移动。
+		*/
+		GetCharacterMovement()->StopMovementImmediately();
+		GetCharacterMovement()->Velocity = FVector::ZeroVector;
+
+		StopJumping();
+
+		/*
+		* 隐藏世界交互 Prompt。
+		*/
+		HideInteractionPrompt();
+
+		/*
+		* 先加入 Viewport，
+		* 确保 BindWidget 与 NativeConstruct 已完成。
+		*/
+		ActiveDialogueWidget->AddToViewport(20);
+
+		ActiveDialogueWidget->StartDialogue(
+			DialogueSequence,
+			StoryNPC,
+			this
+		);
+
+		/*
+		* GameAndUI:
+		* - 鼠标可以点击 Continue/ Close
+		* - 未被 UI 消耗的 E 仍可进入 Interact（）
+		*/
+		FInputModeGameAndUI InputMode;
+
+		InputMode.SetWidgetToFocus(
+			ActiveDialogueWidget->TakeWidget()
+		);
+
+		InputMode.SetLockMouseToViewportBehavior(
+			EMouseLockMode::DoNotLock
+		);
+
+		InputMode.SetHideCursorDuringCapture(false);
+
+		PlayerController->SetInputMode(InputMode);
+		PlayerController->bShowMouseCursor = true;
+
+		/*
+		* 阻止移动与镜头输入。
+		* 
+		* 攻击，锁定，Journal 和 Jump 由 CanAct() 或各自函数保护。
+		*/
+		PlayerController->SetIgnoreMoveInput(true);
+		PlayerController->SetIgnoreLookInput(true);
+
+		return true;
+	}
+
+	void AWCCharacter::EndDialogue()
+	{
+		if (!bIsInDialogue &&
+			!ActiveDialogueWidget)
+		{
+			return;
+		}
+
+		/*
+		* 在清空前保存 NPC 引用。
+		* 用于对话关闭后恢复 Prompt。
+		*/
+		AWCStoryNPC* PreviousDialogueNPC =
+			ActiveDialogueNPC;
+
+		if (ActiveDialogueWidget)
+		{
+			ActiveDialogueWidget->RemoveFromParent();
+		}
+
+		ActiveDialogueWidget = nullptr;
+		ActiveDialogueNPC = nullptr;
+		bIsInDialogue = false;
+
+		APlayerController* PlayerController =
+			Cast<APlayerController>(GetController());
+
+		if (PlayerController)
+		{
+			// 无论是否死亡，都移除 Dialogue 鼠标状态。
+			PlayerController->bShowMouseCursor = false;
+
+			FInputModeGameOnly InputMode;
+			PlayerController->SetInputMode(InputMode);
+
+			/*
+			* 玩家正常存活时恢复控制。
+			* 
+			* 玩家死亡时不恢复，
+			* Die（）会继续禁用输入和移动。
+			*/
+			if (!bIsDead)
+			{
+				PlayerController->SetIgnoreMoveInput(false);
+				PlayerController->SetIgnoreLookInput(false);
+			}
+		}
+
+		/*
+		* 如果玩家关闭对话后仍在 NPC 范围内，
+		* 重新显示 [E] Approach。
+		* 
+		* 如果玩家已被清出范围，
+		* CurrentInteractable 不再是该 NPC，
+		* 则不会恢复 Prompt.
+		*/
+		if (!bIsDead &&
+			PreviousDialogueNPC &&
+			CurrentInteractable == PreviousDialogueNPC)
+		{
+			ShowInteractionPrompt(
+				PreviousDialogueNPC->GetInteractionPrompt()
+			);
+		}
 	}
 
 //*****************Combat********************
@@ -576,6 +829,10 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		return bIsLockedOn;
 	}
 
+	bool AWCCharacter::GetIsInDialogue() const {
+		return bIsInDialogue;
+	}
+
 
 	void AWCCharacter::Die() {
 		if (bIsDead) {
@@ -584,6 +841,15 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		bIsDead = true;
 		bIsAttacking = false;
+
+		/*
+		* 玩家死亡时立即关闭 Dialogue UI。
+		*/
+		if (bIsInDialogue || ActiveDialogueWidget)
+		{
+			EndDialogue();
+		}
+
 		UnlockTarget();
 		bHasProcessedAttackHit = false;
 		bIsCurrentAttackHeavy = false;
@@ -640,9 +906,16 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 
 	bool AWCCharacter::CanAct() const {
-		if (bIsDead) {
+		if (bIsDead) 
+		{
 			return false;
 		}
+
+		if (bIsInDialogue)
+		{
+			return false;
+		}
+
 		return true;
 	}
 

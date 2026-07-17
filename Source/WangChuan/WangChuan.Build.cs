@@ -4,10 +4,29 @@ using UnrealBuildTool;
 
 public class WangChuan : ModuleRules
 {
-	public WangChuan(ReadOnlyTargetRules Target) : base(Target)
+	public WangChuan(ReadOnlyTargetRules Target) 
+		: base(Target)
 	{
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		PCHUsage = 
+			PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG"});
+		PublicDependencyModuleNames.AddRange(
+			new string[] { 
+				"Core", 
+				"CoreUObject", 
+				"Engine", 
+				"InputCore", 
+				"EnhancedInput", 
+				"UMG"
+			}
+		);
+
+		PrivateDependencyModuleNames.AddRange(
+			new string[]
+			{
+				"Slate",
+				"SlateCore"
+			}
+		);
 	}
 }
