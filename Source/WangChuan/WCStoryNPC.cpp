@@ -8,6 +8,9 @@
 #include "Components/SphereComponent.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
+
+#include "StoryAnchor.h"
 #include "WCCharacter.h"
 
 // Sets default values
@@ -34,6 +37,7 @@ AWCStoryNPC::AWCStoryNPC()
 
 	// 交互范围只用于 Query， 不产生物理阻挡。
 	InteractionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	InteractionSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
 	InteractionSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	InteractionSphere->SetGenerateOverlapEvents(true);
 
@@ -49,6 +53,15 @@ AWCStoryNPC::AWCStoryNPC()
 
 void AWCStoryNPC::Interact()
 {
+	/*
+	* Relocating，Dormant 或其他不可交互状态下，
+	* 不允许打开 Dialogue。
+	*/
+	if (StoryState != EStoryNPCState::Available)
+	{
+		return;
+	}
+
 	const FDialogueSequence CurrentDialogue = GetCurrentDialogueSequence();
 	
 	// 验证 Blueprint 中是否配置了当前阶段对话。
@@ -68,7 +81,7 @@ void AWCStoryNPC::Interact()
 
 			GEngine->AddOnScreenDebugMessage(
 				-1,
-				5.0f,
+				4.0f,
 				FColor::Red,
 				WarningMessage
 			);
@@ -76,11 +89,7 @@ void AWCStoryNPC::Interact()
 		return;
 	}
 	AWCCharacter* Player = Cast<AWCCharacter>(
-		UGameplayStatics::GetPlayerCharacter(
-			this,
-			0
-		)
-	);
+		UGameplayStatics::GetPlayerCharacter(this,0));
 
 	if (!Player)
 	{
@@ -100,6 +109,11 @@ void AWCStoryNPC::Interact()
 
 FString AWCStoryNPC::GetInteractionPrompt()
 {
+	if (StoryState != EStoryNPCState::Available)
+	{
+		return FString();
+	}
+
 	return InteractionPrompt;
 }
 
@@ -119,6 +133,287 @@ AWCStoryNPC::GetCurrentDialogueSequence() const
 	return DialogueByStage[CurrentStoryStage];
 }
 
+int32 AWCStoryNPC::GetCurrentStoryStage() const
+{
+	return CurrentStoryStage;
+}
+
+EStoryNPCState
+AWCStoryNPC::GetStoryState() const
+{
+	return StoryState;
+}
+
+bool AWCStoryNPC::RelocateToStoryAnchor(
+	AStoryAnchor* TargetAnchor,
+	int32 NewStoryStage)
+{
+	if (!TargetAnchor)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				3.0f,
+				FColor::Red,
+				TEXT(
+					"Story NPC relocation failed: "
+					"TargetAnchor is null."
+				)
+			);
+		}
+		return false;
+	}
+	if (NewStoryStage < 0)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				3.0f,
+				FColor::Red,
+				TEXT(
+					"Story NPC relocation failed: "
+					"NewStoryStage cannot be negative."
+				)
+			);
+		}
+		return false;
+	}
+	/*
+	* 防止同一个 NPC 在一次 Relocation 尚未完成时，
+	* 再次启动新的 Relocation。
+	*/
+	if (StoryState == EStoryNPCState::Relocating)
+	{
+		return false;
+	}
+
+	AWCCharacter* Player =
+		Cast<AWCCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+
+	/*
+	* 不允许在 Dialogue 尚未关闭时移动 NPC。
+	*/
+	if (Player && Player->GetIsInDialogue())
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				2.0f,
+				FColor::Yellow,
+				TEXT(
+					"Close the dialogue before "
+					"relocating the Story NPC."
+				)
+			);
+		}
+		return false;
+	}
+
+	/*
+	* 缺少目标 Stage Dialogue 时不阻止移动，
+	* 但给出配置警告。
+	*/
+	if (!DialogueByStage.IsValidIndex(NewStoryStage))
+	{
+		if (GEngine)
+		{
+			const FString WarningMessage =
+				FString::Printf(
+					TEXT(
+						"Relocation warning: "
+						"no dialogue configured "
+						"for Story Stage %d."
+					),
+					NewStoryStage
+				);
+
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				4.0f,
+				FColor::Yellow,
+				WarningMessage
+			);
+		}
+	}
+
+	GetWorldTimerManager().ClearTimer(
+		RelocationTimerHandle
+	);
+
+	/*
+	* NPC 消失前清理旧位置的玩家交互引用。
+	*/
+	ClearPlayerInteractionIfNeeded();
+
+	StoryState = EStoryNPCState::Relocating;
+
+	PendingStoryStage = NewStoryStage;
+
+	/*
+	* 关闭交互和碰撞。
+	*/
+	SetStoryNPCInteractionEnabled(false);
+
+	/*
+	* 先隐藏，再移动。
+	*/
+	SetActorHiddenInGame(true);
+
+	const FTransform TargetTransform =
+		TargetAnchor->GetAnchorTransform();
+
+	/*
+	* Story Anchor 的 Rotation 表示最终玩家应该看到的
+	* NPC 视觉朝向。
+	* 
+	* NPCMesh 可能因为模型导入方向而具有额外的
+	* Relative Yaw，因此需要从 Actor Rotation 中抵消。
+	* 只复制 Location 和 Rotation。
+	*/
+	FRotator TargetActorRotation =
+		TargetTransform.Rotator();
+
+	TargetActorRotation.Yaw =
+		FRotator::NormalizeAxis(
+			TargetActorRotation.Yaw
+			- MeshFacingYawOffset);
+
+	SetActorLocationAndRotation(
+		TargetTransform.GetLocation(),
+		TargetActorRotation,
+		false,
+		nullptr,
+		ETeleportType::TeleportPhysics
+	);
+
+	if (RelocationRevealDelay <= KINDA_SMALL_NUMBER)
+	{
+		FinishRelocation();
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(
+			RelocationTimerHandle,
+			this,
+			&AWCStoryNPC::FinishRelocation,
+			RelocationRevealDelay,
+			false
+		);
+	}
+
+	return true;
+}
+
+bool AWCStoryNPC::RelocateToStoryAnchorByIndex(
+	int32 AnchorIndex, int32 NewStoryStage)
+{
+	if (!StoryAnchors.IsValidIndex(AnchorIndex))
+	{
+		if (GEngine)
+		{
+			const FString WarningMessage =
+				FString::Printf(
+					TEXT(
+						"Story Anchor index %d "
+						"is invalid."
+					),
+					AnchorIndex
+				);
+
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				3.0f,
+				FColor::Red,
+				WarningMessage
+			);
+		}
+		return false;
+	}
+
+	AStoryAnchor* TargetAnchor = StoryAnchors[AnchorIndex];
+	
+	return RelocateToStoryAnchor(
+		TargetAnchor, NewStoryStage
+	);
+}
+
+void AWCStoryNPC::FinishRelocation()
+{
+	if (PendingStoryStage != INDEX_NONE)
+	{
+		CurrentStoryStage =
+			PendingStoryStage;
+	}
+
+	PendingStoryStage = INDEX_NONE;
+
+	/*
+	* 必须先恢复 Available，
+	* 因为恢复 Collision 时可能立刻产生 BeginOverlap。
+	*/
+	StoryState = EStoryNPCState::Available;
+
+	SetActorHiddenInGame(false);
+
+	SetStoryNPCInteractionEnabled(true);
+
+	GetWorldTimerManager().ClearTimer(
+		RelocationTimerHandle
+	);
+}
+
+void AWCStoryNPC::SetStoryNPCInteractionEnabled(bool bEnabled)
+{
+	SetActorEnableCollision(bEnabled);
+
+	if (!InteractionSphere)
+	{
+		return;
+	}
+
+	if (bEnabled)
+	{
+		InteractionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+		InteractionSphere->SetGenerateOverlapEvents(true);
+
+		/*
+		* 如果玩家恰好站在目标 Anchor 附近，
+		* 立即重新计算 Overlap。
+		*/
+		InteractionSphere->UpdateOverlaps();
+	}
+	else
+	{
+		InteractionSphere->SetGenerateOverlapEvents(false);
+
+		InteractionSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void AWCStoryNPC::ClearPlayerInteractionIfNeeded()
+{
+	AWCCharacter* Player =
+		Cast<AWCCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+
+	if (!Player)
+	{
+		return;
+	}
+
+	if (Player->CurrentInteractable != this)
+	{
+		return;
+	}
+
+	Player->CurrentInteractable = nullptr;
+
+	Player->HideInteractionPrompt();
+}
+
 void AWCStoryNPC::OnPlayerEnter(
 	UPrimitiveComponent* OverlappedComponent,
 	AActor* OtherActor,
@@ -127,10 +422,23 @@ void AWCStoryNPC::OnPlayerEnter(
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
+	/*
+	* 只有 Available 状态可以被玩家识别。
+	*/
+	if (StoryState != EStoryNPCState::Available)
+	{
+		return;
+	}
+
 	AWCCharacter* Player =
 		Cast<AWCCharacter>(OtherActor);
 
 	if (!Player)
+	{
+		return;
+	}
+
+	if (Player->GetIsDead())
 	{
 		return;
 	}

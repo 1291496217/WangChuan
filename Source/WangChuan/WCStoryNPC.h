@@ -8,6 +8,7 @@
 #include "StoryTypes.h"
 #include "WCStoryNPC.generated.h"
 
+class AStoryAnchor;
 class USceneComponent;
 class USkeletalMeshComponent;
 class USphereComponent;
@@ -20,6 +21,7 @@ class UPrimitiveComponent;
 * - 接入已有的 IInteractable 系统
 * - 提供交互范围
 * - 保存 NPC 名称，当前故事阶段， 当前行为状态， Blueprint 可配置的阶段对话。
+* - 在 Story Anchors 之间进行轻量转移。
 * 
 * 不负责：
 * - 写死剧情，铃铛逻辑
@@ -54,40 +56,98 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Story NPC|Dialogue")
 	FDialogueSequence GetCurrentDialogueSequence() const;
 
+	UFUNCTION(BlueprintPure, Category = "Story NPC|Story")
+	int32 GetCurrentStoryStage() const;
+
+	UFUNCTION(BlueprintPure, Category = "Story NPC|Story")
+	EStoryNPCState GetStoryState() const;
+
+	/*
+	* 将 NPC 转移到指定Story Anchor。
+	* 
+	* TargetAnchor： NPC 的目标位置与朝向。
+	* 
+	* NewStoryStage： NPC 重新出现后使用的故事阶段。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Story NPC|Relocation")
+	bool RelocateToStoryAnchor(AStoryAnchor* TargetAnchor, int32 NewStoryStage);
+
+	/*
+	* 根据 StoryAnchors 数组下标进行转移。
+	* 
+	* 主要用于 Blueprint 配置与 Day3 测试。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Story NPC|Relocation")
+	bool RelocateToStoryAnchorByIndex(int32 AnchorIndex, int32 NewStoryStage);
+
 protected:
-	// Actor 根组件。
+	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Story NPC|Components")
 	USceneComponent* SceneRoot;
 
-	// NPC 骨骼模型。
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Story NPC|Components")
 	USkeletalMeshComponent* NPCMesh;
 
-	// 玩家进入后用于触发交互提示的范围。
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Story NPC|Components")
 	USphereComponent* InteractionSphere;
 
-	// NPC显示名称。
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story NPC|Identity")
 	FText NPCDisplayName;
 
-	// 交互提示。
+	// Interaction
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story NPC|Interaction")
 	FString InteractionPrompt = TEXT("[E] Approach");
 
-	// 当前故事阶段。
+	// Story
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Story NPC|State")
 	int32 CurrentStoryStage = 0;
 
-	// 当前通用行为状态。
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story NPC|State")
 	EStoryNPCState StoryState = EStoryNPCState::Available;
 
-	// 数组下标与 CurrentStoryStage 对应。EX：DialogueByStage[0] = Stage 0 Dialogue.
+	// Dialogue
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story NPC|Dialogue")
 	TArray<FDialogueSequence> DialogueByStage;
 
-	// 玩家进入交互范围。
+	// Relocation
+	/*
+	* 当前 NPC 可以使用的关卡 Anchor。
+	*/
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "StoryNPC|Relocation")
+	TArray<AStoryAnchor*> StoryAnchors;
+
+	/*
+	* NPC 移动到位置后，
+	* 等待多久再重新显示。
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, 
+		Category = "Story NPC|Relocation", meta = (ClampMin = "0.0"))
+	float RelocationRevealDelay = 0.5f;
+
+	/*
+	* Relocating 期间暂存下一 Story Stage。
+	*/
+	UPROPERTY()
+	int32 PendingStoryStage = INDEX_NONE;
+
+	FTimerHandle RelocationTimerHandle;
+
+	/*
+	* NPC Mesh 相对于 Actor Forward 的视觉朝向偏移。
+	* 
+	* 例如：
+	* NPCMesh Relative Yaw = 150.
+	* 这里则配置 150.
+	* 
+	* Relocation 时会自动抵消该角度。
+	* 然最终模型视觉朝向与 Story Achor 箭头一致。
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story NPC|Relocation", 
+		meta = (ClampMin = "-180.0", ClampMax = "180.0"))
+	float MeshFacingYawOffset = 0.0f;
+
+	// Overlap
+
 	UFUNCTION()
 	void OnPlayerEnter(
 		UPrimitiveComponent* OverlappedComponent,
@@ -98,7 +158,6 @@ protected:
 		const FHitResult& SweepResult
 	);
 
-	// 玩家离开交互范围
 	UFUNCTION()
 	void OnPlayerExit(
 		UPrimitiveComponent* OverlappedComponent,
@@ -106,4 +165,21 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex
 	);
+
+	/*
+	* Relocation 延迟结束后的恢复函数。
+	*/
+	void FinishRelocation();
+
+	/*
+	* 统一开启或关闭交互碰撞。
+	*/
+	void SetStoryNPCInteractionEnabled(
+		bool bEnabled
+	);
+
+	/*
+	* NPC 消失前清除玩家当前交互引用与 Prompt。
+	*/
+	void ClearPlayerInteractionIfNeeded();
 };
