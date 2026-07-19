@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -13,6 +13,19 @@ class USceneComponent;
 class USkeletalMeshComponent;
 class UMaterialInstanceDynamic;
 class AWCCharacter;
+class AGhostEnemy;
+
+/*
+* 当 Ghost Enemy 正式进入死亡状态时广播。
+* 
+* 参数：
+* DefeatedEnemy = 被击败的敌人实例。
+*/
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+	FOnGhostEnemyDefeatedSignature,
+	AGhostEnemy*,
+	DefeatedEnemy
+);
 
 UCLASS()
 class WANGCHUAN_API AGhostEnemy : public AActor
@@ -21,6 +34,15 @@ class WANGCHUAN_API AGhostEnemy : public AActor
 	
 public:
 	AGhostEnemy();
+
+	/*
+	* 当敌人第一次正式进入死亡状态时广播。
+	* 
+	* BlueprintAssignable 允许 Blueprint
+	* 或其他 Actor 监听该事件。
+	*/
+	UPROPERTY(BlueprintAssignable, Category = "Enemy|Events")
+	FOnGhostEnemyDefeatedSignature OnEnemyDefeated;
 
 protected:
 	virtual void BeginPlay() override;

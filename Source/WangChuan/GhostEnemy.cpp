@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "GhostEnemy.h"
@@ -112,10 +112,13 @@ void AGhostEnemy::ClearCombatTimers() {
 	GetWorldTimerManager().ClearTimer(EnemyAttackDurationTimerHandle);
 }
 
-void AGhostEnemy::Die() {
-	if (bIsDead) {
+void AGhostEnemy::Die() 
+{
+	if (bIsDead) 
+	{
 		return;
 	}
+
 	bIsDead = true;
 	bIsMoving = false;
 	bIsAttacking = false;
@@ -141,6 +144,12 @@ void AGhostEnemy::Die() {
 		EnemyMesh->SetCollisionEnabled(
 			ECollisionEnabled::NoCollision);
 	}
+
+	/*
+	* 此时敌人已经进入稳定死亡状态。
+	* Encounter 可以安全处理叙事事件。
+	*/
+	OnEnemyDefeated.Broadcast(this);
 
 	GetWorldTimerManager().SetTimer(
 		DeathTimerHandle,
