@@ -9,6 +9,7 @@
 #include "GhostEnemy.h"
 #include "StoryAnchor.h"
 #include "WCStoryNPC.h"
+#include "EchoRelic.h"
 
 AStoryEncounter::AStoryEncounter()
 {
@@ -31,48 +32,69 @@ void AStoryEncounter::BeginPlay()
 	bRequiredEnemyDefeated = false;
 	bEncounterCompleted = false;
 
-	if (!RequiredEnemy)
+	if (RequiredEnemy)
+	{
+		RequiredEnemy->OnEnemyDefeated
+			.AddUniqueDynamic(
+				this,
+				&AStoryEncounter::HandleRequiredEnemyDefeated
+			);
+
+		ShowEncounterDebugMessage(
+			FString::Printf(
+				TEXT(
+					"%s: Listening to "
+					"RequiredEnemy: %s"
+				),
+				*EncounterID.ToString(),
+				*GetNameSafe(RequiredEnemy)
+			),
+			FColor::Cyan
+		);
+	}
+	else
 	{
 		ShowEncounterDebugMessage(
 			FString::Printf(
 				TEXT(
-					"%s, RequiredEnemy is not assigned."
+					"%s, RequiredEnemy "
+					"is not assigned."
 				),
 				*EncounterID.ToString()
 			),
 			FColor::Red
 		);
-		return;
 	}
 
-	/*
-	* 只绑定当前 Encounter 指定的敌人。
-	* 
-	* 其他普通敌人死亡不会推进该 Encounter。
-	*/
-	RequiredEnemy->OnEnemyDefeated
-		.AddUniqueDynamic(
-			this,
-			&AStoryEncounter::HandleRequiredEnemyDefeated
-		);
-
-	ShowEncounterDebugMessage(
-		FString::Printf(
-			TEXT(
-				"% s: Listening to RequiredEnemy : % s"
+	if (EchoRelic)
+	{
+		EchoRelic->OnEchoActivated
+			.AddUniqueDynamic(
+				this,
+				&AStoryEncounter::HandleEchoRelicActivated
+			);
+	}
+	else
+	{
+		ShowEncounterDebugMessage(
+			FString::Printf(
+				TEXT(
+					"%s: EchoRelic "
+					"is not assigned."
+				),
+				*EncounterID.ToString()
 			),
-			*EncounterID.ToString(),
-			*GetNameSafe(RequiredEnemy)
-		),
-		FColor::Cyan
-	);
+			FColor::Red
+		);
+	}
 
 	if (!StoryNPC)
 	{
 		ShowEncounterDebugMessage(
 			FString::Printf(
 				TEXT(
-					"%s, StoryNPC is not assigned."
+					"%s, StoryNPC "
+					"is not assigned."
 				),
 				*EncounterID.ToString()
 			),
@@ -110,6 +132,15 @@ void AStoryEncounter::EndPlay(
 			);
 	}
 
+	if (IsValid(EchoRelic))
+	{
+		EchoRelic->OnEchoActivated
+			.RemoveDynamic(
+				this,
+				&AStoryEncounter::HandleEchoRelicActivated
+			);
+	}
+
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -144,6 +175,26 @@ void AStoryEncounter::HandleRequiredEnemyDefeated(
 	}
 
 	bRequiredEnemyDefeated = true;
+
+	if (EchoRelic)
+	{
+		const bool bUnlocked =
+			EchoRelic->UnlockRelic();
+
+		if (!bUnlocked)
+		{
+			ShowEncounterDebugMessage(
+				FString::Printf(
+					TEXT(
+						"%s: Echo Relic could "
+						"not be unlocked."
+					),
+					*EncounterID.ToString()
+				),
+				FColor::Yellow
+			);
+		}
+	}
 
 	ShowEncounterDebugMessage(
 		FString::Printf(
@@ -189,6 +240,96 @@ void AStoryEncounter::ShowEncounterDebugMessage(
 		5.0f,
 		Color,
 		Message
+	);
+}
+
+void AStoryEncounter::HandleEchoRelicActivated(
+	AEchoRelic* ActivatedRelic)
+{
+	if (bEncounterCompleted)
+	{
+		return;
+	}
+
+	if (!bRequiredEnemyDefeated)
+	{
+		ShowEncounterDebugMessage(
+			FString::Printf(
+				TEXT(
+					"%s: Echo activation "
+					"rejected because Required "
+					"Enemy is not defeated."
+				),
+				*EncounterID.ToString()
+			),
+			FColor::Red
+		);
+
+		return;
+	}
+
+	if (!ActivatedRelic ||
+		ActivatedRelic != EchoRelic)
+	{
+		return;
+	}
+
+	bEncounterCompleted = true;
+
+	if (StoryNPC)
+	{
+		StoryNPC->RecieveStoryEvent(
+			CompletionStoryEventID
+		);
+
+		if (NextStoryAnchor)
+		{
+			const bool bRelocationStarted = StoryNPC
+				->RelocateToStoryAnchor(
+					NextStoryAnchor,
+					NextStoryStage
+				);
+
+			if (!bRelocationStarted)
+			{
+				ShowEncounterDebugMessage(
+					FString::Printf(
+						TEXT(
+							"%s: NPC relocation "
+							"could not start."
+						),
+						*EncounterID.ToString()
+					),
+					FColor::Yellow
+				);
+			}
+		}
+	}
+
+	ShowEncounterDebugMessage(
+		FString::Printf(
+			TEXT(
+				"%s,\n"
+				"Required Enemy Defeated: True\n"
+				"Echo Activated: True\n"
+				"Encounter Completed: True\n"
+				"Next Story Stage: %d"
+			),
+			*EncounterID.ToString(),
+			NextStoryStage
+		),
+		FColor::Green
+	);
+
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT(
+			"Story Encounter [%s] completed "
+			"through Echo Relic [%s]."
+		),
+		*EncounterID.ToString(),
+		*GetNameSafe(ActivatedRelic)
 	);
 }
 

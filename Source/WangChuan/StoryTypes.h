@@ -62,3 +62,78 @@ struct FDialogueSequence
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	TArray<FDialogueLine> Lines;
 };
+
+/*
+* Echo Relic 当前状态。
+*/
+UENUM(BlueprintType)
+enum class EEchoRelicState : uint8
+{
+	/*
+	* 尚未满足激活条件。
+	*/
+	locked UMETA(DisplayName = "Locked"),
+
+	/*
+	* 条件已满足，可以被玩家调查。
+	*/
+	Available UMETA(DisplayName = "Available"),
+
+	/*
+	* 玩家已阅读并确认该 Memory Echo。
+	*/
+	Activated UMETA(DisplayName = "Activated")
+};
+
+/*
+* 一条可记录的 Memory Echo 数据。
+*/
+USTRUCT(BlueprintType)
+struct FMemoryEchoData
+{
+	GENERATED_BODY()
+
+	/*
+	* 用于识别与去重。
+	* 
+	* 例如：QuietChild.BellEcho01
+	*/
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Memory Echo"
+	)
+	FName EchoID = NAME_None;
+
+	/*
+	* Journal 与 Echo UI 中显示的标题。
+	*/
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Memory Echo"
+	)
+	FText Title;
+
+	/*
+	* 遗物自身释放出的记忆残响。
+	*/
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Memory Echo",
+		meta = (MultiLine = "true")
+	)
+	FText EchoText;
+
+	/*
+	* 残响引发的主角个人共鸣。
+	*/
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category = "Memory Echo",
+		meta = (MultiLine = "true")
+	)
+	FText PlayerReasonanceText;
+};

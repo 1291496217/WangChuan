@@ -476,3 +476,45 @@ void AWCStoryNPC::OnPlayerExit(
 	}
 }
 
+void AWCStoryNPC::RecieveStoryEvent(FName EventID)
+{
+	if (EventID.IsNone())
+	{
+		return;
+	}
+
+	LastReceivedStoryEvent = EventID;
+
+	if (StoryState !=
+		EStoryNPCState::Relocating &&
+		StoryState !=
+		EStoryNPCState::ChapterComplete)
+	{
+		StoryState =
+			EStoryNPCState::EventResolved;
+	}
+
+	if (GEngine)
+	{
+		const FString Message =
+			FString::Printf(
+				TEXT(
+					"%s received Story Event: %s"
+				),
+				*NPCDisplayName.ToString(),
+				*EventID.ToString()
+			);
+
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			3.0f,
+			FColor::Cyan,
+			Message
+		);
+	}
+}
+
+FName AWCStoryNPC::GetLastReceivedStoryEvent() const
+{
+	return LastReceivedStoryEvent;
+}

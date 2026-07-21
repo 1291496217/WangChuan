@@ -24,6 +24,8 @@
 class AGhostEnemy;
 class AWCStoryNPC;
 class UDialogueWidget;
+class AEchoRelic;
+class UMemoryEchoWidget;
 
 USTRUCT(BlueprintType)
 struct FPlayerAttackData 
@@ -117,6 +119,31 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Dialogue")
 	bool GetIsInDialogue() const;
+
+	// Memory Echo Public API
+
+	UFUNCTION(BlueprintCallable, Category = "Memory Echo")
+	bool StartMemoryEcho(
+		const FMemoryEchoData& EchoData,
+		AEchoRelic* SourceRelic
+	);
+
+	/*
+	* bCompleted:
+	* true = 玩家完整读完。
+	* false = 死亡或异常终止。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Memory Echo")
+	void EndMemoryEcho(bool bCompleted);
+
+	UFUNCTION(BlueprintCallable, Category = "Memory Echo")
+	bool GetIsViewingMemoryEcho() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Memory Echo")
+	bool RecordMemoryEcho(const FMemoryEchoData& EchoData);
+
+	UFUNCTION(BlueprintCallable, Category = "Memory Echo")
+	bool HasRecordedMemoryEcho(FName EchoID) const;
 
 protected:
 	// Camera
@@ -354,6 +381,24 @@ protected:
 	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	bool bIsInDialogue = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|Memory Echo")
+	TSubclassOf<UMemoryEchoWidget>MemoryEchoWidgetClass;
+
+	UPROPERTY()
+	UMemoryEchoWidget* ActiveMemoryEchoWidget = nullptr;
+
+	UPROPERTY()
+	AEchoRelic* ActiveEchoRelic = nullptr;
+
+	UPROPERTY()
+	FMemoryEchoData ActiveMemoryEchoData;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Memory Echo")
+	bool bIsViewingMemoryEcho = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Memory Echo")
+	TArray<FMemoryEchoData>RecordedMemoryEchoes;
 
 	// Input Functions
 	void Move(const FInputActionValue& Value);

@@ -22,6 +22,9 @@
 #include "DialogueWidget.h"
 #include "Camera/PlayerCameraManager.h"
 
+#include "EchoRelic.h"
+#include "MemoryEchoWidget.h"
+
 // Sets default values
 AWCCharacter::AWCCharacter()
 {
@@ -261,8 +264,22 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	void AWCCharacter::Interact()
 	{
 		/*
-		* 对话已经打开时，
-		* E 键用于推进当前对话。
+		* Memory Echo 状态下，
+		* E 键用于翻页和关闭。
+		*/
+		if (bIsViewingMemoryEcho)
+		{
+			if (ActiveMemoryEchoWidget)
+			{
+				ActiveMemoryEchoWidget->AdvanceMemoryEcho();
+			}
+
+			return;
+		}
+
+		/*
+		* Dialogue 状态下，
+		* E 键用于推进 Dialogue。
 		*/
 		if (bIsInDialogue)
 		{
@@ -337,17 +354,53 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		if (CollectedFragments.Num() >= 3) {
 			JournalText += TEXT(
 				"\n\n"
-				"妈妈....."
+				"妈妈.....\n"
 				"我今天也很乖。\n"
 				"要快点来接我哦。"
 			);
 		}
+
+		/*
+		* 追加已经记录的 Memory Echo。
+		* 
+		* 当前 Debug Journal 只显示：
+		* - Title
+		* - EchoText
+		* 
+		* 暂不显示 PlayerReasonanceText，
+		* 避免 Journal 内容过长。
+		*/
+		if (RecordedMemoryEchoes.Num() > 0)
+		{
+			JournalText += TEXT(
+				"\n\n"
+				"-------------------\n"
+				"Memory Echo"
+			);
+
+			for (const FMemoryEchoData& Echo :
+				RecordedMemoryEchoes)
+			{
+				JournalText += FString::Printf(
+					TEXT(
+						"\n\n"
+						"<%s> \n"
+						"%s"
+					),
+					*Echo.Title.ToString(),
+					*Echo.EchoText.ToString()
+				);
+			}
+		}
 		
-		GEngine->AddOnScreenDebugMessage(
-			2,
-			8.0f,
-			FColor::Cyan,
-			JournalText);
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				2,
+				8.0f,
+				FColor::Cyan,
+				JournalText);
+		}
 	}
 
 	bool AWCCharacter::StartDialogue(
@@ -542,8 +595,271 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 	}
 
+	bool AWCCharacter::StartMemoryEcho(
+		const FMemoryEchoData& EchoData,
+		AEchoRelic* SourceRelic)
+	{
+		if (bIsDead)
+		{
+			return false;
+		}
+
+		if (bIsInDialogue ||
+			bIsViewingMemoryEcho)
+		{
+			return false;
+		}
+
+		if (bIsAttacking)
+		{
+			return false;
+		}
+
+		if (!SourceRelic)
+		{
+			return false;
+		}
+
+		if (EchoData.EchoID.IsNone())
+		{
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					3.0f,
+					FColor::Red,
+					TEXT(
+						"Memory Echo has no EchoID."
+					)
+				);
+			}
+			return false;
+		}
+
+		if (!MemoryEchoWidgetClass)
+		{
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					4.0f,
+					FColor::Red,
+					TEXT(
+						"MemoryEchoWidgetClass "
+						"is not assigned."
+					)
+				);
+			}
+
+			return false;
+		}
+
+		APlayerController* PlayerController =
+			Cast<APlayerController>(
+				GetController()
+			);
+
+		if (!PlayerController)
+		{
+			return false;
+		}
+
+		UMemoryEchoWidget* NewWidget =
+			CreateWidget<UMemoryEchoWidget>(
+				PlayerController,
+				MemoryEchoWidgetClass
+			);
+
+		if (!NewWidget)
+		{
+			return false;
+		}
+
+		if (bIsLockedOn)
+		{
+			UnlockTarget();
+		}
+
+		ExitCombatState();
+
+		bIsViewingMemoryEcho = true;
+
+		ActiveEchoRelic = SourceRelic;
+		ActiveMemoryEchoData = EchoData;
+		ActiveMemoryEchoWidget = NewWidget;
+
+		GetCharacterMovement()->StopMovementImmediately();
+
+		GetCharacterMovement()->Velocity = FVector::ZeroVector;
+
+		StopJumping();
+
+		HideInteractionPrompt();
+
+		ActiveMemoryEchoWidget->AddToViewport(25);
+
+		ActiveMemoryEchoWidget->StartMemoryEcho(
+			EchoData,
+			this
+		);
+
+		FInputModeGameAndUI InputMode;
+
+		InputMode.SetWidgetToFocus(
+			ActiveMemoryEchoWidget->TakeWidget()
+		);
+
+		InputMode.SetLockMouseToViewportBehavior(
+			EMouseLockMode::DoNotLock
+		);
+
+		InputMode.SetHideCursorDuringCapture(
+			false
+		);
+
+		PlayerController->SetInputMode(
+			InputMode
+		);
+
+		PlayerController->bShowMouseCursor = true;
+
+		PlayerController->SetIgnoreMoveInput(true);
+
+		return true;
+	}
+
+	void AWCCharacter::EndMemoryEcho(
+		bool bCompleted)
+	{
+		if (!bIsViewingMemoryEcho &&
+			!ActiveMemoryEchoWidget)
+		{
+			return;
+		}
+
+		/*
+		* 在清空状态前保留数据。
+		*/
+		AEchoRelic* PreviousRelic = ActiveEchoRelic;
+
+		const FMemoryEchoData CompletedEchoData =
+			ActiveMemoryEchoData;
+
+		if (ActiveMemoryEchoWidget)
+		{
+			ActiveMemoryEchoWidget->RemoveFromParent();
+		}
+
+		ActiveMemoryEchoWidget = nullptr;
+		ActiveEchoRelic = nullptr;
+		ActiveMemoryEchoData = FMemoryEchoData();
+
+		bIsViewingMemoryEcho = false;
+
+		APlayerController* PlayerController =
+			Cast<APlayerController>(
+				GetController()
+			);
+
+		if (PlayerController)
+		{
+			PlayerController->bShowMouseCursor = false;
+
+			FInputModeGameOnly InputMode;
+
+			PlayerController->SetInputMode(InputMode);
+
+			if (!bIsDead)
+			{
+				PlayerController->SetIgnoreMoveInput(false);
+				PlayerController->SetIgnoreLookInput(false);
+			}
+		}
+
+		/*
+		* 玩家存活且完整阅读：
+		* 记录 Journal， 并确认 Relic。
+		*/
+		if (bCompleted && !bIsDead)
+		{
+			RecordMemoryEcho(
+				CompletedEchoData
+			);
+
+			if (PreviousRelic)
+			{
+				PreviousRelic->ConfirmEchoRead();
+			}
+
+			return;
+		}
+
+		/*
+		* 玩家死亡或 UI 异常关闭。
+		* 不完成 Story Event。
+		*/
+		if (PreviousRelic)
+		{
+			PreviousRelic->CancelEchoRead();
+		}
+	}
+
+	bool AWCCharacter::HasRecordedMemoryEcho(FName EchoID) const
+	{
+		if (EchoID.IsNone())
+		{
+			return false;
+		}
+
+		for (const FMemoryEchoData& Echo :
+			RecordedMemoryEchoes)
+		{
+			if (Echo.EchoID == EchoID)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool AWCCharacter::RecordMemoryEcho(
+		const FMemoryEchoData& EchoData)
+	{
+		if (EchoData.EchoID.IsNone())
+		{
+			return false;
+		}
+
+		if (HasRecordedMemoryEcho(EchoData.EchoID))
+		{
+			return false;
+		}
+
+		RecordedMemoryEchoes.Add(EchoData);
+
+		if (GEngine)
+		{
+			const FString Message = FString::Printf(
+				TEXT(
+					"Memory Echo Recored: %s"
+				),
+				*EchoData.Title.ToString()
+			);
+
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				3.0f,
+				FColor::Cyan,
+				Message
+			);
+		}
+
+		return true;
+	}
+
 //*****************Combat********************
-	void AWCCharacter::Attack() {
+	void AWCCharacter::Attack() 
+	{
 		if (!CanAct()) {
 			return;
 		}
@@ -833,6 +1149,10 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		return bIsInDialogue;
 	}
 
+	bool AWCCharacter::GetIsViewingMemoryEcho() const {
+		return bIsViewingMemoryEcho;
+	}
+
 
 	void AWCCharacter::Die() {
 		if (bIsDead) {
@@ -848,6 +1168,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		if (bIsInDialogue || ActiveDialogueWidget)
 		{
 			EndDialogue();
+		}
+
+		if (bIsViewingMemoryEcho || ActiveMemoryEchoWidget)
+		{
+			EndMemoryEcho(false);
 		}
 
 		UnlockTarget();
@@ -912,6 +1237,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		if (bIsInDialogue)
+		{
+			return false;
+		}
+
+		if (bIsViewingMemoryEcho)
 		{
 			return false;
 		}

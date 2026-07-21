@@ -62,6 +62,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Story NPC|Story")
 	EStoryNPCState GetStoryState() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Story NPC|Story")
+	void RecieveStoryEvent(FName EventID);
+
+	UFUNCTION(BlueprintPure, Category = "Story NPC|Story")
+	FName GetLastReceivedStoryEvent() const;
+
 	/*
 	* 将 NPC 转移到指定Story Anchor。
 	* 
@@ -104,6 +110,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story NPC|State")
 	EStoryNPCState StoryState = EStoryNPCState::Available;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Story NPC|Story")
+	FName LastReceivedStoryEvent = NAME_None;
 
 	// Dialogue
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story NPC|Dialogue")

@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -10,6 +8,7 @@ class AGhostEnemy;
 class AStoryAnchor;
 class AWCStoryNPC;
 class USceneComponent;
+class AEchoRelic;
 
 /*
 * 轻量 Story Encounter 协调者。
@@ -81,6 +80,10 @@ protected:
 		Category = "Story Encounter|References")
 	AStoryAnchor* NextStoryAnchor = nullptr;
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly,
+		Category = "Story Encounter|References")
+	AEchoRelic* EchoRelic = nullptr;
+
 	/*
 	* 指定 RequiredEnemy 是否已死亡。
 	*/
@@ -102,6 +105,18 @@ protected:
 		Category = "Story Encounter|Debug")
 	bool bShowEncounterDebug = true;
 
+	// Event Complete
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,
+		Category = "Story Encounter|Completion")
+	FName CompletionStoryEventID =
+		TEXT("QuietChild.BellEchoActivated");
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,
+		Category = "Story Encounter|Completion",
+		meta = (ClampMin = "0"))
+	int32 NextStoryStage = 1;
+
 	/*
 	* RequiredEnemy 广播死亡时调用。
 	* 
@@ -117,4 +132,9 @@ protected:
 		const FString& Message,
 		const FColor& Color
 	) const;
+
+	UFUNCTION()
+	void HandleEchoRelicActivated(
+		AEchoRelic* ActivatedRelic
+	);
 };
