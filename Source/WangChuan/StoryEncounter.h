@@ -9,6 +9,7 @@ class AStoryAnchor;
 class AWCStoryNPC;
 class USceneComponent;
 class AEchoRelic;
+class AStoryObjectiveBase;
 
 /*
 * 轻量 Story Encounter 协调者。
@@ -39,6 +40,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Story Encounter")
 	bool GetIsEncounterCompleted() const;
 
+	bool IsEncounterConditionResolved() const;
+
+	void UnlockEchoRelicFromResolvedCondition();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -58,13 +63,23 @@ protected:
 
 	/*
 	* 玩家必须击败的特定敌人。
-	* 
+	*
 	* 使用 EditInstanceOnly， 
 	* 因为它引用当前地图中的敌人实例。
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, 
 		Category = "Story Encounter|References")
 	AGhostEnemy* RequiredEnemy = nullptr;
+
+	/*
+	* Optional non-combat completion condition.
+	*
+	* A valid Encounter should use either RequiredEnemy or StoryObjective,
+	* but not both.
+	*/
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly,
+		Category = "StoryEncounter|Objective", meta = (AllowPrivateAccess = "true"))
+	AStoryObjectiveBase* StoryObjective = nullptr;
 
 	/*
 	* 与本 Encounter 相关的 Story NPC。
@@ -97,6 +112,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, 
 		Category = "Story Encounter|State")
 	bool bEncounterCompleted = false;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly,
+		Category = "Story Encounter|State", meta = (AllowPrivateAccess = "true"))
+	bool bStoryObjectiveCompleted = false;
 
 	/*
 	* 是否显示 Encounter Debug Message。
@@ -136,5 +155,10 @@ protected:
 	UFUNCTION()
 	void HandleEchoRelicActivated(
 		AEchoRelic* ActivatedRelic
+	);
+
+	UFUNCTION()
+	void HandleStoryObjectiveCompleted(
+		AStoryObjectiveBase* CompletedObjective
 	);
 };
