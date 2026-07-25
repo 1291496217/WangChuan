@@ -213,15 +213,28 @@ void ALanternPuzzlePiece::PlayLanternFeedback()
 	* Preview 阶段也需要调用本函数。
 	* 因此这里不检查 bInteractionEnabled。
 	*/
+	PlayLanternFeedbackForDuration(
+		FeedbackDuration
+	);
+}
+
+void ALanternPuzzlePiece::PlayLanternFeedbackForDuration(float Duration)
+{
 	SetLanternLit(true);
 
 	PlayLanternTone();
+
+	const float SafeDuration =
+		FMath::Max(
+			Duration,
+			0.05f
+		);
 
 	GetWorldTimerManager().SetTimer(
 		LanternFeedbackTimerHandle,
 		this,
 		&ALanternPuzzlePiece::FinishLanternFeedback,
-		FeedbackDuration,
+		SafeDuration,
 		false
 	);
 }
@@ -390,7 +403,10 @@ void ALanternPuzzlePiece::PlayLanternTone()
 	UGameplayStatics::PlaySoundAtLocation(
 		this,
 		LanternTone,
-		GetActorLocation()
+		GetActorLocation(),
+		FRotator::ZeroRotator,
+		ToneVolumeMultiplier,
+		TonePitchMultiplier
 	);
 }
 

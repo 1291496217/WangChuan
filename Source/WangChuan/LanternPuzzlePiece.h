@@ -59,6 +59,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lantern Puzzle|Feedback")
 	void PlayLanternFeedback();
 
+	/*
+	* 使用指定持续时间播放一次光与声音反馈。
+	* 
+	* Puzzle Controller 使用这个接口。
+	* 保证 Preview 的灯光时间与 Controller 配置一致。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Lantern Puzzle|Feedback")
+	void PlayLanternFeedbackForDuration(float Duration);
+
 	UFUNCTION(BlueprintPure, Category = "Lantern Puzzle")
 	int32 GetPieceID() const;
 
@@ -136,6 +145,19 @@ protected:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,
 		Category = "Lantern Puzzle|Feedback")
 	USoundBase* LanternTone = nullptr;
+
+	/*
+	* 同一个音源可以通过 Volume 与 Pitch
+	* 为不同 Lantern Piece 形成轻微差异。
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,
+		Category = "Lantern Puzzle|Feedback", meta = (ClampMin = "0.0"))
+	float ToneVolumeMultiplier = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,
+		Category = "Lantern Puzzle|Feedback", 
+		meta = (ClampMin = "0.1", ClampMax = "4.0"))
+	float TonePitchMultiplier = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,
 		Category = "Lantern Puzzle|Feedback", meta = (ClampMin = "0.05"))
