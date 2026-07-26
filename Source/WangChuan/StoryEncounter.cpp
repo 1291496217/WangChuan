@@ -340,12 +340,19 @@ void AStoryEncounter::HandleEchoRelicActivated(
 		FString::Printf(
 			TEXT(
 				"%s,\n"
-				"Required Enemy Defeated: True\n"
+				"Required Enemy Defeated: %s\n"
+				"Story Objective Completed: %s\n"
 				"Echo Activated: True\n"
 				"Encounter Completed: True\n"
-				"Next Story Stage: %d"
+				"Next Story Stage Config: %d"
 			),
 			*EncounterID.ToString(),
+			bRequiredEnemyDefeated
+			? TEXT("True")
+			: TEXT("False"),
+			bStoryObjectiveCompleted
+			? TEXT("True")
+			: TEXT("False"),
 			NextStoryStage
 		),
 		FColor::Green
@@ -440,21 +447,39 @@ void AStoryEncounter::UnlockEchoRelicFromResolvedCondition()
 			LogTemp,
 			Warning,
 			TEXT(
-				"Story Encounter [%s] resolved its condition, "
-				"but no EchoRelic is configured."
+				"Story Encounter [%s] resolved its "
+				"condition, but no EchoRelic is configured."
 			),
 			*EncounterID.ToString()
+		);
+		return;
+	}
+
+	const bool bRelicUnlocked = EchoRelic->UnlockRelic();
+
+	if (bRelicUnlocked)
+	{
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT(
+				"Story Encounter [%s] unlocked "
+				"Echo Relic [%s]."
+			),
+			*EncounterID.ToString(),
+			*EchoRelic->GetName()
 		);
 
 		return;
 	}
 
-	EchoRelic->UnlockRelic();
-
 	UE_LOG(
 		LogTemp,
-		Log,
-		TEXT("Story Encounter [%s] unlocked Echo Relic [%s]."),
+		Warning,
+		TEXT(
+			"Story Encounter [%s] could not unlock "
+			"Echo Relic [%s] because it was no longer Locked."
+		),
 		*EncounterID.ToString(),
 		*EchoRelic->GetName()
 	);
