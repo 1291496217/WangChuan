@@ -84,7 +84,13 @@ void ALanternSequencePuzzle::BeginPlay()
 	bConfigurationValid =
 		ValidatePuzzleConfiguration();
 
-	SetAllLanternsLit(false);
+	/*
+	* Each Lantern Piece initializes its own light state in BeginPlay.
+	*
+	* Do not call SetAllLanternsLit() here: actor BeginPlay order is not
+	* guaranteed, so the Puzzle Controller may run before the Lantern
+	* Blueprints have created their dynamic material instances.
+	*/
 
 	SetLanternInteractionEnabled(false);
 
