@@ -8,6 +8,10 @@
 #include "Components/SphereComponent.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "TimerManager.h"
 
 #include "StoryAnchor.h"
@@ -49,6 +53,21 @@ AWCStoryNPC::AWCStoryNPC()
 		this,
 		&AWCStoryNPC::OnPlayerExit);
 
+}
+
+void AWCStoryNPC::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitializeRelocationMaterials();
+	SetRelocationFadeOpacity(1.0f);
+}
+
+void AWCStoryNPC::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	ClearRelocationTimers();
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void AWCStoryNPC::Interact()
@@ -184,7 +203,10 @@ bool AWCStoryNPC::RelocateToStoryAnchor(
 	* 防止同一个 NPC 在一次 Relocation 尚未完成时，
 	* 再次启动新的 Relocation。
 	*/
-	if (StoryState == EStoryNPCState::Relocating)
+	if (StoryState == EStoryNPCState::Relocating ||
+		GetWorldTimerManager().IsTimerActive(RelocationStartTimerHandle) ||
+		GetWorldTimerManager().IsTimerActive(RelocationFadeTimerHandle) ||
+		GetWorldTimerManager().IsTimerActive(RelocationRevealTimerHandle))
 	{
 		return false;
 	}
@@ -239,18 +261,18 @@ bool AWCStoryNPC::RelocateToStoryAnchor(
 		}
 	}
 
-	GetWorldTimerManager().ClearTimer(
-		RelocationTimerHandle
-	);
+	ClearRelocationTimers();
 
 	/*
 	* NPC 消失前清理旧位置的玩家交互引用。
 	*/
 	ClearPlayerInteractionIfNeeded();
 
+	StoryStateBeforeRelocation = StoryState;
 	StoryState = EStoryNPCState::Relocating;
 
 	PendingStoryStage = NewStoryStage;
+	PendingRelocationAnchor = TargetAnchor;
 
 	/*
 	* 关闭交互和碰撞。
@@ -258,48 +280,23 @@ bool AWCStoryNPC::RelocateToStoryAnchor(
 	SetStoryNPCInteractionEnabled(false);
 
 	/*
-	* 先隐藏，再移动。
+	* Gameplay 状态立即进入 Relocating，但旧位置的视觉表现延迟开始。
+	* 这样 Prompt 会立刻消失，玩家仍能观察 NPC 的离场效果。
 	*/
-	SetActorHiddenInGame(true);
+	SetActorHiddenInGame(false);
+	SetRelocationFadeOpacity(1.0f);
 
-	const FTransform TargetTransform =
-		TargetAnchor->GetAnchorTransform();
-
-	/*
-	* Story Anchor 的 Rotation 表示最终玩家应该看到的
-	* NPC 视觉朝向。
-	* 
-	* NPCMesh 可能因为模型导入方向而具有额外的
-	* Relative Yaw，因此需要从 Actor Rotation 中抵消。
-	* 只复制 Location 和 Rotation。
-	*/
-	FRotator TargetActorRotation =
-		TargetTransform.Rotator();
-
-	TargetActorRotation.Yaw =
-		FRotator::NormalizeAxis(
-			TargetActorRotation.Yaw
-			- MeshFacingYawOffset);
-
-	SetActorLocationAndRotation(
-		TargetTransform.GetLocation(),
-		TargetActorRotation,
-		false,
-		nullptr,
-		ETeleportType::TeleportPhysics
-	);
-
-	if (RelocationRevealDelay <= KINDA_SMALL_NUMBER)
+	if (RelocationStartDelay <= KINDA_SMALL_NUMBER)
 	{
-		FinishRelocation();
+		BeginRelocationFade();
 	}
 	else
 	{
 		GetWorldTimerManager().SetTimer(
-			RelocationTimerHandle,
+			RelocationStartTimerHandle,
 			this,
-			&AWCStoryNPC::FinishRelocation,
-			RelocationRevealDelay,
+			&AWCStoryNPC::BeginRelocationFade,
+			RelocationStartDelay,
 			false
 		);
 	}
@@ -340,8 +337,259 @@ bool AWCStoryNPC::RelocateToStoryAnchorByIndex(
 	);
 }
 
+void AWCStoryNPC::InitializeRelocationMaterials()
+{
+	RelocationMaterialInstances.Reset();
+	bRelocationFadeSupported = false;
+
+	if (!NPCMesh || RelocationFadeParameterName.IsNone())
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("%s: relocation fade is unavailable because the mesh or parameter name is invalid."),
+			*GetName()
+		);
+		return;
+	}
+
+	const int32 MaterialCount = NPCMesh->GetNumMaterials();
+	if (MaterialCount <= 0)
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("%s: relocation fade is unavailable because NPCMesh has no materials."),
+			*GetName()
+		);
+		return;
+	}
+
+	/*
+	* 先验证所有可见 Slot，再创建 MID，避免只有部分身体淡出。
+	*/
+	for (int32 MaterialIndex = 0; MaterialIndex < MaterialCount; ++MaterialIndex)
+	{
+		UMaterialInterface* Material = NPCMesh->GetMaterial(MaterialIndex);
+		float ParameterValue = 0.0f;
+		const bool bHasFadeParameter =
+			Material &&
+			Material->GetScalarParameterValue(
+				FHashedMaterialParameterInfo(RelocationFadeParameterName),
+				ParameterValue
+			);
+
+		if (!bHasFadeParameter)
+		{
+			UE_LOG(
+				LogTemp,
+				Warning,
+				TEXT("%s: material slot %d does not expose scalar parameter '%s'. Relocation will use the safe instant-hide fallback."),
+				*GetName(),
+				MaterialIndex,
+				*RelocationFadeParameterName.ToString()
+			);
+			return;
+		}
+	}
+
+	for (int32 MaterialIndex = 0; MaterialIndex < MaterialCount; ++MaterialIndex)
+	{
+		if (UMaterialInstanceDynamic* MaterialInstance =
+			NPCMesh->CreateAndSetMaterialInstanceDynamic(MaterialIndex))
+		{
+			RelocationMaterialInstances.Add(MaterialInstance);
+		}
+	}
+
+	bRelocationFadeSupported =
+		RelocationMaterialInstances.Num() == MaterialCount;
+
+	if (!bRelocationFadeSupported)
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("%s: not all relocation material instances could be created. Relocation will use the safe instant-hide fallback."),
+			*GetName()
+		);
+		RelocationMaterialInstances.Reset();
+	}
+}
+
+void AWCStoryNPC::SetRelocationFadeOpacity(float NewOpacity)
+{
+	if (!bRelocationFadeSupported)
+	{
+		return;
+	}
+
+	const float ClampedOpacity = FMath::Clamp(NewOpacity, 0.0f, 1.0f);
+	for (UMaterialInstanceDynamic* MaterialInstance : RelocationMaterialInstances)
+	{
+		if (IsValid(MaterialInstance))
+		{
+			MaterialInstance->SetScalarParameterValue(
+				RelocationFadeParameterName,
+				ClampedOpacity
+			);
+		}
+	}
+}
+
+void AWCStoryNPC::BeginRelocationFade()
+{
+	GetWorldTimerManager().ClearTimer(RelocationStartTimerHandle);
+
+	if (StoryState != EStoryNPCState::Relocating ||
+		!IsValid(PendingRelocationAnchor))
+	{
+		AbortRelocation(TEXT("target anchor became invalid before the fade started"));
+		return;
+	}
+
+	if (RelocationVFXSystem)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			this,
+			RelocationVFXSystem,
+			GetActorLocation() + RelocationVFXOffset,
+			FRotator::ZeroRotator,
+			FVector::OneVector,
+			true,
+			true,
+			ENCPoolMethod::None,
+			true
+		);
+	}
+	else if (!bWarnedMissingRelocationVFX)
+	{
+		bWarnedMissingRelocationVFX = true;
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("%s: RelocationVFXSystem is not configured. Fade and relocation will continue."),
+			*GetName()
+		);
+	}
+
+	if (RelocationFadeDuration <= KINDA_SMALL_NUMBER)
+	{
+		CompleteFadeAndTeleport();
+		return;
+	}
+
+	if (!bRelocationFadeSupported)
+	{
+		GetWorldTimerManager().SetTimer(
+			RelocationFadeTimerHandle,
+			this,
+			&AWCStoryNPC::CompleteFadeAndTeleport,
+			RelocationFadeDuration,
+			false
+		);
+		return;
+	}
+
+	RelocationFadeStartTime = GetWorld()->GetTimeSeconds();
+	SetRelocationFadeOpacity(1.0f);
+
+	GetWorldTimerManager().SetTimer(
+		RelocationFadeTimerHandle,
+		this,
+		&AWCStoryNPC::UpdateRelocationFade,
+		FMath::Max(RelocationFadeUpdateInterval, 0.01f),
+		true
+	);
+}
+
+void AWCStoryNPC::UpdateRelocationFade()
+{
+	if (StoryState != EStoryNPCState::Relocating)
+	{
+		ClearRelocationTimers();
+		return;
+	}
+
+	const float ElapsedTime =
+		GetWorld()->GetTimeSeconds() - RelocationFadeStartTime;
+	const float LinearAlpha =
+		FMath::Clamp(ElapsedTime / RelocationFadeDuration, 0.0f, 1.0f);
+	const float SmoothAlpha =
+		LinearAlpha * LinearAlpha * (3.0f - 2.0f * LinearAlpha);
+
+	SetRelocationFadeOpacity(1.0f - SmoothAlpha);
+
+	if (LinearAlpha >= 1.0f)
+	{
+		CompleteFadeAndTeleport();
+	}
+}
+
+void AWCStoryNPC::CompleteFadeAndTeleport()
+{
+	GetWorldTimerManager().ClearTimer(RelocationFadeTimerHandle);
+
+	if (StoryState != EStoryNPCState::Relocating ||
+		!IsValid(PendingRelocationAnchor))
+	{
+		AbortRelocation(TEXT("target anchor became invalid before teleport"));
+		return;
+	}
+
+	SetRelocationFadeOpacity(0.0f);
+	SetActorHiddenInGame(true);
+
+	const FTransform TargetTransform =
+		PendingRelocationAnchor->GetAnchorTransform();
+
+	/*
+	* Story Anchor 的 Rotation 表示最终玩家应该看到的
+	* NPC 视觉朝向。抵消 Mesh 导入方向的 Relative Yaw。
+	*/
+	FRotator TargetActorRotation = TargetTransform.Rotator();
+	TargetActorRotation.Yaw =
+		FRotator::NormalizeAxis(
+			TargetActorRotation.Yaw - MeshFacingYawOffset
+		);
+
+	SetActorLocationAndRotation(
+		TargetTransform.GetLocation(),
+		TargetActorRotation,
+		false,
+		nullptr,
+		ETeleportType::TeleportPhysics
+	);
+
+	/*
+	* Actor 仍隐藏时恢复材质，确保新 Anchor reveal 时完全可见。
+	*/
+	SetRelocationFadeOpacity(1.0f);
+
+	if (RelocationRevealDelay <= KINDA_SMALL_NUMBER)
+	{
+		FinishRelocation();
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(
+			RelocationRevealTimerHandle,
+			this,
+			&AWCStoryNPC::FinishRelocation,
+			RelocationRevealDelay,
+			false
+		);
+	}
+}
+
 void AWCStoryNPC::FinishRelocation()
 {
+	if (StoryState != EStoryNPCState::Relocating)
+	{
+		ClearRelocationTimers();
+		return;
+	}
+
 	if (PendingStoryStage != INDEX_NONE)
 	{
 		CurrentStoryStage =
@@ -349,6 +597,7 @@ void AWCStoryNPC::FinishRelocation()
 	}
 
 	PendingStoryStage = INDEX_NONE;
+	PendingRelocationAnchor = nullptr;
 
 	/*
 	* 必须先恢复 Available，
@@ -356,13 +605,47 @@ void AWCStoryNPC::FinishRelocation()
 	*/
 	StoryState = EStoryNPCState::Available;
 
+	SetRelocationFadeOpacity(1.0f);
 	SetActorHiddenInGame(false);
 
 	SetStoryNPCInteractionEnabled(true);
 
-	GetWorldTimerManager().ClearTimer(
-		RelocationTimerHandle
+	ClearRelocationTimers();
+}
+
+void AWCStoryNPC::AbortRelocation(const TCHAR* Reason)
+{
+	UE_LOG(
+		LogTemp,
+		Error,
+		TEXT("%s: Story NPC relocation aborted because %s."),
+		*GetName(),
+		Reason
 	);
+
+	ClearRelocationTimers();
+	PendingStoryStage = INDEX_NONE;
+	PendingRelocationAnchor = nullptr;
+	SetRelocationFadeOpacity(1.0f);
+	SetActorHiddenInGame(false);
+
+	StoryState = StoryStateBeforeRelocation;
+	SetStoryNPCInteractionEnabled(
+		StoryState == EStoryNPCState::Available
+	);
+}
+
+void AWCStoryNPC::ClearRelocationTimers()
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	FTimerManager& TimerManager = GetWorldTimerManager();
+	TimerManager.ClearTimer(RelocationStartTimerHandle);
+	TimerManager.ClearTimer(RelocationFadeTimerHandle);
+	TimerManager.ClearTimer(RelocationRevealTimerHandle);
 }
 
 void AWCStoryNPC::SetStoryNPCInteractionEnabled(bool bEnabled)

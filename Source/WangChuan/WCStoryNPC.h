@@ -9,6 +9,8 @@
 #include "WCStoryNPC.generated.h"
 
 class AStoryAnchor;
+class UMaterialInstanceDynamic;
+class UNiagaraSystem;
 class USceneComponent;
 class USkeletalMeshComponent;
 class USphereComponent;
@@ -34,6 +36,9 @@ class WANGCHUAN_API AWCStoryNPC : public AActor, public IInteractable
 
 public:
 	AWCStoryNPC();
+
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/*
 	* IInteractable 接口
@@ -130,8 +135,42 @@ protected:
 	* 等待多久再重新显示。
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, 
-		Category = "Story NPC|Relocation", meta = (ClampMin = "0.0"))
+		Category = "Story NPC|Relocation|Timing", meta = (ClampMin = "0.0"))
 	float RelocationRevealDelay = 0.5f;
+
+	/*
+	* 进入 Relocating 后，在旧位置开始 VFX 和淡出前的观察时间。
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Story NPC|Relocation|Timing", meta = (ClampMin = "0.0"))
+	float RelocationStartDelay = 0.35f;
+
+	/*
+	* NPC Mesh 从完全可见淡出到完全不可见所需时间。
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Story NPC|Relocation|Timing", meta = (ClampMin = "0.0"))
+	float RelocationFadeDuration = 1.2f;
+
+	/*
+	* Fade Timer 只在淡出期间运行。
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Story NPC|Relocation|Timing",
+		meta = (ClampMin = "0.01", ClampMax = "0.1"))
+	float RelocationFadeUpdateInterval = 0.03f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Story NPC|Relocation|VFX")
+	TObjectPtr<UNiagaraSystem> RelocationVFXSystem;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Story NPC|Relocation|VFX")
+	FVector RelocationVFXOffset = FVector(0.0f, 0.0f, 80.0f);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+		Category = "Story NPC|Relocation|Materials")
+	FName RelocationFadeParameterName = TEXT("FadeOpacity");
 
 	/*
 	* Relocating 期间暂存下一 Story Stage。
@@ -139,7 +178,20 @@ protected:
 	UPROPERTY()
 	int32 PendingStoryStage = INDEX_NONE;
 
-	FTimerHandle RelocationTimerHandle;
+	UPROPERTY(Transient)
+	TObjectPtr<AStoryAnchor> PendingRelocationAnchor;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UMaterialInstanceDynamic>> RelocationMaterialInstances;
+
+	FTimerHandle RelocationStartTimerHandle;
+	FTimerHandle RelocationFadeTimerHandle;
+	FTimerHandle RelocationRevealTimerHandle;
+
+	float RelocationFadeStartTime = 0.0f;
+	EStoryNPCState StoryStateBeforeRelocation = EStoryNPCState::Available;
+	bool bRelocationFadeSupported = false;
+	bool bWarnedMissingRelocationVFX = false;
 
 	/*
 	* NPC Mesh 相对于 Actor Forward 的视觉朝向偏移。
@@ -179,6 +231,14 @@ protected:
 	* Relocation 延迟结束后的恢复函数。
 	*/
 	void FinishRelocation();
+
+	void InitializeRelocationMaterials();
+	void SetRelocationFadeOpacity(float NewOpacity);
+	void BeginRelocationFade();
+	void UpdateRelocationFade();
+	void CompleteFadeAndTeleport();
+	void AbortRelocation(const TCHAR* Reason);
+	void ClearRelocationTimers();
 
 	/*
 	* 统一开启或关闭交互碰撞。

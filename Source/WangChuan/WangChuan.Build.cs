@@ -17,7 +17,8 @@ public class WangChuan : ModuleRules
 				"Engine", 
 				"InputCore", 
 				"EnhancedInput", 
-				"UMG"
+				"UMG",
+				"Niagara"
 			}
 		);
 
