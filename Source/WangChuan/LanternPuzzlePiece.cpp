@@ -26,7 +26,7 @@ ALanternPuzzlePiece::ALanternPuzzlePiece()
 	* 第一版本由 InteractionSphere 负责交互。
 	* 
 	* Placeholder Mesh 不阻玩家，
-	* 避免三盏灯在灰盒阶段形成意外碰撞。
+	* 避免 Lantern 在灰盒阶段形成意外碰撞。
 	*/
 	LanternMesh->SetCollisionEnabled(
 		ECollisionEnabled::NoCollision);

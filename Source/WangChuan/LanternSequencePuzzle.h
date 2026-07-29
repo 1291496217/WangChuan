@@ -11,7 +11,7 @@ class UPrimitiveComponent;
 class USoundBase;
 
 /*
-* 三灯谜题的运行状态。
+* Lantern sequence puzzle runtime state.
 *
 * Dormant:
 * 尚未进入区域或启动谜题。
@@ -117,8 +117,6 @@ protected:
 
 	/*
 	* 关卡中实际存在的 Lantern Piece 实例。
-	*
-	* 正式版本配置三盏灯。
 	*/
 	UPROPERTY(
 		EditInstanceOnly,
@@ -131,7 +129,7 @@ protected:
 	/*
 	* 只保存 PieceID，不依赖数组位置。
 	*
-	* 默认：
+	* Generic default:
 	* 0 -> 2 -> 1
 	*/
 	UPROPERTY(

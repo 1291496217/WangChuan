@@ -262,36 +262,19 @@ bool ALanternSequencePuzzle::ValidatePuzzleConfiguration()
 {
 	bool bIsValid = true;
 
-	if (LanternPieces.Num() < 2)
+	if (LanternPieces.IsEmpty())
 	{
 		UE_LOG(
 			LogTemp,
 			Error,
 			TEXT(
-				"Lantern Puzzle [%s] requires "
-				"at least two Lantern Pieces."
+				"Lantern Puzzle [%s] has "
+				"an empty LanternPieces array."
 			),
 			*ObjectiveID.ToString()
 		);
 
 		bIsValid = false;
-	}
-	else if (LanternPieces.Num() != 3)
-	{
-		/*
-		* 两灯版本可以作为风险缩减方案运行，
-		* 但 Week6 正式配置应为三盏。
-		*/
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT(
-				"Lantern Puzzle [%s] has %d pieces. "
-				"Week6 formal version expects 3."
-			),
-			*ObjectiveID.ToString(),
-			LanternPieces.Num()
-		);
 	}
 
 	TSet<ALanternPuzzlePiece*>

@@ -6,7 +6,6 @@
 #include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
 
-#include "GhostEnemy.h"
 #include "StoryAnchor.h"
 #include "WCStoryNPC.h"
 #include "EchoRelic.h"
@@ -30,26 +29,10 @@ void AStoryEncounter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	bRequiredEnemyDefeated = false;
 	bEncounterCompleted = false;
 	bStoryObjectiveCompleted = false;
 
-	const bool bHasRequiredEnemy = IsValid(RequiredEnemy);
-	const bool bHasStoryObjective = IsValid(StoryObjective);
-
-	if (bHasRequiredEnemy && bHasStoryObjective)
-	{
-		UE_LOG(
-			LogTemp,
-			Error,
-			TEXT(
-				"Story Encounter [%s] has both RequiredEnemy and StoryObjective. "
-				"Configure exactly one completion source."
-			),
-			*EncounterID.ToString()
-		);
-	}
-	else if (bHasStoryObjective)
+	if (IsValid(StoryObjective))
 	{
 		StoryObjective->OnObjectiveCompleted.AddUniqueDynamic(
 			this,
@@ -75,28 +58,13 @@ void AStoryEncounter::BeginPlay()
 			HandleStoryObjectiveCompleted(StoryObjective);
 		}
 	}
-	else if (bHasRequiredEnemy)
-	{
-		RequiredEnemy->OnEnemyDefeated.AddUniqueDynamic(
-			this,
-			&AStoryEncounter::HandleRequiredEnemyDefeated
-		);
-
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("Story Encounter [%s] bound to Required Enemy [%s]."),
-			*EncounterID.ToString(),
-			*RequiredEnemy->GetName()
-		);
-	}
 	else
 	{
 		UE_LOG(
 			LogTemp,
 			Warning,
 			TEXT(
-				"Story Encounter [%s] has no RequiredEnemy or StoryObjective."
+				"Story Encounter [%s] has no StoryObjective assigned."
 			),
 			*EncounterID.ToString()
 		);
@@ -159,15 +127,6 @@ void AStoryEncounter::EndPlay(
 	/*
 	* Encounter 被销毁或关卡结束时解除绑定。
 	*/
-	if (IsValid(RequiredEnemy))
-	{
-		RequiredEnemy->OnEnemyDefeated
-			.RemoveDynamic(
-				this,
-				&AStoryEncounter::HandleRequiredEnemyDefeated
-			);
-	}
-
 	if (IsValid(EchoRelic))
 	{
 		EchoRelic->OnEchoActivated
@@ -189,70 +148,9 @@ void AStoryEncounter::EndPlay(
 	Super::EndPlay(EndPlayReason);
 }
 
-bool AStoryEncounter::GetIsRequiredEnemyDefeated() const
-{
-	return bRequiredEnemyDefeated;
-}
-
 bool AStoryEncounter::GetIsEncounterCompleted() const
 {
 	return bEncounterCompleted;
-}
-
-void AStoryEncounter::HandleRequiredEnemyDefeated(
-	AGhostEnemy* DefeatedEnemy)
-{
-	if (bEncounterCompleted)
-	{
-		return;
-	}
-
-	/*
-	* 防止 Encounter 重复处理同一次结果。
-	*/
-	if (bRequiredEnemyDefeated)
-	{
-		return;
-	}
-
-	if (!IsValid(RequiredEnemy))
-	{
-		return;
-	}
-
-	if (!IsValid(DefeatedEnemy))
-	{
-		return;
-	}
-
-	/*
-	* 只能由 RequiredEnemy 推进流程。
-	*/
-	if (DefeatedEnemy != RequiredEnemy)
-	{
-		return;
-	}
-
-	/*
-	* This path should not be used when a Story Objective is configured.
-	*/
-	if (IsValid(StoryObjective))
-	{
-		UE_LOG(
-			LogTemp,
-			Error,
-			TEXT(
-				"Story Encounter [%s] cannot process RequiredEnemy "
-				"because StoryObjective is also configured."
-			),
-			*EncounterID.ToString()
-		);
-
-		return;
-	}
-	bRequiredEnemyDefeated = true;
-
-	UnlockEchoRelicFromResolvedCondition();
 }
 
 void AStoryEncounter::ShowEncounterDebugMessage(
@@ -340,16 +238,12 @@ void AStoryEncounter::HandleEchoRelicActivated(
 		FString::Printf(
 			TEXT(
 				"%s,\n"
-				"Required Enemy Defeated: %s\n"
 				"Story Objective Completed: %s\n"
 				"Echo Activated: True\n"
 				"Encounter Completed: True\n"
 				"Next Story Stage Config: %d"
 			),
 			*EncounterID.ToString(),
-			bRequiredEnemyDefeated
-			? TEXT("True")
-			: TEXT("False"),
 			bStoryObjectiveCompleted
 			? TEXT("True")
 			: TEXT("False"),
@@ -404,24 +298,6 @@ void AStoryEncounter::HandleStoryObjectiveCompleted(
 			),
 			*EncounterID.ToString(),
 			*CompletedObjective->GetName()
-		);
-
-		return;
-	}
-
-	/*
-	* Exactly one condition source is allowed.
-	*/
-	if (IsValid(RequiredEnemy))
-	{
-		UE_LOG(
-			LogTemp,
-			Error,
-			TEXT(
-				"Story Encounter [%s] cannot process StoryObjective "
-				"because RequiredEnemy is also configured."
-			),
-			*EncounterID.ToString()
 		);
 
 		return;
@@ -487,21 +363,5 @@ void AStoryEncounter::UnlockEchoRelicFromResolvedCondition()
 
 bool AStoryEncounter::IsEncounterConditionResolved() const
 {
-	/*
-	* Resolve from the recorded result, not from the current validity of the
-	* configured Actor pointer.
-	*
-	* Required enemies are destroyed shortly after death. By the time the
-	* player finishes reading the Echo, RequiredEnemy can therefore be invalid
-	* even though this Encounter already received and recorded its defeat.
-	*
-	* BeginPlay rejects configurations with both or neither source, and the
-	* source-specific handlers prevent both result flags from becoming true.
-	*/
-	if (bRequiredEnemyDefeated == bStoryObjectiveCompleted)
-	{
-		return false;
-	}
-
-	return bRequiredEnemyDefeated || bStoryObjectiveCompleted;
+	return bStoryObjectiveCompleted;
 }

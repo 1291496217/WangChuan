@@ -9,7 +9,6 @@
 #include "WCStoryNPC.generated.h"
 
 class AStoryAnchor;
-class UMaterialInstanceDynamic;
 class UNiagaraSystem;
 class USceneComponent;
 class USkeletalMeshComponent;
@@ -139,26 +138,18 @@ protected:
 	float RelocationRevealDelay = 0.5f;
 
 	/*
-	* 进入 Relocating 后，在旧位置开始 VFX 和淡出前的观察时间。
+	* 进入 Relocating 后，在旧位置生成 VFX 前的反应时间。
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
 		Category = "Story NPC|Relocation|Timing", meta = (ClampMin = "0.0"))
 	float RelocationStartDelay = 0.35f;
 
 	/*
-	* NPC Mesh 从完全可见淡出到完全不可见所需时间。
+	* VFX 生成后，NPC Mesh 在旧位置继续保持可见的观察时间。
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
 		Category = "Story NPC|Relocation|Timing", meta = (ClampMin = "0.0"))
-	float RelocationFadeDuration = 1.2f;
-
-	/*
-	* Fade Timer 只在淡出期间运行。
-	*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
-		Category = "Story NPC|Relocation|Timing",
-		meta = (ClampMin = "0.01", ClampMax = "0.1"))
-	float RelocationFadeUpdateInterval = 0.03f;
+	float RelocationVFXObservationDuration = 0.75f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
 		Category = "Story NPC|Relocation|VFX")
@@ -167,10 +158,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
 		Category = "Story NPC|Relocation|VFX")
 	FVector RelocationVFXOffset = FVector(0.0f, 0.0f, 80.0f);
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
-		Category = "Story NPC|Relocation|Materials")
-	FName RelocationFadeParameterName = TEXT("FadeOpacity");
 
 	/*
 	* Relocating 期间暂存下一 Story Stage。
@@ -181,16 +168,12 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<AStoryAnchor> PendingRelocationAnchor;
 
-	UPROPERTY(Transient)
-	TArray<TObjectPtr<UMaterialInstanceDynamic>> RelocationMaterialInstances;
-
 	FTimerHandle RelocationStartTimerHandle;
-	FTimerHandle RelocationFadeTimerHandle;
+	FTimerHandle RelocationVFXObservationTimerHandle;
 	FTimerHandle RelocationRevealTimerHandle;
 
-	float RelocationFadeStartTime = 0.0f;
+	FVector PendingRelocationVFXLocation = FVector::ZeroVector;
 	EStoryNPCState StoryStateBeforeRelocation = EStoryNPCState::Available;
-	bool bRelocationFadeSupported = false;
 	bool bWarnedMissingRelocationVFX = false;
 
 	/*
@@ -232,13 +215,11 @@ protected:
 	*/
 	void FinishRelocation();
 
-	void InitializeRelocationMaterials();
-	void SetRelocationFadeOpacity(float NewOpacity);
-	void BeginRelocationFade();
-	void UpdateRelocationFade();
-	void CompleteFadeAndTeleport();
+	void BeginRelocationVFXObservation();
+	void HideAndTeleport();
 	void AbortRelocation(const TCHAR* Reason);
 	void ClearRelocationTimers();
+	void SetNPCVisible(bool bVisible);
 
 	/*
 	* 统一开启或关闭交互碰撞。

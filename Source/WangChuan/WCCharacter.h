@@ -26,6 +26,7 @@ class AWCStoryNPC;
 class UDialogueWidget;
 class AEchoRelic;
 class UMemoryEchoWidget;
+class UMemoryJournalWidget;
 
 USTRUCT(BlueprintType)
 struct FPlayerAttackData 
@@ -58,6 +59,13 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(
+		const EEndPlayReason::Type EndPlayReason
+	) override;
+	virtual void OnMovementModeChanged(
+		EMovementMode PrevMovementMode,
+		uint8 PreviousCustomMode = 0
+	) override;
 
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -144,6 +152,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Memory Echo")
 	bool HasRecordedMemoryEcho(FName EchoID) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Memory Journal")
+	void CloseMemoryJournal();
+
+	UFUNCTION(BlueprintPure, Category = "Memory Journal")
+	bool GetIsMemoryJournalOpen() const;
 
 protected:
 	// Camera
@@ -400,6 +414,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Memory Echo")
 	TArray<FMemoryEchoData>RecordedMemoryEchoes;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|Memory Journal")
+	TSubclassOf<UMemoryJournalWidget> MemoryJournalWidgetClass;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UMemoryJournalWidget> ActiveMemoryJournalWidget;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Memory Journal")
+	bool bIsMemoryJournalOpen = false;
+
 	// Input Functions
 	void Move(const FInputActionValue& Value);
 
@@ -407,7 +430,9 @@ protected:
 
 	void Interact();
 
-	void ShowMemoryJournal();
+	void ToggleMemoryJournal();
+
+	bool OpenMemoryJournal();
 
 	void Attack();
 
@@ -418,6 +443,14 @@ protected:
 	void HandleJumpCompleted();
 
 	// Combat Functions
+	bool IsAnyAttackActive() const;
+
+	bool CanStartGroundAttack() const;
+
+	bool CanStartJump() const;
+
+	void CancelActiveAttackForAirborneTransition();
+
 	void PerformCurrentAttackTrace();
 
 	void PlayLightAttackMontage(FName SectionName);

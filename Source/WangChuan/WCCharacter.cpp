@@ -24,6 +24,7 @@
 
 #include "EchoRelic.h"
 #include "MemoryEchoWidget.h"
+#include "MemoryJournalWidget.h"
 
 // Sets default values
 AWCCharacter::AWCCharacter()
@@ -106,6 +107,20 @@ void AWCCharacter::BeginPlay()
 	}
 }
 
+void AWCCharacter::EndPlay(
+	const EEndPlayReason::Type EndPlayReason)
+{
+	if (ActiveMemoryJournalWidget)
+	{
+		ActiveMemoryJournalWidget->RemoveFromParent();
+	}
+
+	ActiveMemoryJournalWidget = nullptr;
+	bIsMemoryJournalOpen = false;
+
+	Super::EndPlay(EndPlayReason);
+}
+
 // Called every frame
 void AWCCharacter::Tick(float DeltaTime)
 {
@@ -162,7 +177,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 				JournalAction,
 				ETriggerEvent::Started,
 				this,
-				&AWCCharacter::ShowMemoryJournal);
+				&AWCCharacter::ToggleMemoryJournal);
 		}
 		if (AttackAction) {
 			EnhancedInputComponent->BindAction(
@@ -228,7 +243,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	void AWCCharacter::HandleJumpStarted() 
 	{
-		if (!CanAct())
+		if (!CanStartJump())
 		{
 			return;
 		}
@@ -263,6 +278,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	void AWCCharacter::Interact()
 	{
+		if (bIsMemoryJournalOpen)
+		{
+			return;
+		}
+
 		/*
 		* Memory Echo 状态下，
 		* E 键用于翻页和关闭。
@@ -327,80 +347,153 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		GEngine->RemoveOnScreenDebugMessage(1);
 	}
 
-	void AWCCharacter::ShowMemoryJournal() 
+	void AWCCharacter::ToggleMemoryJournal()
 	{
-		if (!CanAct())
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("Memory Journal input received (open=%s)."),
+			bIsMemoryJournalOpen ? TEXT("true") : TEXT("false")
+		);
+
+		if (bIsMemoryJournalOpen)
+		{
+			CloseMemoryJournal();
+			return;
+		}
+
+		OpenMemoryJournal();
+	}
+
+	bool AWCCharacter::OpenMemoryJournal()
+	{
+		if (bIsDead ||
+			bIsInDialogue ||
+			bIsViewingMemoryEcho ||
+			bIsMemoryJournalOpen ||
+			bIsAttacking ||
+			bIsInCombat ||
+			bIsLockedOn)
+		{
+			if (bIsInCombat || bIsLockedOn)
+			{
+				UE_LOG(
+					LogTemp,
+					Log,
+					TEXT(
+						"Memory Journal open rejected while "
+						"the player is in combat."
+					)
+				);
+			}
+			return false;
+		}
+
+		if (!MemoryJournalWidgetClass)
+		{
+			UE_LOG(
+				LogTemp,
+				Warning,
+				TEXT(
+					"Memory Journal cannot open because "
+					"MemoryJournalWidgetClass is not assigned."
+				)
+			);
+			return false;
+		}
+
+		APlayerController* PlayerController =
+			Cast<APlayerController>(GetController());
+		if (!PlayerController)
+		{
+			return false;
+		}
+
+		if (!ActiveMemoryJournalWidget)
+		{
+			ActiveMemoryJournalWidget =
+				CreateWidget<UMemoryJournalWidget>(
+					PlayerController,
+					MemoryJournalWidgetClass
+				);
+		}
+
+		if (!ActiveMemoryJournalWidget)
+		{
+			return false;
+		}
+
+		bIsMemoryJournalOpen = true;
+
+		GetCharacterMovement()->StopMovementImmediately();
+		GetCharacterMovement()->Velocity = FVector::ZeroVector;
+		StopJumping();
+		HideInteractionPrompt();
+
+		ActiveMemoryJournalWidget->InitializeJournal(
+			this,
+			RecordedMemoryEchoes
+		);
+		ActiveMemoryJournalWidget->AddToViewport(30);
+
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(
+			ActiveMemoryJournalWidget->TakeWidget()
+		);
+		InputMode.SetLockMouseToViewportBehavior(
+			EMouseLockMode::DoNotLock
+		);
+		InputMode.SetHideCursorDuringCapture(false);
+
+		PlayerController->SetInputMode(InputMode);
+		PlayerController->bShowMouseCursor = true;
+		PlayerController->SetIgnoreMoveInput(true);
+		PlayerController->SetIgnoreLookInput(true);
+
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("Memory Journal opened with %d recorded echo(es)."),
+			RecordedMemoryEchoes.Num()
+		);
+
+		return true;
+	}
+
+	void AWCCharacter::CloseMemoryJournal()
+	{
+		if (!bIsMemoryJournalOpen &&
+			!ActiveMemoryJournalWidget)
 		{
 			return;
 		}
 
-		FString StatusText = TEXT("未完成");
-
-		if (CollectedFragments.Num() >= 3) {
-			StatusText = TEXT("已解锁");
-		}
-
-		FString JournalText = FString::Printf(
-			TEXT(
-				"记忆日志\n\n"
-				"《安静的孩子》\n"
-				"碎片：%d / 3\n"
-				"状态：%s"
-			),
-			CollectedFragments.Num(),
-			*StatusText
-		);
-
-		if (CollectedFragments.Num() >= 3) {
-			JournalText += TEXT(
-				"\n\n"
-				"妈妈.....\n"
-				"我今天也很乖。\n"
-				"要快点来接我哦。"
-			);
-		}
-
-		/*
-		* 追加已经记录的 Memory Echo。
-		* 
-		* 当前 Debug Journal 只显示：
-		* - Title
-		* - EchoText
-		* 
-		* 暂不显示 PlayerReasonanceText，
-		* 避免 Journal 内容过长。
-		*/
-		if (RecordedMemoryEchoes.Num() > 0)
+		if (ActiveMemoryJournalWidget)
 		{
-			JournalText += TEXT(
-				"\n\n"
-				"-------------------\n"
-				"Memory Echo"
-			);
+			ActiveMemoryJournalWidget->RemoveFromParent();
+		}
 
-			for (const FMemoryEchoData& Echo :
-				RecordedMemoryEchoes)
+		bIsMemoryJournalOpen = false;
+
+		APlayerController* PlayerController =
+			Cast<APlayerController>(GetController());
+		if (PlayerController)
+		{
+			PlayerController->bShowMouseCursor = false;
+
+			FInputModeGameOnly InputMode;
+			PlayerController->SetInputMode(InputMode);
+
+			if (!bIsDead &&
+				!bIsInDialogue &&
+				!bIsViewingMemoryEcho)
 			{
-				JournalText += FString::Printf(
-					TEXT(
-						"\n\n"
-						"<%s> \n"
-						"%s"
-					),
-					*Echo.Title.ToString(),
-					*Echo.EchoText.ToString()
-				);
+				PlayerController->SetIgnoreMoveInput(false);
+				PlayerController->SetIgnoreLookInput(false);
 			}
 		}
-		
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				2,
-				8.0f,
-				FColor::Cyan,
-				JournalText);
-		}
+
+		UE_LOG(LogTemp, Log, TEXT("Memory Journal closed."));
 	}
 
 	bool AWCCharacter::StartDialogue(
@@ -412,7 +505,9 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			return false;
 		}
 
-		if (bIsInDialogue)
+		if (bIsInDialogue ||
+			bIsViewingMemoryEcho ||
+			bIsMemoryJournalOpen)
 		{
 			return false;
 		}
@@ -605,7 +700,8 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		if (bIsInDialogue ||
-			bIsViewingMemoryEcho)
+			bIsViewingMemoryEcho ||
+			bIsMemoryJournalOpen)
 		{
 			return false;
 		}
@@ -837,30 +933,34 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		RecordedMemoryEchoes.Add(EchoData);
 
-		if (GEngine)
+		if (bIsMemoryJournalOpen &&
+			ActiveMemoryJournalWidget)
 		{
-			const FString Message = FString::Printf(
-				TEXT(
-					"Memory Echo Recored: %s"
-				),
-				*EchoData.Title.ToString()
-			);
-
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				3.0f,
-				FColor::Cyan,
-				Message
+			ActiveMemoryJournalWidget->RefreshJournalEntries(
+				RecordedMemoryEchoes
 			);
 		}
 
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("Memory Echo recorded: [%s] %s."),
+			*EchoData.EchoID.ToString(),
+			*EchoData.Title.ToString()
+		);
+
 		return true;
+	}
+
+	bool AWCCharacter::GetIsMemoryJournalOpen() const
+	{
+		return bIsMemoryJournalOpen;
 	}
 
 //*****************Combat********************
 	void AWCCharacter::Attack() 
 	{
-		if (!CanAct()) {
+		if (!CanStartGroundAttack()) {
 			return;
 		}
 		if (bIsAttacking) {
@@ -923,7 +1023,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 
 	void AWCCharacter::HeavyAttack() {
-		if (!CanAct()) {
+		if (!CanStartGroundAttack()) {
 			return;
 		}
 
@@ -959,7 +1059,72 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		StartAttackTimer(CurrentAttackData.Duration);
 	}
 
+	bool AWCCharacter::IsAnyAttackActive() const {
+		return bIsAttacking;
+	}
+
+	bool AWCCharacter::CanStartGroundAttack() const {
+		const UCharacterMovementComponent* MovementComponent =
+			GetCharacterMovement();
+
+		return CanAct()
+			&& MovementComponent
+			&& MovementComponent->IsMovingOnGround()
+			&& !bPressedJump;
+	}
+
+	bool AWCCharacter::CanStartJump() const {
+		return CanAct()
+			&& !IsAnyAttackActive()
+			&& CanJump();
+	}
+
+	void AWCCharacter::CancelActiveAttackForAirborneTransition() {
+		if (!IsAnyAttackActive()) {
+			return;
+		}
+
+		StopCurrentAttackMontage();
+		EndHitStop();
+
+		GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+		GetWorldTimerManager().ClearTimer(ComboResetTimerHandle);
+		GetWorldTimerManager().ClearTimer(ComboWindowOpenTimerHandle);
+		GetWorldTimerManager().ClearTimer(ComboWindowCloseTimerHandle);
+
+		bIsAttacking = false;
+		bHasProcessedAttackHit = false;
+		bIsCurrentAttackHeavy = false;
+		bIsCurrentAttackFinisher = false;
+		CurrentAttackMontage = nullptr;
+		CurrentLightComboIndex = 0;
+		ClearLightComboBuffer();
+	}
+
+	void AWCCharacter::OnMovementModeChanged(
+		EMovementMode PrevMovementMode,
+		uint8 PreviousCustomMode)
+	{
+		Super::OnMovementModeChanged(
+			PrevMovementMode,
+			PreviousCustomMode);
+
+		const UCharacterMovementComponent* MovementComponent =
+			GetCharacterMovement();
+
+		if (MovementComponent
+			&& MovementComponent->IsFalling()
+			&& IsAnyAttackActive())
+		{
+			CancelActiveAttackForAirborneTransition();
+		}
+	}
+
 	void AWCCharacter::PerformCurrentAttackTrace() {
+		if (!CanStartGroundAttack() || !IsAnyAttackActive()) {
+			return;
+		}
+
 		FVector ForwardVector = GetActorForwardVector();
 
 		FVector Start = GetActorLocation()
@@ -1040,10 +1205,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 
 	void AWCCharacter::OnPlayerAttackHitNotify() {
-		if (!CanAct()) {
-			return;
-		}
-		if (!bIsAttacking) {
+		if (!CanStartGroundAttack() || !IsAnyAttackActive()) {
 			return;
 		}
 		if (bHasProcessedAttackHit) {
@@ -1079,6 +1241,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	void AWCCharacter::ReceiveDamage(float DamageAmount) {
 		if (bIsDead) {
 			return;
+		}
+
+		if (bIsMemoryJournalOpen)
+		{
+			CloseMemoryJournal();
 		}
 
 		Health -= DamageAmount;
@@ -1138,11 +1305,33 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 
 	bool AWCCharacter::GetIsInCombat() const {
-		return bIsInCombat;
+		const UCharacterMovementComponent* MovementComponent =
+			GetCharacterMovement();
+
+		/*
+		 * bIsInCombat is the persistent gameplay state used by combat
+		 * timing and Journal restrictions.  The Blueprint getter feeds
+		 * ABP_Manny's grounded Combat Idle selection, so do not expose
+		 * that visual state while the character is airborne.
+		 */
+		return bIsInCombat
+			&& MovementComponent
+			&& MovementComponent->IsMovingOnGround();
 	}
 
 	bool AWCCharacter::GetIsLockedOn() const {
-		return bIsLockedOn;
+		const UCharacterMovementComponent* MovementComponent =
+			GetCharacterMovement();
+
+		/*
+		 * Keep bIsLockedOn and CurrentLockOnTarget active in the air so
+		 * camera tracking and landing restoration are preserved.  This
+		 * Blueprint getter feeds ABP_Manny's grounded Lock-On Strafe
+		 * selection, so suppress only the airborne animation request.
+		 */
+		return bIsLockedOn
+			&& MovementComponent
+			&& MovementComponent->IsMovingOnGround();
 	}
 
 	bool AWCCharacter::GetIsInDialogue() const {
@@ -1173,6 +1362,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		if (bIsViewingMemoryEcho || ActiveMemoryEchoWidget)
 		{
 			EndMemoryEcho(false);
+		}
+
+		if (bIsMemoryJournalOpen || ActiveMemoryJournalWidget)
+		{
+			CloseMemoryJournal();
 		}
 
 		UnlockTarget();
@@ -1242,6 +1436,11 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		}
 
 		if (bIsViewingMemoryEcho)
+		{
+			return false;
+		}
+
+		if (bIsMemoryJournalOpen)
 		{
 			return false;
 		}
@@ -1496,11 +1695,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	// Combo Window / Input Buffer
 	void AWCCharacter::OpenLightComboWindow() {
-		if (!CanAct()) {
-			return;
-		}
-
-		if (!bIsAttacking) {
+		if (!CanStartGroundAttack() || !IsAnyAttackActive()) {
 			return;
 		}
 
@@ -1520,7 +1715,7 @@ void AWCCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 
 	void AWCCharacter::ConsumeBufferedLightAttack() {
-		if (!CanAct()) {
+		if (!CanStartGroundAttack()) {
 			ClearLightComboBuffer();
 			return;
 		}

@@ -8,8 +8,6 @@
 #include "Components/SphereComponent.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
-#include "Materials/MaterialInstanceDynamic.h"
-#include "Materials/MaterialInterface.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "TimerManager.h"
@@ -58,9 +56,6 @@ AWCStoryNPC::AWCStoryNPC()
 void AWCStoryNPC::BeginPlay()
 {
 	Super::BeginPlay();
-
-	InitializeRelocationMaterials();
-	SetRelocationFadeOpacity(1.0f);
 }
 
 void AWCStoryNPC::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -205,7 +200,8 @@ bool AWCStoryNPC::RelocateToStoryAnchor(
 	*/
 	if (StoryState == EStoryNPCState::Relocating ||
 		GetWorldTimerManager().IsTimerActive(RelocationStartTimerHandle) ||
-		GetWorldTimerManager().IsTimerActive(RelocationFadeTimerHandle) ||
+		GetWorldTimerManager().IsTimerActive(
+			RelocationVFXObservationTimerHandle) ||
 		GetWorldTimerManager().IsTimerActive(RelocationRevealTimerHandle))
 	{
 		return false;
@@ -273,6 +269,8 @@ bool AWCStoryNPC::RelocateToStoryAnchor(
 
 	PendingStoryStage = NewStoryStage;
 	PendingRelocationAnchor = TargetAnchor;
+	PendingRelocationVFXLocation =
+		GetActorLocation() + RelocationVFXOffset;
 
 	/*
 	* 关闭交互和碰撞。
@@ -283,19 +281,18 @@ bool AWCStoryNPC::RelocateToStoryAnchor(
 	* Gameplay 状态立即进入 Relocating，但旧位置的视觉表现延迟开始。
 	* 这样 Prompt 会立刻消失，玩家仍能观察 NPC 的离场效果。
 	*/
-	SetActorHiddenInGame(false);
-	SetRelocationFadeOpacity(1.0f);
+	SetNPCVisible(true);
 
 	if (RelocationStartDelay <= KINDA_SMALL_NUMBER)
 	{
-		BeginRelocationFade();
+		BeginRelocationVFXObservation();
 	}
 	else
 	{
 		GetWorldTimerManager().SetTimer(
 			RelocationStartTimerHandle,
 			this,
-			&AWCStoryNPC::BeginRelocationFade,
+			&AWCStoryNPC::BeginRelocationVFXObservation,
 			RelocationStartDelay,
 			false
 		);
@@ -337,114 +334,15 @@ bool AWCStoryNPC::RelocateToStoryAnchorByIndex(
 	);
 }
 
-void AWCStoryNPC::InitializeRelocationMaterials()
-{
-	RelocationMaterialInstances.Reset();
-	bRelocationFadeSupported = false;
-
-	if (!NPCMesh || RelocationFadeParameterName.IsNone())
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("%s: relocation fade is unavailable because the mesh or parameter name is invalid."),
-			*GetName()
-		);
-		return;
-	}
-
-	const int32 MaterialCount = NPCMesh->GetNumMaterials();
-	if (MaterialCount <= 0)
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("%s: relocation fade is unavailable because NPCMesh has no materials."),
-			*GetName()
-		);
-		return;
-	}
-
-	/*
-	* 先验证所有可见 Slot，再创建 MID，避免只有部分身体淡出。
-	*/
-	for (int32 MaterialIndex = 0; MaterialIndex < MaterialCount; ++MaterialIndex)
-	{
-		UMaterialInterface* Material = NPCMesh->GetMaterial(MaterialIndex);
-		float ParameterValue = 0.0f;
-		const bool bHasFadeParameter =
-			Material &&
-			Material->GetScalarParameterValue(
-				FHashedMaterialParameterInfo(RelocationFadeParameterName),
-				ParameterValue
-			);
-
-		if (!bHasFadeParameter)
-		{
-			UE_LOG(
-				LogTemp,
-				Warning,
-				TEXT("%s: material slot %d does not expose scalar parameter '%s'. Relocation will use the safe instant-hide fallback."),
-				*GetName(),
-				MaterialIndex,
-				*RelocationFadeParameterName.ToString()
-			);
-			return;
-		}
-	}
-
-	for (int32 MaterialIndex = 0; MaterialIndex < MaterialCount; ++MaterialIndex)
-	{
-		if (UMaterialInstanceDynamic* MaterialInstance =
-			NPCMesh->CreateAndSetMaterialInstanceDynamic(MaterialIndex))
-		{
-			RelocationMaterialInstances.Add(MaterialInstance);
-		}
-	}
-
-	bRelocationFadeSupported =
-		RelocationMaterialInstances.Num() == MaterialCount;
-
-	if (!bRelocationFadeSupported)
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("%s: not all relocation material instances could be created. Relocation will use the safe instant-hide fallback."),
-			*GetName()
-		);
-		RelocationMaterialInstances.Reset();
-	}
-}
-
-void AWCStoryNPC::SetRelocationFadeOpacity(float NewOpacity)
-{
-	if (!bRelocationFadeSupported)
-	{
-		return;
-	}
-
-	const float ClampedOpacity = FMath::Clamp(NewOpacity, 0.0f, 1.0f);
-	for (UMaterialInstanceDynamic* MaterialInstance : RelocationMaterialInstances)
-	{
-		if (IsValid(MaterialInstance))
-		{
-			MaterialInstance->SetScalarParameterValue(
-				RelocationFadeParameterName,
-				ClampedOpacity
-			);
-		}
-	}
-}
-
-void AWCStoryNPC::BeginRelocationFade()
+void AWCStoryNPC::BeginRelocationVFXObservation()
 {
 	GetWorldTimerManager().ClearTimer(RelocationStartTimerHandle);
 
 	if (StoryState != EStoryNPCState::Relocating ||
 		!IsValid(PendingRelocationAnchor))
 	{
-		AbortRelocation(TEXT("target anchor became invalid before the fade started"));
+		AbortRelocation(
+			TEXT("target anchor became invalid before VFX observation"));
 		return;
 	}
 
@@ -453,7 +351,7 @@ void AWCStoryNPC::BeginRelocationFade()
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 			this,
 			RelocationVFXSystem,
-			GetActorLocation() + RelocationVFXOffset,
+			PendingRelocationVFXLocation,
 			FRotator::ZeroRotator,
 			FVector::OneVector,
 			true,
@@ -468,67 +366,33 @@ void AWCStoryNPC::BeginRelocationFade()
 		UE_LOG(
 			LogTemp,
 			Warning,
-			TEXT("%s: RelocationVFXSystem is not configured. Fade and relocation will continue."),
+			TEXT(
+				"%s: RelocationVFXSystem is not configured. "
+				"Relocation will continue."
+			),
 			*GetName()
 		);
 	}
 
-	if (RelocationFadeDuration <= KINDA_SMALL_NUMBER)
+	if (RelocationVFXObservationDuration <= KINDA_SMALL_NUMBER)
 	{
-		CompleteFadeAndTeleport();
+		HideAndTeleport();
 		return;
 	}
-
-	if (!bRelocationFadeSupported)
-	{
-		GetWorldTimerManager().SetTimer(
-			RelocationFadeTimerHandle,
-			this,
-			&AWCStoryNPC::CompleteFadeAndTeleport,
-			RelocationFadeDuration,
-			false
-		);
-		return;
-	}
-
-	RelocationFadeStartTime = GetWorld()->GetTimeSeconds();
-	SetRelocationFadeOpacity(1.0f);
 
 	GetWorldTimerManager().SetTimer(
-		RelocationFadeTimerHandle,
+		RelocationVFXObservationTimerHandle,
 		this,
-		&AWCStoryNPC::UpdateRelocationFade,
-		FMath::Max(RelocationFadeUpdateInterval, 0.01f),
-		true
+		&AWCStoryNPC::HideAndTeleport,
+		RelocationVFXObservationDuration,
+		false
 	);
 }
 
-void AWCStoryNPC::UpdateRelocationFade()
+void AWCStoryNPC::HideAndTeleport()
 {
-	if (StoryState != EStoryNPCState::Relocating)
-	{
-		ClearRelocationTimers();
-		return;
-	}
-
-	const float ElapsedTime =
-		GetWorld()->GetTimeSeconds() - RelocationFadeStartTime;
-	const float LinearAlpha =
-		FMath::Clamp(ElapsedTime / RelocationFadeDuration, 0.0f, 1.0f);
-	const float SmoothAlpha =
-		LinearAlpha * LinearAlpha * (3.0f - 2.0f * LinearAlpha);
-
-	SetRelocationFadeOpacity(1.0f - SmoothAlpha);
-
-	if (LinearAlpha >= 1.0f)
-	{
-		CompleteFadeAndTeleport();
-	}
-}
-
-void AWCStoryNPC::CompleteFadeAndTeleport()
-{
-	GetWorldTimerManager().ClearTimer(RelocationFadeTimerHandle);
+	GetWorldTimerManager().ClearTimer(
+		RelocationVFXObservationTimerHandle);
 
 	if (StoryState != EStoryNPCState::Relocating ||
 		!IsValid(PendingRelocationAnchor))
@@ -537,8 +401,7 @@ void AWCStoryNPC::CompleteFadeAndTeleport()
 		return;
 	}
 
-	SetRelocationFadeOpacity(0.0f);
-	SetActorHiddenInGame(true);
+	SetNPCVisible(false);
 
 	const FTransform TargetTransform =
 		PendingRelocationAnchor->GetAnchorTransform();
@@ -560,11 +423,6 @@ void AWCStoryNPC::CompleteFadeAndTeleport()
 		nullptr,
 		ETeleportType::TeleportPhysics
 	);
-
-	/*
-	* Actor 仍隐藏时恢复材质，确保新 Anchor reveal 时完全可见。
-	*/
-	SetRelocationFadeOpacity(1.0f);
 
 	if (RelocationRevealDelay <= KINDA_SMALL_NUMBER)
 	{
@@ -598,6 +456,7 @@ void AWCStoryNPC::FinishRelocation()
 
 	PendingStoryStage = INDEX_NONE;
 	PendingRelocationAnchor = nullptr;
+	PendingRelocationVFXLocation = FVector::ZeroVector;
 
 	/*
 	* 必须先恢复 Available，
@@ -605,8 +464,7 @@ void AWCStoryNPC::FinishRelocation()
 	*/
 	StoryState = EStoryNPCState::Available;
 
-	SetRelocationFadeOpacity(1.0f);
-	SetActorHiddenInGame(false);
+	SetNPCVisible(true);
 
 	SetStoryNPCInteractionEnabled(true);
 
@@ -626,8 +484,8 @@ void AWCStoryNPC::AbortRelocation(const TCHAR* Reason)
 	ClearRelocationTimers();
 	PendingStoryStage = INDEX_NONE;
 	PendingRelocationAnchor = nullptr;
-	SetRelocationFadeOpacity(1.0f);
-	SetActorHiddenInGame(false);
+	PendingRelocationVFXLocation = FVector::ZeroVector;
+	SetNPCVisible(true);
 
 	StoryState = StoryStateBeforeRelocation;
 	SetStoryNPCInteractionEnabled(
@@ -644,8 +502,19 @@ void AWCStoryNPC::ClearRelocationTimers()
 
 	FTimerManager& TimerManager = GetWorldTimerManager();
 	TimerManager.ClearTimer(RelocationStartTimerHandle);
-	TimerManager.ClearTimer(RelocationFadeTimerHandle);
+	TimerManager.ClearTimer(RelocationVFXObservationTimerHandle);
 	TimerManager.ClearTimer(RelocationRevealTimerHandle);
+}
+
+void AWCStoryNPC::SetNPCVisible(bool bVisible)
+{
+	if (!NPCMesh)
+	{
+		return;
+	}
+
+	NPCMesh->SetVisibility(bVisible, true);
+	NPCMesh->SetHiddenInGame(!bVisible, true);
 }
 
 void AWCStoryNPC::SetStoryNPCInteractionEnabled(bool bEnabled)

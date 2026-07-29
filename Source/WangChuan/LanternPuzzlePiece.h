@@ -114,8 +114,6 @@ protected:
 
 	/*
 	* 每盏灯的稳定身份。
-	* 
-	* 正式三灯实例分别使用：0，1，2
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,
 		Category = "Lantern Puzzle|Identity", meta = (ClampMin = "0"))

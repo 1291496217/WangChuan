@@ -4,7 +4,6 @@
 #include "GameFramework/Actor.h"
 #include "StoryEncounter.generated.h"
 
-class AGhostEnemy;
 class AStoryAnchor;
 class AWCStoryNPC;
 class USceneComponent;
@@ -15,7 +14,7 @@ class AStoryObjectiveBase;
 * 轻量 Story Encounter 协调者。
 * 
 * 负责：
-* - 监听指定 RequiredEnemy 的死亡事件。
+* - 监听统一 Story Objective 的完成事件。
 * - 记录 Encounter 当前进度。
 * - 保存 Story NPC， Echo Relic， 与 Next Anchor 等引用。
 */
@@ -27,12 +26,6 @@ class WANGCHUAN_API AStoryEncounter : public AActor
 	
 public:	
 	AStoryEncounter();
-
-	/*
-	* 指定敌人是否已经被击败。
-	*/
-	UFUNCTION(BlueprintPure, Category = "Story Encounter")
-	bool GetIsRequiredEnemyDefeated() const;
 
 	/*
 	* 整个 Encounter 是否已经完成。
@@ -62,20 +55,8 @@ protected:
 	FName EncounterID = TEXT("StoryEncounter.None");
 
 	/*
-	* 玩家必须击败的特定敌人。
-	*
-	* 使用 EditInstanceOnly， 
-	* 因为它引用当前地图中的敌人实例。
-	*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, 
-		Category = "Story Encounter|References")
-	AGhostEnemy* RequiredEnemy = nullptr;
-
-	/*
-	* Optional non-combat completion condition.
-	*
-	* A valid Encounter should use either RequiredEnemy or StoryObjective,
-	* but not both.
+	* Required gameplay condition for this Encounter.
+	* Condition-specific logic belongs to the configured Objective.
 	*/
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly,
 		Category = "StoryEncounter|Objective", meta = (AllowPrivateAccess = "true"))
@@ -98,13 +79,6 @@ protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly,
 		Category = "Story Encounter|References")
 	AEchoRelic* EchoRelic = nullptr;
-
-	/*
-	* 指定 RequiredEnemy 是否已死亡。
-	*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, 
-		Category = "Story Encounter|State")
-	bool bRequiredEnemyDefeated = false;
 
 	/*
 	* 整条 Encounter 是否完成。
@@ -135,17 +109,6 @@ protected:
 		Category = "Story Encounter|Completion",
 		meta = (ClampMin = "0"))
 	int32 NextStoryStage = 1;
-
-	/*
-	* RequiredEnemy 广播死亡时调用。
-	* 
-	* 参数签名必须与
-	* FOnGhostEnemyDefeatedSignature 完全一致。
-	*/
-	UFUNCTION()
-	void HandleRequiredEnemyDefeated(
-		AGhostEnemy* DefeatedEnemy
-	);
 
 	void ShowEncounterDebugMessage(
 		const FString& Message,
