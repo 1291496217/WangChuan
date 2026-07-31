@@ -117,6 +117,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Story NPC|Relocation")
 	bool RelocateToStoryAnchorByIndex(int32 AnchorIndex, int32 NewStoryStage);
 
+	/*
+	* 静默恢复 NPC 的稳定 Story Stage 与 Anchor。
+	*
+	* 不接收 Story Event，不播放 Niagara，
+	* 不进入 Relocating，不等待 Timer。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Story NPC|Persistence")
+	bool ApplySavedStoryState(int32 SavedStoryStage, FName SavedAnchorID);
+
 protected:
 	// ******************** Components ********************
 
@@ -278,4 +287,8 @@ protected:
 	* NPC 消失前清除玩家当前交互引用与 Prompt。
 	*/
 	void ClearPlayerInteractionIfNeeded();
+
+	AStoryAnchor* FindStoryAnchorByID(
+		FName AnchorID
+	) const;
 };

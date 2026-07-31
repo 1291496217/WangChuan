@@ -242,6 +242,13 @@ protected:
 		const FHitResult& SweepResult
 	);
 
+	virtual void OnSavedObjectiveStateApplied()
+		override;
+
+	void SetActivationBoxEnabledForRestore(
+		bool bEnabled
+	);
+
 	UFUNCTION()
 	void HandleLanternInteracted(ALanternPuzzlePiece* InteractedLantern);
 

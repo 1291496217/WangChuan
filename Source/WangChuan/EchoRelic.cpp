@@ -340,18 +340,7 @@ void AEchoRelic::ClearPlayerInteractionIfNeeded()
 
 void AEchoRelic::DisableRelicInteraction()
 {
-	if (!InteractionSphere)
-	{
-		return;
-	}
-
-	InteractionSphere
-		->SetGenerateOverlapEvents(false);
-
-	InteractionSphere
-		->SetCollisionEnabled(
-			ECollisionEnabled::NoCollision
-		);
+	SetRelicInteractionEnabled(false);
 }
 
 void AEchoRelic::RefreshPromptForOverlappingPlayer()
@@ -396,3 +385,84 @@ void AEchoRelic::RefreshPromptForOverlappingPlayer()
 	);
 }
 
+void AEchoRelic::ApplySavedRelicState(EEchoRelicState SavedState)
+{
+	/*
+	* 不允许保留一次旧的半途 Echo 阅读状态。
+	*/
+	bActivationInProgress = false;
+
+	ClearPlayerInteractionIfNeeded();
+
+	RelicState = SavedState;
+
+	if (RelicState == EEchoRelicState::Activated)
+	{
+		SetRelicInteractionEnabled(
+			false
+		);
+
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT(
+				"Echo Relic [%s] silently restored "
+				"as Activated."
+			),
+			*MemoryEchoData.EchoID.ToString()
+		);
+
+		return;
+	}
+
+	SetRelicInteractionEnabled(
+		true
+	);
+
+	/*
+	* 玩家如果已在范围中，恢复正确的 Examine / Listen Prompt。
+	*/
+	RefreshPromptForOverlappingPlayer();
+
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT(
+			"Echo Relic [%s] silently restored "
+			"to state [%d]."
+		),
+		*MemoryEchoData.EchoID.ToString(),
+		static_cast<int32>(RelicState)
+	);
+}
+
+void AEchoRelic::SetRelicInteractionEnabled(bool bEnabled)
+{
+	if (!InteractionSphere)
+	{
+		return;
+	}
+
+	if (bEnabled)
+	{
+		InteractionSphere->SetCollisionEnabled(
+			ECollisionEnabled::QueryOnly
+		);
+
+		InteractionSphere->SetGenerateOverlapEvents(
+			true
+		);
+
+		InteractionSphere->UpdateOverlaps();
+
+		return;
+	}
+
+	InteractionSphere->SetGenerateOverlapEvents(
+		false
+	);
+
+	InteractionSphere->SetCollisionEnabled(
+		ECollisionEnabled::NoCollision
+	);
+}

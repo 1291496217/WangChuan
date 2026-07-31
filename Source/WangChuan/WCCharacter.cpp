@@ -815,6 +815,101 @@ bool AWCCharacter::GetIsMemoryJournalOpen() const
 	return bIsMemoryJournalOpen;
 }
 
+
+void AWCCharacter::ApplySavedMemoryEchoes(
+	const TArray<FMemoryEchoData>&
+	SavedEchoes)
+{
+	/*
+	* 不在其他 Story Modal 运行中替换数据。
+	*
+	* 正式 Load 流程之后还会增加统一 Modal 安全处理。
+	*/
+	if (bIsInDialogue ||
+		bIsViewingMemoryEcho)
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT(
+				"Memory Echo restore rejected because "
+				"a Story UI mode is active."
+			)
+		);
+
+		return;
+	}
+
+	if (bIsMemoryJournalOpen ||
+		ActiveMemoryJournalWidget)
+	{
+		CloseMemoryJournal();
+	}
+
+	RecordedMemoryEchoes.Reset(
+		SavedEchoes.Num()
+	);
+
+	TSet<FName> RestoredEchoIDs;
+
+	for (const FMemoryEchoData& EchoData :
+		SavedEchoes)
+	{
+		if (EchoData.EchoID.IsNone())
+		{
+			UE_LOG(
+				LogTemp,
+				Warning,
+				TEXT(
+					"Skipped saved Memory Echo "
+					"with ID None."
+				)
+			);
+
+			continue;
+		}
+
+		if (RestoredEchoIDs.Contains(
+			EchoData.EchoID))
+		{
+			UE_LOG(
+				LogTemp,
+				Warning,
+				TEXT(
+					"Skipped duplicate saved "
+					"Memory Echo [%s]."
+				),
+				*EchoData.EchoID.ToString()
+			);
+
+			continue;
+		}
+
+		RestoredEchoIDs.Add(
+			EchoData.EchoID
+		);
+
+		/*
+		* 不调用 RecordMemoryEcho()。
+		*
+		* Restore 直接恢复已经确认的记录，
+		* 不需要模拟“刚刚获得 Echo”。
+		*/
+		RecordedMemoryEchoes.Add(
+			EchoData
+		);
+	}
+
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT(
+			"Memory Journal silently restored "
+			"with %d Echo record(s)."
+		),
+		RecordedMemoryEchoes.Num()
+	);
+}
 // ******************** Combat ********************
 
 void AWCCharacter::Attack()
@@ -1816,3 +1911,4 @@ void AWCCharacter::FaceLockOnTargetInstantly()
 
 	SetActorRotation(DirectionToTarget.Rotation());
 }
+

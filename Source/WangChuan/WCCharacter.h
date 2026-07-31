@@ -168,6 +168,16 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Memory Journal")
 	bool GetIsMemoryJournalOpen() const;
 
+	/*
+	* 静默恢复已记录的 Memory Echo。
+	*
+	* 不调用 RecordMemoryEcho()，
+	* 不打开 Journal 或 Echo UI，
+	* 不触发 Relic 或 Encounter。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Memory Journal|Persistence")
+	void ApplySavedMemoryEchoes(const TArray<FMemoryEchoData>&SavedEchoes);
+
 protected:
 	// ******************** Components ********************
 

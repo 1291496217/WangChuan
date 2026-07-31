@@ -203,3 +203,98 @@ void AEnemyDefeatObjective::HandleRequiredEnemyDefeated(
 
 	CompleteIfReady();
 }
+
+void AEnemyDefeatObjective::OnSavedObjectiveStateApplied()
+{
+	Super::OnSavedObjectiveStateApplied();
+
+	if (GetIsObjectiveComplete())
+	{
+		bRequiredEnemyDefeated = true;
+
+		/*
+		* 已完成 Objective 不再需要监听 Enemy。
+		*/
+		UnbindRequiredEnemy();
+
+		if (IsValid(RequiredEnemy))
+		{
+			RequiredEnemy
+				->ApplyPersistentDefeatedState();
+		}
+
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT(
+				"Enemy Defeat Objective [%s] silently "
+				"restored as completed."
+			),
+			*ObjectiveID.ToString()
+		);
+
+		return;
+	}
+
+	/*
+	* 未完成存档不恢复中途战斗状态。
+	* 在新的默认 World 中，Enemy 应处于正常存活状态。
+	*/
+	bRequiredEnemyDefeated = false;
+
+	bConfigurationValid =
+		ValidateConfiguration();
+
+	if (!bConfigurationValid)
+	{
+		UnbindRequiredEnemy();
+		bIsActive = false;
+		return;
+	}
+
+	/*
+	* 如果存档说未完成，但当前 Enemy 已经死亡，
+	* 当前 World 与 Save Data 存在矛盾。
+	*
+	* 不通过 CompleteObjective() 自动纠正，
+	* 因为那会广播 Gameplay Delegate。
+	*/
+	if (IsValid(RequiredEnemy) &&
+		RequiredEnemy->GetIsDead())
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT(
+				"Enemy Defeat Objective [%s] restore "
+				"found an already-dead Enemy while the "
+				"saved Objective is incomplete."
+			),
+			*ObjectiveID.ToString()
+		);
+
+		UnbindRequiredEnemy();
+		bIsActive = false;
+		return;
+	}
+
+	BindRequiredEnemy();
+
+	/*
+	* Enemy Objective 是立即活动的世界条件。
+	*
+	* 直接设置 Active，不调用 ActivateObjective()，
+	* 避免它重新检查 Enemy 并可能调用 CompleteObjective()。
+	*/
+	bIsActive = true;
+
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT(
+			"Enemy Defeat Objective [%s] silently "
+			"restored as incomplete and active."
+		),
+		*ObjectiveID.ToString()
+	);
+}

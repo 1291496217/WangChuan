@@ -704,3 +704,183 @@ FName AWCStoryNPC::GetLastReceivedStoryEvent() const
 {
 	return LastReceivedStoryEvent;
 }
+
+bool AWCStoryNPC::ApplySavedStoryState(
+	int32 SavedStoryStage,
+	FName SavedAnchorID)
+{
+	if (SavedStoryStage < 0)
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT(
+				"Story NPC [%s] restore failed: "
+				"Story Stage cannot be negative."
+			),
+			*GetStoryNPCID().ToString()
+		);
+
+		return false;
+	}
+
+	if (SavedAnchorID.IsNone())
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT(
+				"Story NPC [%s] restore failed: "
+				"Anchor ID is None."
+			),
+			*GetStoryNPCID().ToString()
+		);
+
+		return false;
+	}
+
+	AStoryAnchor* TargetAnchor =
+		FindStoryAnchorByID(
+			SavedAnchorID
+		);
+
+	if (!IsValid(TargetAnchor))
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT(
+				"Story NPC [%s] restore failed: "
+				"Anchor [%s] was not found."
+			),
+			*GetStoryNPCID().ToString(),
+			*SavedAnchorID.ToString()
+		);
+
+		return false;
+	}
+
+	AWCCharacter* Player =
+		Cast<AWCCharacter>(
+			UGameplayStatics::GetPlayerCharacter(
+				this,
+				0
+			)
+		);
+
+	/*
+	* Day6 会在正式 Load 前关闭或拒绝 Modal 状态。
+	*
+	* 当前接口不能在对话中直接移动对话来源。
+	*/
+	if (Player &&
+		Player->GetIsInDialogue())
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT(
+				"Story NPC [%s] restore rejected "
+				"because Dialogue is active."
+			),
+			*GetStoryNPCID().ToString()
+		);
+
+		return false;
+	}
+
+	/*
+	* 所有验证先完成，再修改 World。
+	*/
+	ClearRelocationTimers();
+
+	ClearPlayerInteractionIfNeeded();
+
+	PendingStoryStage = INDEX_NONE;
+	PendingRelocationAnchor = nullptr;
+	PendingRelocationVFXLocation =
+		FVector::ZeroVector;
+
+	SetStoryNPCInteractionEnabled(false);
+
+	const FTransform TargetTransform =
+		TargetAnchor->GetAnchorTransform();
+
+	FRotator TargetActorRotation =
+		TargetTransform.Rotator();
+
+	TargetActorRotation.Yaw =
+		FRotator::NormalizeAxis(
+			TargetActorRotation.Yaw -
+			MeshFacingYawOffset
+		);
+
+	SetActorLocationAndRotation(
+		TargetTransform.GetLocation(),
+		TargetActorRotation,
+		false,
+		nullptr,
+		ETeleportType::TeleportPhysics
+	);
+
+	CurrentStoryStage =
+		SavedStoryStage;
+
+	StoryState =
+		EStoryNPCState::Available;
+
+	StoryStateBeforeRelocation =
+		EStoryNPCState::Available;
+
+	/*
+	* LastReceivedStoryEvent 是 Runtime Debug 状态，
+	* 不属于保存事实。
+	*/
+	LastReceivedStoryEvent =
+		NAME_None;
+
+	SetNPCVisible(true);
+
+	SetStoryNPCInteractionEnabled(true);
+
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT(
+			"Story NPC [%s] silently restored: "
+			"Stage=%d, Anchor=[%s]."
+		),
+		*GetStoryNPCID().ToString(),
+		CurrentStoryStage,
+		*SavedAnchorID.ToString()
+	);
+
+	return true;
+}
+
+AStoryAnchor*
+AWCStoryNPC::FindStoryAnchorByID(
+	FName AnchorID) const
+{
+	if (AnchorID.IsNone())
+	{
+		return nullptr;
+	}
+
+	for (AStoryAnchor* StoryAnchor :
+		StoryAnchors)
+	{
+		if (!IsValid(StoryAnchor))
+		{
+			continue;
+		}
+
+		if (StoryAnchor->GetAnchorID() ==
+			AnchorID)
+		{
+			return StoryAnchor;
+		}
+	}
+
+	return nullptr;
+}

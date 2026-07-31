@@ -49,6 +49,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Story Objective")
 	virtual void ResetObjective();
 
+	/*
+	* 静默应用存档中的最终 Objective 状态。
+	*
+	* 与 CompleteObjective() 不同：
+	* - 不要求 Objective 已经 Active
+	* - 不广播 OnObjectiveCompleted
+	* - 不触发 Encounter
+	* - 不播放任何一次性反馈
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Story Objective|Persistence")
+	virtual void ApplySavedObjectiveState(bool bSavedCompleted);
+
 	// ******************** Getters ********************
 
 	/*
@@ -99,4 +111,15 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly,
 		Category = "Story Objective|State")
 	bool bIsCompleted;
+
+	/*
+	* 子类恢复自身表现与引用状态的 Hook。
+	*
+	* 调用时，Base 的：
+	* bIsCompleted
+	* bIsActive
+	*
+	* 已经设置完毕。
+	*/
+	virtual void OnSavedObjectiveStateApplied();
 };

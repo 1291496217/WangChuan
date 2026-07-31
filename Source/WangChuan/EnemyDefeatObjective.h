@@ -53,6 +53,8 @@ protected:
 	)
 	bool bRequiredEnemyDefeated = false;
 
+	virtual void OnSavedObjectiveStateApplied() override;
+
 private:
 	// ******************** Runtime State ********************
 

@@ -380,3 +380,60 @@ bool AStoryEncounter::IsEncounterConditionResolved() const
 {
 	return bStoryObjectiveCompleted;
 }
+
+void AStoryEncounter::ApplySavedEncounterState(bool bSavedCompleted)
+{
+	bEncounterCompleted = bSavedCompleted;
+
+	/*
+	* 这个值可以由当前已恢复的 Objective 推导。
+	*
+	* 因此 Day3 完整 Restore 时必须先恢复 Objective，
+	* 再恢复 Encounter。
+	*/
+	bStoryObjectiveCompleted =
+		IsValid(StoryObjective) &&
+		StoryObjective
+		->GetIsObjectiveComplete();
+
+	if (bEncounterCompleted &&
+		!bStoryObjectiveCompleted)
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT(
+				"Story Encounter [%s] is saved as "
+				"completed, but its configured Objective "
+				"is currently incomplete."
+			),
+			*EncounterID.ToString()
+		);
+	}
+
+	/*
+	* 不调用：
+	*
+	* HandleStoryObjectiveCompleted()
+	* UnlockEchoRelicFromResolvedCondition()
+	* HandleEchoRelicActivated()
+	* RecieveStoryEvent()
+	* RelocateToStoryAnchor()
+	*/
+
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT(
+			"Story Encounter [%s] silently restored. "
+			"ObjectiveResolved=%s, Completed=%s."
+		),
+		*EncounterID.ToString(),
+		bStoryObjectiveCompleted
+		? TEXT("True")
+		: TEXT("False"),
+		bEncounterCompleted
+		? TEXT("True")
+		: TEXT("False")
+	);
+}

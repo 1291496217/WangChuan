@@ -1,5 +1,4 @@
-﻿
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -87,6 +86,16 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Echoo Relic|Events")
 	FOnEchoRelicActivatedSignature OnEchoActivated;
 
+	/*
+	* 静默恢复 Relic 的稳定状态。
+	*
+	* 不打开 Memory Echo UI，
+	* 不广播 OnEchoActivated，
+	* 不记录 Journal。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Echo Relic|Persistence")
+	void ApplySavedRelicState(EEchoRelicState SavedState);
+
 protected:
 	// ******************** Components ********************
 
@@ -154,4 +163,5 @@ protected:
 
 	void RefreshPromptForOverlappingPlayer();
 
+	void SetRelicInteractionEnabled(bool bEnabled);
 };

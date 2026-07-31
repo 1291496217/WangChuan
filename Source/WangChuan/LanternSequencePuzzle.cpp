@@ -997,7 +997,132 @@ void ALanternSequencePuzzle::PlayWrongInputSound(
 	);
 }
 
+void ALanternSequencePuzzle::
+OnSavedObjectiveStateApplied()
+{
+	Super::OnSavedObjectiveStateApplied();
 
+	ClearPuzzleTimers();
+
+	CurrentPlayerInput.Empty();
+	CurrentPreviewIndex = 0;
+
+	SetLanternInteractionEnabled(false);
+
+	bConfigurationValid =
+		ValidatePuzzleConfiguration();
+
+	if (!bConfigurationValid)
+	{
+		PuzzleState =
+			ELanternPuzzleState::Dormant;
+
+		SetAllLanternsLit(false);
+
+		SetActivationBoxEnabledForRestore(
+			false
+		);
+
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT(
+				"Lantern Puzzle [%s] could not apply "
+				"saved state because its configuration "
+				"is invalid."
+			),
+			*ObjectiveID.ToString()
+		);
+
+		return;
+	}
+
+	if (GetIsObjectiveComplete())
+	{
+		PuzzleState =
+			ELanternPuzzleState::Completed;
+
+		SetAllLanternsLit(true);
+
+		SetActivationBoxEnabledForRestore(
+			false
+		);
+
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT(
+				"Lantern Puzzle [%s] silently restored "
+				"as completed."
+			),
+			*ObjectiveID.ToString()
+		);
+
+		return;
+	}
+
+	/*
+	* 未完成时不恢复 Previewing、AwaitingInput 或 Resetting。
+	* 统一回到稳定 Dormant 状态。
+	*/
+	PuzzleState =
+		ELanternPuzzleState::Dormant;
+
+	SetAllLanternsLit(false);
+
+	SetActivationBoxEnabledForRestore(
+		true
+	);
+
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT(
+			"Lantern Puzzle [%s] silently restored "
+			"as incomplete and Dormant."
+		),
+		*ObjectiveID.ToString()
+	);
+}
+
+void ALanternSequencePuzzle::
+SetActivationBoxEnabledForRestore(
+	bool bEnabled)
+{
+	if (!ActivationBox)
+	{
+		return;
+	}
+
+	if (bEnabled)
+	{
+		ActivationBox->SetCollisionEnabled(
+			ECollisionEnabled::QueryOnly
+		);
+
+		ActivationBox->SetGenerateOverlapEvents(
+			true
+		);
+
+		/*
+		* 这里不主动调用 UpdateOverlaps()。
+		*
+		* 避免 Restore 时玩家已经站在 Trigger 内，
+		* 导致 Preview 立即作为副作用启动。
+		*
+		* 玩家离开并重新进入后，谜题正常开始。
+		*/
+		return;
+	}
+
+	ActivationBox->SetGenerateOverlapEvents(
+		false
+	);
+
+	ActivationBox->SetCollisionEnabled(
+		ECollisionEnabled::NoCollision
+	);
+}
 
 
 

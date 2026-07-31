@@ -168,6 +168,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void OnEnemyAttackHit();
 
+	/*
+	* 将 Enemy 静默恢复为“此前已经被击败”的稳定状态。
+	*
+	* 不调用 Die()，不播放音效，不广播 OnEnemyDefeated，
+	* 不启动死亡 Timer，也不 Destroy Actor。
+	*
+	* Actor 保留在 World 中但隐藏和禁用，
+	* 使重复 Restore 仍然安全。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Enemy|Persistence")
+	void ApplyPersistentDefeatedState();
+
 	// ******************** Getters ********************
 
 	UFUNCTION(BlueprintPure, Category = "Combat")

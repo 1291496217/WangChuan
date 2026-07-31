@@ -49,6 +49,15 @@ public:
 
 	void UnlockEchoRelicFromResolvedCondition();
 
+	/*
+	* 静默恢复 Encounter 的最终完成状态。
+	*
+	* 不发送 Story Event，不移动 NPC，
+	* 不解锁 Relic，不广播任何新事件。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Story Encounter|Persistence")
+	void ApplySavedEncounterState(bool bSavedCompleted);
+
 protected:
 	// ******************** Lifecycle ********************
 

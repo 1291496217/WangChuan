@@ -281,6 +281,55 @@ bool AGhostEnemy::CanStartAttack() const
 	}
 	return true;
 }
+
+void AGhostEnemy::ApplyPersistentDefeatedState()
+{
+	/*
+	* 重复调用时，所有赋值和组件操作仍得到相同结果。
+	*/
+	ClearCombatTimers();
+
+	GetWorldTimerManager().ClearTimer(
+		DeathTimerHandle
+	);
+
+	Health = 0.0f;
+
+	bIsDead = true;
+	bIsMoving = false;
+	bIsAttacking = false;
+	bIsHitReacting = false;
+	bCanAttackPlayer = false;
+
+	if (HealthWidgetComponent)
+	{
+		HealthWidgetComponent->SetVisibility(
+			false
+		);
+	}
+
+	if (EnemyMesh)
+	{
+		EnemyMesh->SetCollisionEnabled(
+			ECollisionEnabled::NoCollision
+		);
+	}
+
+	SetActorEnableCollision(false);
+	SetActorTickEnabled(false);
+	SetActorHiddenInGame(true);
+
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT(
+			"Ghost Enemy [%s] silently restored "
+			"to persistent defeated state."
+		),
+		*GetName()
+	);
+}
+
 // ******************** Enemy Behavior ********************
 
 void AGhostEnemy::Tick(float DeltaTime)

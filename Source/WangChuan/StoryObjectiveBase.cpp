@@ -94,6 +94,43 @@ void AStoryObjectiveBase::ResetObjective()
 	);
 }
 
+void AStoryObjectiveBase::ApplySavedObjectiveState(bool bSavedCompleted)
+{
+	/*
+	* Restore 直接应用稳定事实。
+	*
+	* 无论完成或未完成，都不尝试恢复一次运行到一半的
+	* Active / Preview / Timer 状态。
+	*/
+	bIsCompleted = bSavedCompleted;
+	bIsActive = false;
+
+	OnSavedObjectiveStateApplied();
+
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT(
+			"Story Objective [%s] silently restored. "
+			"Completed=%s."
+		),
+		*ObjectiveID.ToString(),
+		bIsCompleted
+		? TEXT("True")
+		: TEXT("False")
+	);
+}
+
+void AStoryObjectiveBase::OnSavedObjectiveStateApplied()
+{
+	/*
+	* Base Objective 没有额外表现需要恢复。
+	*
+	* EnemyDefeatObjective 与 LanternSequencePuzzle
+	* 会覆盖这个 Hook。
+	*/
+}
+
 // ******************** Getters ********************
 
 FName AStoryObjectiveBase::GetObjectiveID() const
