@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
@@ -13,10 +11,10 @@ class UTextBlock;
 
 /**
  * 最小 Memory Echo UI。
- * 
+ *
  * Page 0：
  * Echo Text
- * 
+ *
  * Page 1：
  * PlayerReasonanceText
  */
@@ -26,6 +24,8 @@ class WANGCHUAN_API UMemoryEchoWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	// ******************** Public Interface ********************
+
 	UFUNCTION(BlueprintCallable, Category = "Memory Echo")
 	void StartMemoryEcho(
 		const FMemoryEchoData& NewEchoData,
@@ -36,7 +36,11 @@ public:
 	void AdvanceMemoryEcho();
 
 protected:
+	// ******************** Lifecycle ********************
+
 	virtual void NativeConstruct() override;
+
+	// ******************** UI ********************
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* EchoTitleText;
@@ -50,6 +54,8 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* EchoContinueButtonLabel;
 
+	// ******************** Runtime State ********************
+
 	UPROPERTY()
 	FMemoryEchoData ActiveEchoData;
 
@@ -59,9 +65,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Memory Echo")
 	int32 CurrentPageIndex = 0;
 
+	// ******************** Helpers ********************
+
 	void DisplayCurrentPage();
 
 	void RequestCloseEcho();
+
+	// ******************** Events ********************
 
 	UFUNCTION()
 	void HandleContinueClicked();

@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
+﻿
 #include "StoryEncounter.h"
 
 #include "Components/SceneComponent.h"
@@ -10,6 +8,8 @@
 #include "WCStoryNPC.h"
 #include "EchoRelic.h"
 #include "StoryObjectiveBase.h"
+
+// ******************** Construction ********************
 
 AStoryEncounter::AStoryEncounter()
 {
@@ -24,6 +24,8 @@ AStoryEncounter::AStoryEncounter()
 
 	SetActorEnableCollision(false);
 }
+
+// ******************** Lifecycle ********************
 
 void AStoryEncounter::BeginPlay()
 {
@@ -48,10 +50,10 @@ void AStoryEncounter::BeginPlay()
 		);
 
 		/*
-		* This protects against BeginPlay ordering.
+		* 此检查用于规避 BeginPlay 顺序差异。
 		*
-		* If the Objective happened to complete before the Encounter bound to it,
-		* the Encounter can still recover the resolved state.
+		* 如果 Objective 在 Encounter 完成绑定前已经结束，
+		* Encounter 仍可在此恢复已解决状态。
 		*/
 		if (StoryObjective->GetIsObjectiveComplete())
 		{
@@ -105,7 +107,7 @@ void AStoryEncounter::BeginPlay()
 			FColor::Yellow
 		);
 	}
-	
+
 	if (!NextStoryAnchor)
 	{
 		ShowEncounterDebugMessage(
@@ -148,6 +150,8 @@ void AStoryEncounter::EndPlay(
 	Super::EndPlay(EndPlayReason);
 }
 
+// ******************** Getters ********************
+
 FName AStoryEncounter::GetEncounterID() const
 {
 	return EncounterID;
@@ -157,6 +161,8 @@ bool AStoryEncounter::GetIsEncounterCompleted() const
 {
 	return bEncounterCompleted;
 }
+
+// ******************** Helpers ********************
 
 void AStoryEncounter::ShowEncounterDebugMessage(
 	const FString& Message,
@@ -177,6 +183,8 @@ void AStoryEncounter::ShowEncounterDebugMessage(
 		Message
 	);
 }
+
+// ******************** Events ********************
 
 void AStoryEncounter::HandleEchoRelicActivated(
 	AEchoRelic* ActivatedRelic)
@@ -319,6 +327,8 @@ void AStoryEncounter::HandleStoryObjectiveCompleted(
 
 	UnlockEchoRelicFromResolvedCondition();
 }
+
+// ******************** Public Interface ********************
 
 void AStoryEncounter::UnlockEchoRelicFromResolvedCondition()
 {

@@ -18,7 +18,11 @@ class WANGCHUAN_API UWCGameSaveGame : public USaveGame
 	GENERATED_BODY()
 
 public:
+	// ******************** Construction ********************
+
 	UWCGameSaveGame();
+
+	// ******************** Configuration ********************
 
 	/*
 	* 当前 SaveGame 数据格式版本。
@@ -27,6 +31,8 @@ public:
 	* 但加载时仍需要识别不支持的格式。
 	*/
 	static constexpr int32 CurrentSaveVersion = 1;
+
+	// ******************** Save Data ********************
 
 	/*
 	* 当前存档的数据格式版本。

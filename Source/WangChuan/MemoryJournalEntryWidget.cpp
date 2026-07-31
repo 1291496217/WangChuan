@@ -5,6 +5,8 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 
+// ******************** Lifecycle ********************
+
 TSharedRef<SWidget> UMemoryJournalEntryWidget::RebuildWidget()
 {
 	BuildWidgetTree();
@@ -33,6 +35,8 @@ void UMemoryJournalEntryWidget::NativeConstruct()
 	ApplySelectionVisual();
 }
 
+// ******************** Public Interface ********************
+
 void UMemoryJournalEntryWidget::InitializeEntry(
 	int32 InEntryIndex,
 	const FText& InTitle)
@@ -51,6 +55,8 @@ void UMemoryJournalEntryWidget::SetEntrySelected(bool bSelected)
 	bIsSelected = bSelected;
 	ApplySelectionVisual();
 }
+
+// ******************** UI ********************
 
 void UMemoryJournalEntryWidget::BuildWidgetTree()
 {
@@ -111,6 +117,8 @@ void UMemoryJournalEntryWidget::ApplySelectionVisual()
 		: FLinearColor(0.08f, 0.07f, 0.055f, 0.75f)
 	);
 }
+
+// ******************** Events ********************
 
 void UMemoryJournalEntryWidget::HandleEntryClicked()
 {

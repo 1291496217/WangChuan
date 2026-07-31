@@ -7,6 +7,8 @@
 #include "LanternPuzzlePiece.h"
 #include "WCCharacter.h"
 
+// ******************** Construction ********************
+
 ALanternSequencePuzzle::ALanternSequencePuzzle()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -60,6 +62,8 @@ ALanternSequencePuzzle::ALanternSequencePuzzle()
 	bConfigurationValid = false;
 }
 
+// ******************** Lifecycle ********************
+
 void ALanternSequencePuzzle::BeginPlay()
 {
 	Super::BeginPlay();
@@ -85,11 +89,10 @@ void ALanternSequencePuzzle::BeginPlay()
 		ValidatePuzzleConfiguration();
 
 	/*
-	* Each Lantern Piece initializes its own light state in BeginPlay.
+	* 每个 Lantern Piece 会在 BeginPlay 中初始化自身灯光状态。
 	*
-	* Do not call SetAllLanternsLit() here: actor BeginPlay order is not
-	* guaranteed, so the Puzzle Controller may run before the Lantern
-	* Blueprints have created their dynamic material instances.
+	* 此处不能调用 SetAllLanternsLit()：Actor 的 BeginPlay 顺序没有保证，
+	* Puzzle Controller 可能先于 Lantern Blueprint 创建动态材质实例。
 	*/
 
 	SetLanternInteractionEnabled(false);
@@ -138,6 +141,8 @@ void ALanternSequencePuzzle::EndPlay(
 
 	Super::EndPlay(EndPlayReason);
 }
+
+// ******************** Objectives ********************
 
 void ALanternSequencePuzzle::StartPuzzle()
 {
@@ -415,6 +420,8 @@ bool ALanternSequencePuzzle::ValidatePuzzleConfiguration()
 }
 
 ELanternPuzzleState
+// ******************** Getters ********************
+
 ALanternSequencePuzzle::GetPuzzleState() const
 {
 	return PuzzleState;
@@ -424,6 +431,8 @@ int32 ALanternSequencePuzzle::GetCurrentInputCount() const
 {
 	return CurrentPlayerInput.Num();
 }
+
+// ******************** Events ********************
 
 void ALanternSequencePuzzle::OnPuzzleAreaEntered(
 	UPrimitiveComponent* OverlappedComponent,
@@ -514,6 +523,8 @@ void ALanternSequencePuzzle::HandleLanternInteracted(
 		);
 	}
 }
+
+// ******************** Preview ********************
 
 void ALanternSequencePuzzle::PlaySequencePreview()
 {
@@ -676,6 +687,8 @@ void ALanternSequencePuzzle::FinishSequencePreview()
 		*ObjectiveID.ToString()
 	);
 }
+
+// ******************** Input Evaluation ********************
 
 void ALanternSequencePuzzle::HandleCorrectInput(
 	ALanternPuzzlePiece* InteractedLantern)
@@ -843,6 +856,8 @@ void ALanternSequencePuzzle::FinishPuzzle()
 
 	CompleteObjective();
 }
+
+// ******************** Helpers ********************
 
 void ALanternSequencePuzzle::BindLanternDelegates()
 {

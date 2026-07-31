@@ -13,10 +13,9 @@ class UVerticalBox;
 class UMemoryJournalEntryWidget;
 
 /*
-* Lightweight Memory Journal presentation.
+* 轻量 Memory Journal 展示层。
 *
-* Recorded data remains owned by AWCCharacter. This Widget only displays the
-* supplied recording-order snapshot and handles selection.
+* 记录数据仍由 AWCCharacter 持有；此 Widget 仅按记录顺序显示传入快照并处理选择。
 */
 UCLASS()
 class WANGCHUAN_API UMemoryJournalWidget : public UUserWidget
@@ -24,6 +23,8 @@ class WANGCHUAN_API UMemoryJournalWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	// ******************** Public Interface ********************
+
 	void InitializeJournal(
 		AWCCharacter* InPlayerOwner,
 		const TArray<FMemoryEchoData>& InEntries
@@ -34,14 +35,20 @@ public:
 	);
 
 protected:
+	// ******************** Lifecycle ********************
+
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
+
+	// ******************** Configuration ********************
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
 		Category = "Memory Journal")
 	TSubclassOf<UMemoryJournalEntryWidget> EntryWidgetClass;
 
 private:
+	// ******************** Runtime State ********************
+
 	UPROPERTY(Transient)
 	TObjectPtr<AWCCharacter> PlayerOwner;
 
@@ -68,10 +75,14 @@ private:
 
 	int32 SelectedEntryIndex = INDEX_NONE;
 
+	// ******************** Helpers ********************
+
 	void BuildWidgetTree();
 	void RebuildEntryList();
 	void SelectEntry(int32 EntryIndex);
 	void RefreshDetailPanel();
+
+	// ******************** Events ********************
 
 	UFUNCTION()
 	void HandleCloseClicked();

@@ -1,5 +1,7 @@
 #include "WCGameSaveGame.h"
 
+// ******************** Construction ********************
+
 UWCGameSaveGame::UWCGameSaveGame()
 {
 	SaveVersion = CurrentSaveVersion;

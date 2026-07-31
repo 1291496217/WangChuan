@@ -7,6 +7,8 @@ DEFINE_LOG_CATEGORY_STATIC(LogWCSaveGame, Log, All);
 const FString UWCGameInstance::SaveSlotName =
 TEXT("WangChuan_Save_01");
 
+// ******************** Lifecycle ********************
+
 void UWCGameInstance::Init()
 {
 	Super::Init();
@@ -21,6 +23,8 @@ void UWCGameInstance::Init()
 		SaveUserIndex
 	);
 }
+
+// ******************** Save and Load ********************
 
 UWCGameSaveGame* UWCGameInstance::CreateNewSave()
 {
@@ -258,6 +262,8 @@ bool UWCGameInstance::DeleteSavedGame()
 
 	return true;
 }
+
+// ******************** Getters ********************
 
 UWCGameSaveGame* UWCGameInstance::GetLoadedSaveData() const
 {

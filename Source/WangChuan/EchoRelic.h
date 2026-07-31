@@ -25,7 +25,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
 
 /*
 * 可交互的轻量 Memory Echo 遗物。
-* 
+*
 * 当前状态：
 * Locked
 * -> Available
@@ -35,11 +35,13 @@ UCLASS()
 class WANGCHUAN_API AEchoRelic : public AActor, public IInteractable
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
+	// ******************** Construction ********************
+
 	AEchoRelic();
 
-	// IInteractable
+	// ******************** Interaction ********************
 
 	virtual void Interact() override;
 
@@ -63,6 +65,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Echo Relic")
 	void CancelEchoRead();
 
+	// ******************** Getters ********************
+
 	UFUNCTION(BlueprintCallable, Category = "Echo Relic")
 	EEchoRelicState GetRelicState() const;
 
@@ -75,6 +79,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Echo Relic|Identity")
 	FName GetEchoID() const;
 
+	// ******************** Events ********************
+
 	/*
 	* 只有在玩家完整读完残响后才广播。
 	*/
@@ -82,6 +88,8 @@ public:
 	FOnEchoRelicActivatedSignature OnEchoActivated;
 
 protected:
+	// ******************** Components ********************
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Echo Relic|Components")
 	USceneComponent* SceneRoot;
 
@@ -90,6 +98,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Echo Relic|Components")
 	USphereComponent* InteractionSphere;
+
+	// ******************** Configuration ********************
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Relic|State")
 	EEchoRelicState RelicState = EEchoRelicState::locked;
@@ -107,12 +117,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Relic|Memory")
 	FMemoryEchoData MemoryEchoData;
 
+	// ******************** Runtime State ********************
+
 	/*
 	* Memory Echo UI 已经打开，
 	* 但玩家尚未完成阅读。
 	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Echo Relic|State")
 	bool bActivationInProgress = false;
+
+	// ******************** Events ********************
 
 	UFUNCTION()
 	void OnPlayerEnter(
@@ -131,6 +145,8 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex
 	);
+
+	// ******************** Helpers ********************
 
 	void ClearPlayerInteractionIfNeeded();
 

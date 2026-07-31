@@ -9,7 +9,8 @@
 
 #include "WCCharacter.h"
 
-// Sets default values
+// ******************** Construction ********************
+
 ALanternPuzzlePiece::ALanternPuzzlePiece()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -24,7 +25,7 @@ ALanternPuzzlePiece::ALanternPuzzlePiece()
 
 	/*
 	* 第一版本由 InteractionSphere 负责交互。
-	* 
+	*
 	* Placeholder Mesh 不阻玩家，
 	* 避免 Lantern 在灰盒阶段形成意外碰撞。
 	*/
@@ -69,7 +70,7 @@ ALanternPuzzlePiece::ALanternPuzzlePiece()
 
 	/*
 	* 初始状态保持关闭。
-	* 
+	*
 	* 灯光强度，颜色和半径由 Blueprint 配置。
 	*/
 	LanternLight->SetVisibility(false);
@@ -79,10 +80,12 @@ ALanternPuzzlePiece::ALanternPuzzlePiece()
 	bIsLit = false;
 }
 
+// ******************** Lifecycle ********************
+
 void ALanternPuzzlePiece::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	SetLanternLit(false);
 
 	SetInteractionEnabled(
@@ -101,6 +104,8 @@ void ALanternPuzzlePiece::EndPlay(
 
 	Super::EndPlay(EndPlayReason);
 }
+
+// ******************** Interaction ********************
 
 void ALanternPuzzlePiece::Interact()
 {
@@ -164,7 +169,7 @@ void ALanternPuzzlePiece::SetInteractionEnabled(
 	*/
 	if (bInteractionEnabled == bEnabled)
 	{
-		if (bEnabled) 
+		if (bEnabled)
 		{
 			RefreshPromptForOverlappingPlayer();
 		}
@@ -180,7 +185,7 @@ void ALanternPuzzlePiece::SetInteractionEnabled(
 		return;
 	}
 
-	RefreshPromptForOverlappingPlayer();	
+	RefreshPromptForOverlappingPlayer();
 }
 
 void ALanternPuzzlePiece::SetLanternLit(
@@ -189,7 +194,7 @@ void ALanternPuzzlePiece::SetLanternLit(
 	/*
 	* 外部主动设置灯光状态时，
 	* 应取消尚未结束的临时 Feedback Timer。
-	* 
+	*
 	* 例如谜题完成后调用 SetLanternLit(ture),
 	* 旧 Timer 不应稍后再次把灯关闭。
 	*/
@@ -239,6 +244,8 @@ void ALanternPuzzlePiece::PlayLanternFeedbackForDuration(float Duration)
 	);
 }
 
+// ******************** Getters ********************
+
 int32 ALanternPuzzlePiece::GetPieceID() const
 {
 	return PieceID;
@@ -253,6 +260,8 @@ bool ALanternPuzzlePiece::GetIsInteractionEnabled() const
 {
 	return bInteractionEnabled;
 }
+
+// ******************** Events ********************
 
 void ALanternPuzzlePiece::OnPlayerEnter(
 	UPrimitiveComponent* OverlappedComponent,
@@ -316,6 +325,8 @@ void ALanternPuzzlePiece::OnPlayerExit(
 	Player->CurrentInteractable = nullptr;
 	Player->HideInteractionPrompt();
 }
+
+// ******************** Helpers ********************
 
 void ALanternPuzzlePiece::ClearPlayerInteractionIfNeeded()
 {
@@ -392,6 +403,8 @@ void ALanternPuzzlePiece::RefreshPromptForOverlappingPlayer()
 		GetInteractionPrompt()
 	);
 }
+
+// ******************** Feedback ********************
 
 void ALanternPuzzlePiece::PlayLanternTone()
 {

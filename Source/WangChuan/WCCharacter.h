@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -29,7 +27,7 @@ class UMemoryEchoWidget;
 class UMemoryJournalWidget;
 
 USTRUCT(BlueprintType)
-struct FPlayerAttackData 
+struct FPlayerAttackData
 {
 	GENERATED_BODY()
 
@@ -55,26 +53,30 @@ class WANGCHUAN_API AWCCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
+	// ******************** Construction ********************
+
 	AWCCharacter();
 
 protected:
+	// ******************** Lifecycle ********************
+
 	virtual void BeginPlay() override;
-	virtual void EndPlay(
-		const EEndPlayReason::Type EndPlayReason
-	) override;
-	virtual void OnMovementModeChanged(
-		EMovementMode PrevMovementMode,
-		uint8 PreviousCustomMode = 0
-	) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode,
+									   uint8 PreviousCustomMode = 0) override;
 
 public:
+	// ******************** Lifecycle ********************
+
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void SetupPlayerInputComponent(
-		class UInputComponent* PlayerInputComponent
-	) override;
+	// ******************** Input ********************
 
-	// Combat Public API
+	virtual void SetupPlayerInputComponent(
+		class UInputComponent* PlayerInputComponent) override;
+
+	// ******************** Combat ********************
+
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void ReceiveDamage(float DamageAmount);
 
@@ -96,7 +98,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Combat|Lock On")
 	bool GetIsLockedOn() const;
 
-	// Interaction Public API
+	// ******************** Interaction ********************
+
 	IInteractable* CurrentInteractable;
 
 	TSet<int32> CollectedFragments;
@@ -107,40 +110,35 @@ public:
 
 	void HideInteractionPrompt();
 
-	// Dialogue Public API
+	// ******************** Dialogue ********************
 
 	/*
-	* 打开统一 Dialogue UI。
-	* 
-	* 返回 true 表示成功进入对话。
-	*/
+	 * 打开统一 Dialogue UI。
+	 *
+	 * 返回 true 表示成功进入对话。
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
-	bool StartDialogue(
-		AWCStoryNPC* StoryNPC, 
-		const FDialogueSequence& DialogueSequence);
+	bool StartDialogue(AWCStoryNPC* StoryNPC, const FDialogueSequence& DialogueSequence);
 
 	/*
-	* 关闭当前 Dialogue UI 并恢复正常控制。
-	*/
+	 * 关闭当前 Dialogue UI 并恢复正常控制。
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	void EndDialogue();
 
 	UFUNCTION(BlueprintPure, Category = "Dialogue")
 	bool GetIsInDialogue() const;
 
-	// Memory Echo Public API
+	// ******************** Memory Echo ********************
 
 	UFUNCTION(BlueprintCallable, Category = "Memory Echo")
-	bool StartMemoryEcho(
-		const FMemoryEchoData& EchoData,
-		AEchoRelic* SourceRelic
-	);
+	bool StartMemoryEcho(const FMemoryEchoData& EchoData, AEchoRelic* SourceRelic);
 
 	/*
-	* bCompleted:
-	* true = 玩家完整读完。
-	* false = 死亡或异常终止。
-	*/
+	 * bCompleted:
+	 * true = 玩家完整读完。
+	 * false = 死亡或异常终止。
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Memory Echo")
 	void EndMemoryEcho(bool bCompleted);
 
@@ -153,6 +151,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Memory Echo")
 	bool HasRecordedMemoryEcho(FName EchoID) const;
 
+	/*
+	* 返回玩家当前已完整记录的 Memory Echo。
+	*
+	* 只提供只读引用，Persistence Coordinator 不应直接修改
+	* 玩家拥有的 Runtime Journal 数据。
+	*/
+	const TArray<FMemoryEchoData>&
+		GetRecordedMemoryEchoes() const;
+
+	// ******************** Memory Journal ********************
+
 	UFUNCTION(BlueprintCallable, Category = "Memory Journal")
 	void CloseMemoryJournal();
 
@@ -160,7 +169,8 @@ public:
 	bool GetIsMemoryJournalOpen() const;
 
 protected:
-	// Camera
+	// ******************** Components ********************
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	USpringArmComponent* CameraBoom;
 
@@ -170,7 +180,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Feedback")
 	TSubclassOf<UCameraShakeBase> HitCameraShakeClass;
 
-	// Input Assets
+	// ******************** Input ********************
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputMappingContext* DefaultMappingContext;
 
@@ -198,7 +209,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* LockOnAction;
 
-	// Combat Settings
+	// ******************** Combat ********************
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	UAnimMontage* LightAttackMontage;
 
@@ -271,7 +283,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Light Combo")
 	float ComboWindowOpenRatio = 0.55f;
-	
+
 	FTimerHandle ComboWindowOpenTimerHandle;
 	FTimerHandle ComboWindowCloseTimerHandle;
 
@@ -352,15 +364,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* PlayerHurtSound;
 
-	// VFX
+	// ******************** VFX ********************
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX|Combat")
 	UParticleSystem* AttackHitEffect;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX|Combat")
 	float AttackHitEffectScale = 0.4f;
 
-	// UI
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI") 
+	// ******************** UI ********************
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UUserWidget> PlayerHUDClass;
 
 	UPROPERTY()
@@ -372,32 +386,30 @@ protected:
 	UPROPERTY()
 	UPlayerHitFlashWidget* PlayerHitFlashWidget;
 
-	/*
-	* WBP_Dialogue's blueprint class.
-	*/
+	// WBP_Dialogue 对应的 Blueprint 类。
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|Dialogue")
-	TSubclassOf<UDialogueWidget>DialogueWidgetClass;
+	TSubclassOf<UDialogueWidget> DialogueWidgetClass;
 
 	/*
-	* 当前正在显示的 Dialogue Widget。
-	*/
+	 * 当前正在显示的 Dialogue Widget。
+	 */
 	UPROPERTY()
 	UDialogueWidget* ActiveDialogueWidget = nullptr;
 
 	/*
-	* 当前正在与玩家对话的 NPC。
-	*/
+	 * 当前正在与玩家对话的 NPC。
+	 */
 	UPROPERTY()
 	AWCStoryNPC* ActiveDialogueNPC = nullptr;
 
 	/*
-	* 玩家是否正在 Conversation Mode。
-	*/
+	 * 玩家是否正在 Conversation Mode。
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	bool bIsInDialogue = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|Memory Echo")
-	TSubclassOf<UMemoryEchoWidget>MemoryEchoWidgetClass;
+	TSubclassOf<UMemoryEchoWidget> MemoryEchoWidgetClass;
 
 	UPROPERTY()
 	UMemoryEchoWidget* ActiveMemoryEchoWidget = nullptr;
@@ -412,7 +424,7 @@ protected:
 	bool bIsViewingMemoryEcho = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Memory Echo")
-	TArray<FMemoryEchoData>RecordedMemoryEchoes;
+	TArray<FMemoryEchoData> RecordedMemoryEchoes;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|Memory Journal")
 	TSubclassOf<UMemoryJournalWidget> MemoryJournalWidgetClass;
@@ -423,7 +435,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Memory Journal")
 	bool bIsMemoryJournalOpen = false;
 
-	// Input Functions
+	// ******************** Input ********************
+
 	void Move(const FInputActionValue& Value);
 
 	void Look(const FInputActionValue& Value);
@@ -442,7 +455,8 @@ protected:
 
 	void HandleJumpCompleted();
 
-	// Combat Functions
+	// ******************** Combat ********************
+
 	bool IsAnyAttackActive() const;
 
 	bool CanStartGroundAttack() const;
@@ -467,7 +481,8 @@ protected:
 
 	void ExitCombatState();
 
-	// Helper Functions
+	// ******************** Helpers ********************
+
 	bool CanAct() const;
 
 	void PlayAttackHitSound();
@@ -482,7 +497,8 @@ protected:
 
 	void PlayHeavyAttackHitFeedback(const FHitResult& HitResult);
 
-	// Combo Helper
+	// ******************** Combo ********************
+
 	void ResetLightCombo();
 
 	FName GetLightComboSectionName(int32 ComboIndex) const;
@@ -503,7 +519,8 @@ protected:
 
 	void EndHitStop();
 
-	// LockOn Functions
+	// ******************** Lock-On ********************
+
 	void ToggleLockOn();
 
 	void LockOnToTarget();
@@ -518,4 +535,3 @@ protected:
 
 	void FaceLockOnTargetInstantly();
 };
-

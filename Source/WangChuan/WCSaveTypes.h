@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "WCSaveTypes.generated.h"
 
+// ******************** Story NPC ********************
+
 /*
 * Quiet Child 等 Story NPC 的稳定持久化结果。
 *
@@ -55,6 +57,8 @@ struct FWCSavedStoryNPCState
 	FName AnchorID = NAME_None;
 };
 
+// ******************** Objectives ********************
+
 /*
 * 一个 Story Objective 的最终持久化结果。
 *
@@ -86,6 +90,8 @@ struct FWCSavedObjectiveState
 	)
 	bool bCompleted = false;
 };
+
+// ******************** Encounters ********************
 
 /*
 * 一个 Story Encounter 的最终持久化结果。

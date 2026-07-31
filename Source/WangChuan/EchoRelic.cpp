@@ -8,6 +8,8 @@
 
 #include "WCCharacter.h"
 
+// ******************** Construction ********************
+
 AEchoRelic::AEchoRelic()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -71,6 +73,8 @@ AEchoRelic::AEchoRelic()
 			&AEchoRelic::OnPlayerExit
 		);
 }
+
+// ******************** Interaction ********************
 
 void AEchoRelic::Interact()
 {
@@ -230,6 +234,8 @@ void AEchoRelic::CancelEchoRead()
 }
 
 EEchoRelicState
+// ******************** Getters ********************
+
 AEchoRelic::GetRelicState() const
 {
 	return RelicState;
@@ -245,6 +251,8 @@ FName AEchoRelic::GetEchoID() const
 {
 	return MemoryEchoData.EchoID;
 }
+
+// ******************** Events ********************
 
 void AEchoRelic::OnPlayerEnter(
 	UPrimitiveComponent* OverlappedComponent,
@@ -303,6 +311,8 @@ void AEchoRelic::OnPlayerExit(
 		Player->HideInteractionPrompt();
 	}
 }
+
+// ******************** Helpers ********************
 
 void AEchoRelic::ClearPlayerInteractionIfNeeded()
 {

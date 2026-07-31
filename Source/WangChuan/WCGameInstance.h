@@ -25,7 +25,11 @@ class WANGCHUAN_API UWCGameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
+	// ******************** Lifecycle ********************
+
 	virtual void Init() override;
+
+	// ******************** Save and Load ********************
 
 	/*
 	* 创建一个全新的、只存在于内存中的 SaveGame Object。
@@ -69,6 +73,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Save Game")
 	bool DeleteSavedGame();
 
+	// ******************** Getters ********************
+
 	/*
 	* 返回当前在内存中创建或加载的 SaveGame Object。
 	*
@@ -85,6 +91,8 @@ public:
 	int32 GetSaveUserIndex() const;
 
 private:
+	// ******************** Runtime State ********************
+
 	/*
 	* 当前在内存中的工作存档。
 	*
@@ -93,6 +101,8 @@ private:
 	*/
 	UPROPERTY(Transient)
 	TObjectPtr<UWCGameSaveGame> LoadedSaveData;
+
+	// ******************** Configuration ********************
 
 	static const FString SaveSlotName;
 	static constexpr int32 SaveUserIndex = 0;

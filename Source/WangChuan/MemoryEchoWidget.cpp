@@ -5,6 +5,8 @@
 
 #include "WCCharacter.h"
 
+// ******************** Lifecycle ********************
+
 void UMemoryEchoWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -18,6 +20,8 @@ void UMemoryEchoWidget::NativeConstruct()
 			);
 	}
 }
+
+// ******************** Memory Echo ********************
 
 void UMemoryEchoWidget::StartMemoryEcho(
 	const FMemoryEchoData& NewEchoData,
@@ -49,6 +53,8 @@ void UMemoryEchoWidget::AdvanceMemoryEcho()
 	*/
 	RequestCloseEcho();
 }
+
+// ******************** UI ********************
 
 void UMemoryEchoWidget::DisplayCurrentPage()
 {
@@ -102,6 +108,8 @@ void UMemoryEchoWidget::RequestCloseEcho()
 	*/
 	PlayerOwner->EndMemoryEcho(true);
 }
+
+// ******************** Events ********************
 
 void UMemoryEchoWidget::HandleContinueClicked()
 {

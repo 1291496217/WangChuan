@@ -1,12 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 
 #include "StoryAnchor.h"
 
 #include "Components/ArrowComponent.h"
 #include "Components/SceneComponent.h"
 
-// Sets default values
+// ******************** Construction ********************
+
 AStoryAnchor::AStoryAnchor()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -26,6 +25,8 @@ AStoryAnchor::AStoryAnchor()
 	SetActorEnableCollision(false);
 
 }
+
+// ******************** Getters ********************
 
 FTransform AStoryAnchor::GetAnchorTransform() const
 {

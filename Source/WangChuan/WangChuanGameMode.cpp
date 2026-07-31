@@ -6,7 +6,7 @@
 
 AWangChuanGameMode::AWangChuanGameMode()
 {
-	// set default pawn class to our Blueprinted character
+	// 使用项目的角色 Blueprint 作为默认 Pawn。
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"));
 	if (PlayerPawnBPClass.Class != NULL)
 	{

@@ -15,59 +15,78 @@ struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
-UCLASS(config=Game)
+UCLASS(config = Game)
 class AWangChuanCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	// ******************** Components ********************
+
+	// 将摄像机定位在角色后方的弹簧臂。
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera,
+			  meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
 
-	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	// 跟随摄像机。
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera,
+			  meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
-	
-	/** MappingContext */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+
+	// ******************** Input ********************
+
+	// 默认输入映射上下文。
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input,
+			  meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
 
-	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	// 跳跃输入动作。
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input,
+			  meta = (AllowPrivateAccess = "true"))
 	UInputAction* JumpAction;
 
-	/** Move Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	// 移动输入动作。
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input,
+			  meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
 
-	/** Look Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	// 视角输入动作。
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input,
+			  meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
 public:
+	// ******************** Construction ********************
+
 	AWangChuanCharacter();
-	
 
 protected:
+	// ******************** Input ********************
 
-	/** Called for movement input */
+	// 处理移动输入。
 	void Move(const FInputActionValue& Value);
 
-	/** Called for looking input */
+	// 处理视角输入。
 	void Look(const FInputActionValue& Value);
-			
 
 protected:
-	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
-	// To add mapping context
+
+	// ******************** Lifecycle ********************
+
 	virtual void BeginPlay();
 
 public:
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns FollowCamera subobject **/
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-};
+	// ******************** Getters ********************
 
+	// 返回 CameraBoom 子对象。
+	FORCEINLINE class USpringArmComponent* GetCameraBoom() const
+	{
+		return CameraBoom;
+	}
+
+	// 返回 FollowCamera 子对象。
+	FORCEINLINE class UCameraComponent* GetFollowCamera() const
+	{
+		return FollowCamera;
+	}
+};

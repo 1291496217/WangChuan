@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -16,41 +14,48 @@ class AWCCharacter;
 class AGhostEnemy;
 
 /*
-* 当 Ghost Enemy 正式进入死亡状态时广播。
-* 
-* 参数：
-* DefeatedEnemy = 被击败的敌人实例。
-*/
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
-	FOnGhostEnemyDefeatedSignature,
-	AGhostEnemy*,
-	DefeatedEnemy
-);
+ * 当 Ghost Enemy 正式进入死亡状态时广播。
+ *
+ * 参数：
+ * DefeatedEnemy = 被击败的敌人实例。
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGhostEnemyDefeatedSignature, AGhostEnemy*,
+											DefeatedEnemy);
 
 UCLASS()
 class WANGCHUAN_API AGhostEnemy : public AActor
 {
 	GENERATED_BODY()
-	
+
 public:
+	// ******************** Construction ********************
+
 	AGhostEnemy();
 
+	// ******************** Events ********************
+
 	/*
-	* 当敌人第一次正式进入死亡状态时广播。
-	* 
-	* BlueprintAssignable 允许 Blueprint
-	* 或其他 Actor 监听该事件。
-	*/
+	 * 当敌人第一次正式进入死亡状态时广播。
+	 *
+	 * BlueprintAssignable 允许 Blueprint
+	 * 或其他 Actor 监听该事件。
+	 */
 	UPROPERTY(BlueprintAssignable, Category = "Enemy|Events")
 	FOnGhostEnemyDefeatedSignature OnEnemyDefeated;
 
 protected:
+	// ******************** Lifecycle ********************
+
 	virtual void BeginPlay() override;
 
-public: 
+public:
+	// ******************** Lifecycle ********************
+
 	virtual void Tick(float DeltaTime) override;
 
 protected:
+	// ******************** Components ********************
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USceneComponent* SceneRoot;
 
@@ -60,13 +65,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UWidgetComponent* HealthWidgetComponent;
 
+	// ******************** Configuration ********************
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float MaxHealth = 100.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	float Health = 100.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat") 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float DeathDestroyDelay = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Feedback")
@@ -137,8 +144,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* EvilGhostDeathSound;
 
+	// ******************** Runtime State ********************
+
 	UPROPERTY()
-	UMaterialInstanceDynamic* DynamicMaterial; // change enemy's color in runtime
+	UMaterialInstanceDynamic* DynamicMaterial; // 运行时颜色反馈使用的动态材质。
 
 	FTimerHandle HitFeedbackTimerHandle;
 
@@ -150,16 +159,16 @@ protected:
 
 	FTimerHandle DeathTimerHandle;
 
-public:	
+public:
+	// ******************** Combat ********************
+
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void TakeHit(
-		float DamageAmount,
-		FVector HitDirection,
-		float KnockbackStrength
-	);
+	void TakeHit(float DamageAmount, FVector HitDirection, float KnockbackStrength);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void OnEnemyAttackHit();
+
+	// ******************** Getters ********************
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	float GetHealthPercent() const;
@@ -180,41 +189,38 @@ public:
 	bool GetIsHitReacting() const;
 
 protected:
-	// Combat state
+	// ******************** Combat ********************
+
 	void Die();
 
 	void FinishDeath();
 
 	void ClearCombatTimers();
 
-	// Player helper
+	// ******************** State Queries ********************
+
 	AWCCharacter* GetPlayerCharacter() const;
 
 	bool IsPlayerValidAndAlive() const;
 
-	// Enemy behavior helper
 	bool CanUpdateBehavior() const;
 
 	bool CanStartAttack() const;
 
-	// Reaction
-	void ApplyKnockback(
-		FVector KnockbackDirection, 
-		float KnockbackStrength
-	);
+	// ******************** Hit Reaction ********************
+
+	void ApplyKnockback(FVector KnockbackDirection, float KnockbackStrength);
 
 	void StartHitReaction();
 
 	void EndHitReaction();
 
-	// Legacy color feedback. currently replaced by hit reaction animation.
-	//void ShowHitFeedback();
-	//void ResetHitFeedback();
+	// ******************** UI ********************
 
-	// UI
 	void UpdateHealthWidgetFacingCamera();
 
-	// Enemy behavior 
+	// ******************** Enemy Behavior ********************
+
 	void UpdateEnemyBehavior(float DeltaTime);
 
 	void MoveTowardPlayer(APawn* PlayerPawn, float DeltaTime);
@@ -227,10 +233,13 @@ protected:
 
 	void ResetEnemyAttack();
 
-	// Audio
+	// ******************** Audio ********************
+
 	void PlayEvilGhostAttackHitSound();
 	void PlayEvilGhostAttackWhiffSound();
 	void PlayEvilGhostHurtSound();
+
+	// ******************** Movement ********************
 
 	void SnapToGround();
 };

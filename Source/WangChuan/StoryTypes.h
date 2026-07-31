@@ -3,9 +3,11 @@
 #include "CoreMinimal.h"
 #include "StoryTypes.generated.h"
 
+// ******************** Story NPC ********************
+
 /**
 * 通用Story NPC 状态
-* 
+*
 * CurrentStoryStage 表示 NPC 目前处于第几段故事；
 * EStoryNPCState 表示 NPC 在这一阶段中的当前行为状态。
 */
@@ -20,6 +22,8 @@ enum class EStoryNPCState : uint8
 	ChapterComplete UMETA(DisplayName = "Chapter Complete")
 };
 
+// ******************** Dialogue ********************
+
 /**
 * 单行对话数据。
 */
@@ -30,7 +34,7 @@ struct FDialogueLine
 
 	/**
 	* 当前对话行的说话者。
-	* 
+	*
 	* 允许未来同一段 Sequence 中出现不同说话者，
 	* 例如 NPC, 主角内心或无名残响。
 	*/
@@ -39,7 +43,7 @@ struct FDialogueLine
 
 	/*
 	* 实际对话内容。
-	* 
+	*
 	* MultiLine 允许在 Blueprint Details 中编辑较长文本。
 	*/
 	UPROPERTY(
@@ -62,6 +66,8 @@ struct FDialogueSequence
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	TArray<FDialogueLine> Lines;
 };
+
+// ******************** Memory Echo ********************
 
 /*
 * Echo Relic 当前状态。
@@ -95,7 +101,7 @@ struct FMemoryEchoData
 
 	/*
 	* 用于识别与去重。
-	* 
+	*
 	* 例如：QuietChild.BellEcho01
 	*/
 	UPROPERTY(

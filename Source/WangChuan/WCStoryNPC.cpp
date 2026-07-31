@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
+﻿
 #include "WCStoryNPC.h"
 
 #include "Components/SceneComponent.h"
@@ -15,35 +13,36 @@
 #include "StoryAnchor.h"
 #include "WCCharacter.h"
 
-// Sets default values
+// ******************** Construction ********************
+
 AWCStoryNPC::AWCStoryNPC()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	// Root
+	// 创建根组件。
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
 	SetRootComponent(SceneRoot);
 
-	// NPC Mesh
+	// 创建 NPC 骨骼网格体。
 	NPCMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("NPCMesh"));
 	NPCMesh->SetupAttachment(SceneRoot);
 
 	// NPC 暂时不依赖 Mesh 碰撞进行交互
 	NPCMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// Interaction Sphere
+	// 创建玩家交互范围。
 	InteractionSphere =
 		CreateDefaultSubobject<USphereComponent>(TEXT("InteractionSphere"));
 	InteractionSphere->SetupAttachment(SceneRoot);
 	InteractionSphere->SetSphereRadius(300.0f);
 
-	// 交互范围只用于 Query， 不产生物理阻挡。
+	// 交互范围只用于 Query，不产生物理阻挡。
 	InteractionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	InteractionSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
 	InteractionSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	InteractionSphere->SetGenerateOverlapEvents(true);
 
-	// Bind overlap events
+	// 绑定进入和离开交互范围的事件。
 	InteractionSphere->OnComponentBeginOverlap.AddDynamic(
 		this,
 		&AWCStoryNPC::OnPlayerEnter);
@@ -52,6 +51,8 @@ AWCStoryNPC::AWCStoryNPC()
 		&AWCStoryNPC::OnPlayerExit);
 
 }
+
+// ******************** Lifecycle ********************
 
 void AWCStoryNPC::BeginPlay()
 {
@@ -65,6 +66,8 @@ void AWCStoryNPC::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+// ******************** Interaction ********************
+
 void AWCStoryNPC::Interact()
 {
 	/*
@@ -77,7 +80,7 @@ void AWCStoryNPC::Interact()
 	}
 
 	const FDialogueSequence CurrentDialogue = GetCurrentDialogueSequence();
-	
+
 	// 验证 Blueprint 中是否配置了当前阶段对话。
 	if (CurrentDialogue.Lines.Num() == 0)
 	{
@@ -131,6 +134,8 @@ FString AWCStoryNPC::GetInteractionPrompt()
 	return InteractionPrompt;
 }
 
+// ******************** Getters ********************
+
 FText AWCStoryNPC::GetNPCDisplayName() const
 {
 	return NPCDisplayName;
@@ -157,11 +162,31 @@ int32 AWCStoryNPC::GetCurrentStoryStage() const
 	return CurrentStoryStage;
 }
 
+FName AWCStoryNPC::GetCurrentStoryAnchorID() const
+{
+	if (!StoryAnchors.IsValidIndex(CurrentStoryStage))
+	{
+		return NAME_None;
+	}
+
+	const AStoryAnchor* CurrentAnchor =
+		StoryAnchors[CurrentStoryStage];
+
+	if (!IsValid(CurrentAnchor))
+	{
+		return NAME_None;
+	}
+
+	return CurrentAnchor->GetAnchorID();
+}
+
 EStoryNPCState
 AWCStoryNPC::GetStoryState() const
 {
 	return StoryState;
 }
+
+// ******************** Relocation ********************
 
 bool AWCStoryNPC::RelocateToStoryAnchor(
 	AStoryAnchor* TargetAnchor,
@@ -333,7 +358,7 @@ bool AWCStoryNPC::RelocateToStoryAnchorByIndex(
 	}
 
 	AStoryAnchor* TargetAnchor = StoryAnchors[AnchorIndex];
-	
+
 	return RelocateToStoryAnchor(
 		TargetAnchor, NewStoryStage
 	);
@@ -571,6 +596,8 @@ void AWCStoryNPC::ClearPlayerInteractionIfNeeded()
 	Player->HideInteractionPrompt();
 }
 
+// ******************** Events ********************
+
 void AWCStoryNPC::OnPlayerEnter(
 	UPrimitiveComponent* OverlappedComponent,
 	AActor* OtherActor,
@@ -622,7 +649,7 @@ void AWCStoryNPC::OnPlayerExit(
 	/*
 	* 只有当玩家当前记录的对象确实是这个 NPC 时，
 	* 才会清除 CurrentInteractable。
-	* 
+	*
 	* 避免多个交互范围重叠时，
 	* 玩家离开其中一个范围却错误清除另一个对象。
 	*/
@@ -632,6 +659,8 @@ void AWCStoryNPC::OnPlayerExit(
 		Player->HideInteractionPrompt();
 	}
 }
+
+// ******************** Story Events ********************
 
 void AWCStoryNPC::RecieveStoryEvent(FName EventID)
 {

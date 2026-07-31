@@ -2,6 +2,8 @@
 
 #include "Components/SceneComponent.h"
 
+// ******************** Construction ********************
+
 AStoryObjectiveBase::AStoryObjectiveBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -13,6 +15,8 @@ AStoryObjectiveBase::AStoryObjectiveBase()
 	bIsActive = false;
 	bIsCompleted = false;
 }
+
+// ******************** Objectives ********************
 
 void AStoryObjectiveBase::ActivateObjective()
 {
@@ -30,7 +34,7 @@ void AStoryObjectiveBase::ActivateObjective()
 
 	if (bIsActive)
 	{
-		// Repeated activation and should not restart the Objective.
+		// 重复激活不应重新启动 Objective。
 		return;
 	}
 
@@ -48,7 +52,7 @@ void AStoryObjectiveBase::CompleteObjective()
 {
 	if (bIsCompleted)
 	{
-		// Important duplicate-completion guard.
+		// 防止重复完成和重复广播事件。
 		return;
 	}
 
@@ -90,7 +94,7 @@ void AStoryObjectiveBase::ResetObjective()
 	);
 }
 
-// Getters
+// ******************** Getters ********************
 
 FName AStoryObjectiveBase::GetObjectiveID() const
 {

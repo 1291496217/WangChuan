@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -13,14 +11,20 @@ class WANGCHUAN_API UEnemyHealthBarWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
-public: 
+public:
+	// ******************** Setters ********************
+
 	UFUNCTION(BlueprintCallable, Category = "Enemy UI")
 	void SetEnemyOwner(AGhostEnemy* NewEnemyOwner);
+
+	// ******************** Getters ********************
 
 	UFUNCTION(BlueprintPure, Category = "Enemy UI")
 	float GetEnemyHealthPercent() const;
 
-private: 
+private:
+	// ******************** Runtime State ********************
+
 	UPROPERTY()
 	AGhostEnemy* EnemyOwner;
 };

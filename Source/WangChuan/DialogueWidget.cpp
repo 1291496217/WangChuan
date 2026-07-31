@@ -1,12 +1,12 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
+﻿
 #include "DialogueWidget.h"
 
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "WCCharacter.h"
 #include "WCStoryNPC.h"
+
+// ******************** Lifecycle ********************
 
 void UDialogueWidget::NativeConstruct()
 {
@@ -28,6 +28,8 @@ void UDialogueWidget::NativeConstruct()
 		);
 	}
 }
+
+// ******************** Dialogue ********************
 
 void UDialogueWidget::StartDialogue(
 	const FDialogueSequence& NewDialogueSequence,
@@ -69,6 +71,8 @@ void UDialogueWidget::AdvanceDialogue()
 
 	DisplayCurrentLine();
 }
+
+// ******************** UI ********************
 
 void UDialogueWidget::DisplayCurrentLine()
 {
@@ -131,6 +135,8 @@ void UDialogueWidget::RequestCloseDialogue()
 	// Player 引用无效时的安全保护。
 	RemoveFromParent();
 }
+
+// ******************** Events ********************
 
 void UDialogueWidget::HandleContinueClicked()
 {

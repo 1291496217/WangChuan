@@ -17,35 +17,39 @@ UCLASS()
 class WANGCHUAN_API AStoryObjectiveBase : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
+	// ******************** Construction ********************
+
 	AStoryObjectiveBase();
 
+	// ******************** Objectives ********************
+
 	/*
-	* Activates this Objective.
-	* 
-	* A completed Objective cannot be activated again
-	* unless ResetObjective() has been called first.
+	* 激活此 Objective。
+	*
+	* 已完成的 Objective 只有在调用 ResetObjective() 后才能再次激活。
 	*/
 	UFUNCTION(BlueprintCallable, Category = "Story Objective")
 	virtual void ActivateObjective();
 
 	/*
-	* Completes this Objective and broadcasts OnObjectiveCompleted once.
-	* 
-	* The Objective must already be active.
+	* 完成此 Objective，并广播一次 OnObjectiveCompleted。
+	*
+	* 调用时 Objective 必须已经激活。
 	*/
 	UFUNCTION(BlueprintCallable, Category = "Story Objective")
 	virtual void CompleteObjective();
 
 	/*
-	* Returns this Objective to its initial inactive and incomplete state.
-	* 
-	* This is a full Objective reset. It is not the same as resetting one
-	* failed lantern-puzzle attempt.
+	* 将此 Objective 恢复为未激活且未完成的初始状态。
+	*
+	* 这是完整重置，不同于重置一次失败的 Lantern Puzzle 尝试。
 	*/
 	UFUNCTION(BlueprintCallable, Category = "Story Objective")
 	virtual void ResetObjective();
+
+	// ******************** Getters ********************
 
 	/*
 	* 返回此 Objective 的稳定语义 ID。
@@ -60,36 +64,38 @@ public:
 	bool GetIsObjectiveComplete() const;
 
 public:
-	/*
-	* Broadcast once when this Objective successfully completes.
-	*/
+	// ******************** Events ********************
+
+	// Objective 成功完成时广播一次。
 	UPROPERTY(BlueprintAssignable, Category = "Story Objective|Events")
 	FOnStoryObjectiveCompletedSignature OnObjectiveCompleted;
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, 
+	// ******************** Components ********************
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,
 		Category = "Story Objective|Components")
 	TObjectPtr<USceneComponent> SceneRoot;
 
+	// ******************** Configuration ********************
+
 	/*
-	* Semantic identity used by level configuration, debugging and logging.
-	* 
-	* Example: 
+	* 用于关卡配置、调试和日志的稳定语义标识。
+	*
+	* 示例：
 	* QuietChild.LanteernPuzzle01
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Objective")
 	FName ObjectiveID;
 
-	/*
-	* Runtime state. 
-	*/
+	// ******************** Runtime State ********************
+
+	// Objective 当前是否已激活。
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly,
 		Category = "Story Objective|State")
 	bool bIsActive;
 
-	/*
-	* Runtime state.
-	*/
+	// Objective 当前是否已完成。
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly,
 		Category = "Story Objective|State")
 	bool bIsCompleted;

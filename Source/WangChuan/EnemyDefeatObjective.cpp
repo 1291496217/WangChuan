@@ -2,10 +2,14 @@
 
 #include "GhostEnemy.h"
 
+// ******************** Construction ********************
+
 AEnemyDefeatObjective::AEnemyDefeatObjective()
 {
 	PrimaryActorTick.bCanEverTick = false;
 }
+
+// ******************** Lifecycle ********************
 
 void AEnemyDefeatObjective::BeginPlay()
 {
@@ -23,8 +27,8 @@ void AEnemyDefeatObjective::BeginPlay()
 	RefreshRequiredEnemyState();
 
 	/*
-	* Enemy defeat is an immediately active world condition. The Encounter
-	* observes the shared completion delegate but does not own activation.
+	* 敌人死亡是立即生效的世界条件。
+	* Encounter 监听通用完成事件，但不负责激活此 Objective。
 	*/
 	ActivateObjective();
 }
@@ -36,6 +40,8 @@ void AEnemyDefeatObjective::EndPlay(
 
 	Super::EndPlay(EndPlayReason);
 }
+
+// ******************** Objectives ********************
 
 void AEnemyDefeatObjective::ActivateObjective()
 {
@@ -56,6 +62,8 @@ void AEnemyDefeatObjective::ActivateObjective()
 
 	CompleteIfReady();
 }
+
+// ******************** Helpers ********************
 
 bool AEnemyDefeatObjective::ValidateConfiguration() const
 {
@@ -165,6 +173,8 @@ void AEnemyDefeatObjective::CompleteIfReady()
 
 	CompleteObjective();
 }
+
+// ******************** Events ********************
 
 void AEnemyDefeatObjective::HandleRequiredEnemyDefeated(
 	AGhostEnemy* DefeatedEnemy)

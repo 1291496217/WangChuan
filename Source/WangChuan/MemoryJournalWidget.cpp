@@ -31,6 +31,8 @@ namespace
 	}
 }
 
+// ******************** Lifecycle ********************
+
 TSharedRef<SWidget> UMemoryJournalWidget::RebuildWidget()
 {
 	BuildWidgetTree();
@@ -55,6 +57,8 @@ void UMemoryJournalWidget::NativeConstruct()
 	RebuildEntryList();
 }
 
+// ******************** Public Interface ********************
+
 void UMemoryJournalWidget::InitializeJournal(
 	AWCCharacter* InPlayerOwner,
 	const TArray<FMemoryEchoData>& InEntries)
@@ -74,6 +78,8 @@ void UMemoryJournalWidget::RefreshJournalEntries(
 
 	RebuildEntryList();
 }
+
+// ******************** UI ********************
 
 void UMemoryJournalWidget::BuildWidgetTree()
 {
@@ -458,6 +464,8 @@ void UMemoryJournalWidget::RefreshDetailPanel()
 
 	SelectedEntryBody->SetText(FText::FromString(Body));
 }
+
+// ******************** Events ********************
 
 void UMemoryJournalWidget::HandleCloseClicked()
 {

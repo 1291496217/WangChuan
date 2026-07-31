@@ -11,7 +11,7 @@ class UPrimitiveComponent;
 class USoundBase;
 
 /*
-* Lantern sequence puzzle runtime state.
+* Lantern Sequence Puzzle 的运行时状态。
 *
 * Dormant:
 * 尚未进入区域或启动谜题。
@@ -54,7 +54,11 @@ class WANGCHUAN_API ALanternSequencePuzzle
 	GENERATED_BODY()
 
 public:
+	// ******************** Construction ********************
+
 	ALanternSequencePuzzle();
+
+	// ******************** Objectives ********************
 
 	/*
 	* 正式启动谜题。
@@ -85,6 +89,8 @@ public:
 	)
 	bool ValidatePuzzleConfiguration();
 
+	// ******************** Getters ********************
+
 	UFUNCTION(
 		BlueprintPure,
 		Category = "Lantern Puzzle|State"
@@ -98,13 +104,15 @@ public:
 	int32 GetCurrentInputCount() const;
 
 protected:
+	// ******************** Lifecycle ********************
+
 	virtual void BeginPlay() override;
 
 	virtual void EndPlay(
 		const EEndPlayReason::Type EndPlayReason
 	) override;
 
-	// Activation
+	// ******************** Components ********************
 
 	UPROPERTY(
 		VisibleAnywhere,
@@ -113,7 +121,7 @@ protected:
 	)
 	TObjectPtr<UBoxComponent> ActivationBox;
 
-	// Configuration
+	// ******************** Configuration ********************
 
 	/*
 	* 关卡中实际存在的 Lantern Piece 实例。
@@ -150,7 +158,7 @@ protected:
 	)
 	TArray<int32> CurrentPlayerInput;
 
-	// Timing
+	// ******************** Timing ********************
 
 	UPROPERTY(
 		EditAnywhere,
@@ -184,7 +192,7 @@ protected:
 	)
 	float ResetDelay = 0.8f;
 
-	// Feedback
+	// ******************** Feedback ********************
 
 	/*
 	* 可选错误音效。
@@ -198,7 +206,7 @@ protected:
 	)
 	TObjectPtr<USoundBase> WrongInputSound;
 
-	// Runtime State
+	// ******************** Runtime State ********************
 
 	UPROPERTY(
 		VisibleInstanceOnly,
@@ -222,7 +230,7 @@ protected:
 	)
 	int32 CurrentPreviewIndex = 0;
 
-	// Overlap and Lantern Events
+	// ******************** Events ********************
 
 	UFUNCTION()
 	void OnPuzzleAreaEntered(
@@ -237,7 +245,7 @@ protected:
 	UFUNCTION()
 	void HandleLanternInteracted(ALanternPuzzlePiece* InteractedLantern);
 
-	// Preview
+	// ******************** Preview ********************
 
 	void PlaySequencePreview();
 
@@ -245,7 +253,7 @@ protected:
 
 	void FinishSequencePreview();
 
-	// Input Evaluation
+	// ******************** Input Evaluation ********************
 
 	void HandleCorrectInput(ALanternPuzzlePiece* InteractedLantern);
 
@@ -260,7 +268,7 @@ protected:
 
 	void FinishPuzzle();
 
-	// Helpers
+	// ******************** Helpers ********************
 
 	void BindLanternDelegates();
 
