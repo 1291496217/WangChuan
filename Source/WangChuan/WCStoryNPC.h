@@ -53,6 +53,15 @@ public:
 	FText GetNPCDisplayName() const;
 
 	/*
+	* 返回用于持久化匹配的稳定 Story NPC ID。
+	*
+	* 例如：
+	* QuietChild
+	*/
+	UFUNCTION(BlueprintPure, Category = "Story NPC|Identity")
+	FName GetStoryNPCID() const;
+
+	/*
 	* 根据 CurrentStoryStage 返回当前阶段的对话。
 	*
 	* 当数组中不存在对应阶段时，返回一个空的Sequence。
@@ -100,6 +109,14 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Story NPC|Components")
 	USphereComponent* InteractionSphere;
+
+	/*
+	* 用于 SaveGame 与关卡 Actor 恢复匹配的稳定语义 ID。
+	*
+	* 不应使用 Actor Name、Actor Label 或 Display Name 替代。
+	*/
+	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category = "Story NPC|Identity")
+	FName StoryNPCID = NAME_None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story NPC|Identity")
 	FText NPCDisplayName;

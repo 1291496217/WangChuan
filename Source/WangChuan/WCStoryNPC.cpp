@@ -136,6 +136,11 @@ FText AWCStoryNPC::GetNPCDisplayName() const
 	return NPCDisplayName;
 }
 
+FName AWCStoryNPC::GetStoryNPCID() const
+{
+	return StoryNPCID;
+}
+
 FDialogueSequence
 AWCStoryNPC::GetCurrentDialogueSequence() const
 {

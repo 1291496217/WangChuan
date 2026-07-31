@@ -28,6 +28,12 @@ public:
 	AStoryEncounter();
 
 	/*
+	* 返回此 Encounter 的稳定语义 ID。
+	*/
+	UFUNCTION(BlueprintPure, Category = "Story Encounter|Identity")
+	FName GetEncounterID() const;
+
+	/*
 	* 整个 Encounter 是否已经完成。
 	*/
 	UFUNCTION(BlueprintPure, Category = "Story Encounter")
@@ -51,8 +57,9 @@ protected:
 	/*
 	* 用于在编辑器和 Debug 中识别当前 Eencounter。
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Encounter")
-	FName EncounterID = TEXT("StoryEncounter.None");
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, 
+		Category = "Story Encounter")
+	FName EncounterID = NAME_None;
 
 	/*
 	* Required gameplay condition for this Encounter.

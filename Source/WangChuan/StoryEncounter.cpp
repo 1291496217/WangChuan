@@ -148,6 +148,11 @@ void AStoryEncounter::EndPlay(
 	Super::EndPlay(EndPlayReason);
 }
 
+FName AStoryEncounter::GetEncounterID() const
+{
+	return EncounterID;
+}
+
 bool AStoryEncounter::GetIsEncounterCompleted() const
 {
 	return bEncounterCompleted;

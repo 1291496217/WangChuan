@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -47,10 +47,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Story Objective")
 	virtual void ResetObjective();
 
-	UFUNCTION(BlueprintCallable, Category = "Story Objective")
+	/*
+	* 返回此 Objective 的稳定语义 ID。
+	*/
+	UFUNCTION(BlueprintPure, Category = "Story Objective|Identity")
+	FName GetObjectiveID() const;
+
+	UFUNCTION(BlueprintPure, Category = "Story Objective")
 	bool GetIsObjectiveActive() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Story Objective")
+	UFUNCTION(BlueprintPure, Category = "Story Objective")
 	bool GetIsObjectiveComplete() const;
 
 public:

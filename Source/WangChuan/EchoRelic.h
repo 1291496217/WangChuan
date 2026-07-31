@@ -70,6 +70,12 @@ public:
 	FMemoryEchoData GetMemoryEchoData() const;
 
 	/*
+	* 返回此 Echo Relic 的稳定 Echo ID。
+	*/
+	UFUNCTION(BlueprintPure, Category = "Echo Relic|Identity")
+	FName GetEchoID() const;
+
+	/*
 	* 只有在玩家完整读完残响后才广播。
 	*/
 	UPROPERTY(BlueprintAssignable, Category = "Echoo Relic|Events")

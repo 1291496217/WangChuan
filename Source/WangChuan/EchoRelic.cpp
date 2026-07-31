@@ -1,6 +1,4 @@
-﻿
-
-#include "EchoRelic.h"
+﻿#include "EchoRelic.h"
 
 #include "Components/SceneComponent.h"
 #include "Components/SphereComponent.h"
@@ -241,6 +239,11 @@ FMemoryEchoData
 AEchoRelic::GetMemoryEchoData() const
 {
 	return MemoryEchoData;
+}
+
+FName AEchoRelic::GetEchoID() const
+{
+	return MemoryEchoData.EchoID;
 }
 
 void AEchoRelic::OnPlayerEnter(

@@ -90,6 +90,13 @@ void AStoryObjectiveBase::ResetObjective()
 	);
 }
 
+// Getters
+
+FName AStoryObjectiveBase::GetObjectiveID() const
+{
+	return ObjectiveID;
+}
+
 bool AStoryObjectiveBase::GetIsObjectiveActive() const
 {
 	return bIsActive;
