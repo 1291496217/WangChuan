@@ -9,6 +9,7 @@ class AStoryEncounter;
 class AStoryObjectiveBase;
 class AEchoRelic;
 class AWCCharacter;
+class AWCPlayerCheckpoint;
 class AWCStoryNPC;
 
 class UWCGameInstance;
@@ -23,10 +24,10 @@ class UWCGameSaveGame;
 * - 收集稳定 Story 状态
 * - 将完整快照写入 UWCGameSaveGame
 * - 请求 UWCGameInstance 写入磁盘
+* - 按顺序静默恢复 Story World 与玩家 Checkpoint
 *
 * 不负责：
 * - 正常 Gameplay 推进
-* - 恢复 Actor 状态
 * - 播放 Story / Relocation 表现
 * - 自动保存
 */
@@ -128,6 +129,8 @@ private:
 
 	void HandleDeferredAutoRestore();
 
+	bool InitializeDefaultCheckpointForNewGame();
+
 	bool BuildWorldActorMaps(
 		TMap<FName, AWCStoryNPC*>&
 		OutStoryNPCs,
@@ -138,7 +141,9 @@ private:
 		TMap<FName, AEchoRelic*>&
 		OutEchoRelics,
 		TMap<FName, AStoryAnchor*>&
-		OutAnchors
+		OutAnchors,
+		TMap<FName, AWCPlayerCheckpoint*>&
+		OutCheckpoints
 	) const;
 
 	bool ValidateLoadedSaveDataForWorld(
@@ -152,7 +157,9 @@ private:
 		const TMap<FName, AEchoRelic*>&
 		WorldEchoRelics,
 		const TMap<FName, AStoryAnchor*>&
-		WorldAnchors
+		WorldAnchors,
+		const TMap<FName, AWCPlayerCheckpoint*>&
+		WorldCheckpoints
 	) const;
 
 	FTimerHandle DeferredRestoreTimerHandle;

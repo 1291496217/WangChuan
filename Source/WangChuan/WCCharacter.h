@@ -178,6 +178,40 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Memory Journal|Persistence")
 	void ApplySavedMemoryEchoes(const TArray<FMemoryEchoData>&SavedEchoes);
 
+	/*
+	* 更新当前 Runtime Checkpoint。
+	*
+	* 只更新当前 Session 的状态，
+	* 不会自动写入 SaveGame。
+	*/
+	UFUNCTION(
+		BlueprintCallable,
+		Category = "Persistence|Checkpoint"
+	)
+	void SetCurrentCheckpointID(
+		FName NewCheckpointID
+	);
+
+	UFUNCTION(
+		BlueprintPure,
+		Category = "Persistence|Checkpoint"
+	)
+	FName GetCurrentCheckpointID() const;
+
+	/*
+	* 静默将玩家恢复到已验证的 Checkpoint Transform。
+	*
+	* 主要用于新 World 启动后的 Resume，
+	* 不是战斗中的通用 Quick Load / 时间倒流功能。
+	*/
+	UFUNCTION(
+		BlueprintCallable,
+		Category = "Persistence|Checkpoint"
+	)
+	bool ApplySavedCheckpointState(
+		FName SavedCheckpointID,
+		const FTransform& ResumeTransform
+	);
 protected:
 	// ******************** Components ********************
 
@@ -444,6 +478,18 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Memory Journal")
 	bool bIsMemoryJournalOpen = false;
+
+	/*
+	* 当前 Gameplay Session 中，
+	* 玩家最近激活的 Checkpoint。
+	*
+	* Transient：
+	* 真正持久化数据位于 UWCGameSaveGame。
+	*/
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient,
+		Category = "Persistence|Checkpoint"
+	)
+	FName CurrentCheckpointID = NAME_None;
 
 	// ******************** Input ********************
 

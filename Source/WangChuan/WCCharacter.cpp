@@ -1912,3 +1912,156 @@ void AWCCharacter::FaceLockOnTargetInstantly()
 	SetActorRotation(DirectionToTarget.Rotation());
 }
 
+void AWCCharacter::SetCurrentCheckpointID(
+	FName NewCheckpointID)
+{
+	if (NewCheckpointID.IsNone())
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT(
+				"SetCurrentCheckpointID rejected: "
+				"Checkpoint ID is None."
+			)
+		);
+
+		return;
+	}
+
+	if (CurrentCheckpointID ==
+		NewCheckpointID)
+	{
+		return;
+	}
+
+	CurrentCheckpointID =
+		NewCheckpointID;
+
+	UE_LOG(
+		LogTemp,
+		Display,
+		TEXT(
+			"Player Runtime Checkpoint set to [%s]."
+		),
+		*CurrentCheckpointID.ToString()
+	);
+}
+
+FName AWCCharacter::
+GetCurrentCheckpointID() const
+{
+	return CurrentCheckpointID;
+}
+
+bool AWCCharacter::ApplySavedCheckpointState(
+	FName SavedCheckpointID,
+	const FTransform& ResumeTransform)
+{
+	if (SavedCheckpointID.IsNone())
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT(
+				"Player Checkpoint Restore failed: "
+				"Checkpoint ID is None."
+			)
+		);
+
+		return false;
+	}
+
+	UCharacterMovementComponent*
+		MovementComponent =
+		GetCharacterMovement();
+
+	if (!IsValid(MovementComponent))
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT(
+				"Player Checkpoint Restore failed: "
+				"CharacterMovement is invalid."
+			)
+		);
+
+		return false;
+	}
+
+	/*
+	* 清理跳跃与上一位置遗留的移动输入。
+	*/
+	StopJumping();
+	ConsumeMovementInputVector();
+
+	/*
+	* TeleportPhysics 不会自动替我们清除速度，
+	* 所以在移动前后都显式停止 Movement。
+	*/
+	MovementComponent
+		->StopMovementImmediately();
+
+	FRotator TargetRotation =
+		ResumeTransform.Rotator();
+
+	TargetRotation.Pitch = 0.0f;
+	TargetRotation.Roll = 0.0f;
+	TargetRotation.Normalize();
+
+	const bool bMoveSucceeded =
+		SetActorLocationAndRotation(
+			ResumeTransform.GetLocation(),
+			TargetRotation,
+			false,
+			nullptr,
+			ETeleportType::TeleportPhysics
+		);
+
+	if (!bMoveSucceeded)
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT(
+				"Player Checkpoint Restore failed: "
+				"SetActorLocationAndRotation "
+				"returned false."
+			)
+		);
+
+		return false;
+	}
+
+	MovementComponent
+		->StopMovementImmediately();
+
+	MovementComponent->SetMovementMode(
+		MOVE_Walking
+	);
+
+	if (AController* PlayerController =
+		GetController())
+	{
+		PlayerController->SetControlRotation(
+			TargetRotation
+		);
+	}
+
+	CurrentCheckpointID =
+		SavedCheckpointID;
+
+	UE_LOG(
+		LogTemp,
+		Display,
+		TEXT(
+			"Player silently restored to "
+			"Checkpoint [%s] at %s."
+		),
+		*CurrentCheckpointID.ToString(),
+		*GetActorLocation().ToCompactString()
+	);
+
+	return true;
+}
