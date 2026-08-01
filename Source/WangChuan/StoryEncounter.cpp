@@ -162,6 +162,17 @@ bool AStoryEncounter::GetIsEncounterCompleted() const
 	return bEncounterCompleted;
 }
 
+AStoryObjectiveBase*
+AStoryEncounter::GetStoryObjective() const
+{
+	return StoryObjective;
+}
+
+AEchoRelic*
+AStoryEncounter::GetEchoRelic() const
+{
+	return EchoRelic;
+}
 // ******************** Helpers ********************
 
 void AStoryEncounter::ShowEncounterDebugMessage(

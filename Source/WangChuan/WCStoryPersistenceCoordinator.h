@@ -4,7 +4,15 @@
 #include "GameFramework/Actor.h"
 #include "WCStoryPersistenceCoordinator.generated.h"
 
+class AStoryAnchor;
+class AStoryEncounter;
+class AStoryObjectiveBase;
+class AEchoRelic;
+class AWCCharacter;
+class AWCStoryNPC;
+
 class UWCGameInstance;
+class UWCGameSaveGame;
 
 /*
 * 当前关卡的轻量 Story Persistence 协调者。
@@ -62,21 +70,46 @@ public:
 	* 用于在新 PIE Session 中验证磁盘数据，
 	* 不会将数据应用到当前世界。
 	*/
-	UFUNCTION(
-		BlueprintCallable,
-		Category = "Story Persistence|Debug"
-	)
+	UFUNCTION(BlueprintCallable, Category = "Story Persistence|Debug")
 	void PrintLoadedSaveSummary() const;
+
+	/*
+	* 从固定 Slot 读取 SaveGame，并立即恢复当前 World。
+	*
+	* 没有存档时不会修改默认 World。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Story Persistence")
+	bool LoadAndRestoreWorldState();
+
+	/*
+	* 将当前 UWCGameInstance::LoadedSaveData
+	* 应用到本关卡 Actor。
+	*
+	* 本函数不会读取磁盘。
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Story Persistence")
+	bool RestoreLoadedWorldState();
+
+	UFUNCTION(BlueprintPure, Category = "Story Persistence")
+	bool GetHasRestoredLoadedWorld() const;
 
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(
-		EditAnywhere,
-		BlueprintReadOnly,
-		Category = "Story Persistence|Debug"
-	)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Persistence|Debug")
 	bool bShowOnScreenDebug = true;
+
+	virtual void EndPlay(
+		const EEndPlayReason::Type EndPlayReason
+	) override;
+
+	/*
+	* PIE / Map 启动后自动检查固定 Save Slot。
+	*
+	* 没有 Save Slot 时保留默认新游戏世界。
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Persistence|Load")
+	bool bAutoLoadAndRestoreOnBeginPlay = true;
 
 private:
 	UWCGameInstance* GetWCGameInstance() const;
@@ -92,4 +125,40 @@ private:
 		const FString& Message,
 		const FColor& Color
 	) const;
+
+	void HandleDeferredAutoRestore();
+
+	bool BuildWorldActorMaps(
+		TMap<FName, AWCStoryNPC*>&
+		OutStoryNPCs,
+		TMap<FName, AStoryObjectiveBase*>&
+		OutObjectives,
+		TMap<FName, AStoryEncounter*>&
+		OutEncounters,
+		TMap<FName, AEchoRelic*>&
+		OutEchoRelics,
+		TMap<FName, AStoryAnchor*>&
+		OutAnchors
+	) const;
+
+	bool ValidateLoadedSaveDataForWorld(
+		const UWCGameSaveGame* SaveData,
+		const TMap<FName, AWCStoryNPC*>&
+		WorldStoryNPCs,
+		const TMap<FName, AStoryObjectiveBase*>&
+		WorldObjectives,
+		const TMap<FName, AStoryEncounter*>&
+		WorldEncounters,
+		const TMap<FName, AEchoRelic*>&
+		WorldEchoRelics,
+		const TMap<FName, AStoryAnchor*>&
+		WorldAnchors
+	) const;
+
+	FTimerHandle DeferredRestoreTimerHandle;
+
+	bool bRestoreInProgress = false;
+	bool bHasRestoredLoadedWorld = false;
+
+	int32 SuccessfulRestoreCount = 0;
 };

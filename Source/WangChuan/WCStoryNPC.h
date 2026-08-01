@@ -126,6 +126,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Story NPC|Persistence")
 	bool ApplySavedStoryState(int32 SavedStoryStage, FName SavedAnchorID);
 
+	/*
+	* 检查此 NPC 的 StoryAnchors 中是否包含指定稳定 ID。
+	*
+	* 只验证，不修改 NPC。
+	*/
+	UFUNCTION(BlueprintPure, Category = "Story NPC|Persistence")
+	bool HasStoryAnchorID(FName AnchorID) const;
+
 protected:
 	// ******************** Components ********************
 

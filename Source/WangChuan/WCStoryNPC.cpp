@@ -884,3 +884,11 @@ AWCStoryNPC::FindStoryAnchorByID(
 
 	return nullptr;
 }
+
+bool AWCStoryNPC::HasStoryAnchorID(
+	FName AnchorID) const
+{
+	return IsValid(
+		FindStoryAnchorByID(AnchorID)
+	);
+}

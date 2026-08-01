@@ -58,6 +58,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Story Encounter|Persistence")
 	void ApplySavedEncounterState(bool bSavedCompleted);
 
+	/*
+	* 返回当前 Encounter 配置的 Story Objective。
+	*
+	* 仅用于当前 World 中的关系读取。
+	* 不应将返回的 Actor Pointer 写入 SaveGame。
+	*/
+	UFUNCTION(BlueprintPure, Category = "Story Encounter|Persistence")
+	AStoryObjectiveBase* GetStoryObjective() const;
+
+	/*
+	* 返回当前 Encounter 配置的 Echo Relic。
+	*
+	* Coordinator 使用此关系推导 Relic 的恢复状态。
+	*/
+	UFUNCTION(BlueprintPure, Category = "Story Encounter|Persistence")
+	AEchoRelic* GetEchoRelic() const;
+
 protected:
 	// ******************** Lifecycle ********************
 
