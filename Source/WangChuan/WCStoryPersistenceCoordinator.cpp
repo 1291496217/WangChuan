@@ -158,6 +158,11 @@ HandleDeferredAutoRestore()
 		return;
 	}
 
+	TGuardValue<bool> StartupRestoreGuard(
+		bStartupRestoreRequestInProgress,
+		true
+	);
+
 	if (!LoadAndRestoreWorldState())
 	{
 		UE_LOG(
@@ -400,8 +405,11 @@ ValidateLoadedSaveDataForWorld(
 ) const
 {
 	/*
-	* 1. SaveGame 基础有效性
-	*/
+	 * ----------------------------------------------------
+	 * 1. SaveGame 基础有效性
+	 * ----------------------------------------------------
+	 */
+
 	if (!IsValid(SaveData))
 	{
 		UE_LOG(
@@ -434,15 +442,15 @@ ValidateLoadedSaveDataForWorld(
 	}
 
 	/*
-	* Save V1 是当前单地图的完整 Story 快照。
-	*
-	* NPC、Objective、Encounter 的记录数量
-	* 应与当前正式 World 中的 Actor 数量一致。
-	*
-	* Echo Relic 不是独立存档数组；
-	* Journal 只保存已经完成阅读的 Echo，
-	* 所以这里不能要求 Journal 数量等于 Relic 数量。
-	*/
+	 * 当前 Version 2 仍然是：
+	 *
+	 * 单地图
+	 * 完整 Story 快照
+	 *
+	 * 因此 NPC、Objective、Encounter 的存档数量
+	 * 必须与当前地图中的正式 Actor 数量一致。
+	 */
+
 	if (SaveData->StoryNPCStates.Num() !=
 		WorldStoryNPCs.Num() ||
 		SaveData->ObjectiveStates.Num() !=
@@ -471,11 +479,11 @@ ValidateLoadedSaveDataForWorld(
 	}
 
 	/*
-	* 2. Checkpoint 验证
-	*
-	* 必须在任何 World Actor 被修改前，
-	* 确认存档中的 Checkpoint ID 有效。
-	*/
+	 * ----------------------------------------------------
+	 * 2. Player Checkpoint 基础验证
+	 * ----------------------------------------------------
+	 */
+
 	if (SaveData->CurrentCheckpointID.IsNone())
 	{
 		UE_LOG(
@@ -490,7 +498,113 @@ ValidateLoadedSaveDataForWorld(
 		return false;
 	}
 
-	if (!WorldCheckpoints.Contains(
+	AWCPlayerCheckpoint* const*
+		CurrentCheckpointPtr =
+		WorldCheckpoints.Find(
+			SaveData->CurrentCheckpointID
+		);
+
+	if (!CurrentCheckpointPtr ||
+		!IsValid(*CurrentCheckpointPtr))
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Error,
+			TEXT(
+				"Restore validation failed: "
+				"Current Checkpoint [%s] does not "
+				"exist in the current World."
+			),
+			*SaveData
+			->CurrentCheckpointID
+			.ToString()
+		);
+
+		return false;
+	}
+
+	if (SaveData
+		->UnlockedCheckpointIDs
+		.Num() == 0)
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Error,
+			TEXT(
+				"Restore validation failed: "
+				"UnlockedCheckpointIDs is empty."
+			)
+		);
+
+		return false;
+	}
+
+	TSet<FName> SavedUnlockedCheckpointIDs;
+
+	for (const FName CheckpointID :
+	SaveData->UnlockedCheckpointIDs)
+	{
+		if (CheckpointID.IsNone())
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"Restore validation failed: "
+					"Unlocked Checkpoint ID is None."
+				)
+			);
+
+			return false;
+		}
+
+		if (SavedUnlockedCheckpointIDs.Contains(
+			CheckpointID))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"Restore validation failed: "
+					"duplicate unlocked "
+					"Checkpoint ID [%s]."
+				),
+				*CheckpointID.ToString()
+			);
+
+			return false;
+		}
+
+		AWCPlayerCheckpoint* const*
+			CheckpointPtr =
+			WorldCheckpoints.Find(
+				CheckpointID
+			);
+
+		if (!CheckpointPtr ||
+			!IsValid(*CheckpointPtr))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"Restore validation failed: "
+					"unlocked Checkpoint [%s] "
+					"does not exist in the "
+					"current World."
+				),
+				*CheckpointID.ToString()
+			);
+
+			return false;
+		}
+
+		SavedUnlockedCheckpointIDs.Add(
+			CheckpointID
+		);
+	}
+
+	if (!SavedUnlockedCheckpointIDs.Contains(
 		SaveData->CurrentCheckpointID))
 	{
 		UE_LOG(
@@ -498,8 +612,9 @@ ValidateLoadedSaveDataForWorld(
 			Error,
 			TEXT(
 				"Restore validation failed: "
-				"Checkpoint [%s] does not exist "
-				"in the current World."
+				"Current Checkpoint [%s] is not "
+				"contained in "
+				"UnlockedCheckpointIDs."
 			),
 			*SaveData
 			->CurrentCheckpointID
@@ -510,22 +625,16 @@ ValidateLoadedSaveDataForWorld(
 	}
 
 	/*
-	* 用于检测 Save 内部的重复 ID。
-	*/
+	 * ----------------------------------------------------
+	 * 3. 准备 ID Set 与完成状态 Map
+	 * ----------------------------------------------------
+	 */
+
 	TSet<FName> SavedStoryNPCIDs;
 	TSet<FName> SavedObjectiveIDs;
 	TSet<FName> SavedEncounterIDs;
 	TSet<FName> SavedJournalEchoIDs;
 
-	/*
-	* 用于之后验证：
-	*
-	* Encounter Complete
-	* → Objective 必须 Complete
-	*
-	* Encounter Complete
-	* ↔ Journal 必须包含对应 Echo
-	*/
 	TMap<FName, bool>
 		SavedObjectiveCompletion;
 
@@ -533,8 +642,11 @@ ValidateLoadedSaveDataForWorld(
 		SavedEncounterCompletion;
 
 	/*
-	* 3. Story NPC Records
-	*/
+	 * ----------------------------------------------------
+	 * 4. Story NPC Records
+	 * ----------------------------------------------------
+	 */
+
 	for (const FWCSavedStoryNPCState& NPCState :
 		SaveData->StoryNPCStates)
 	{
@@ -584,9 +696,8 @@ ValidateLoadedSaveDataForWorld(
 				Error,
 				TEXT(
 					"Restore validation failed: "
-					"saved Story NPC [%s] "
-					"does not exist in the "
-					"current World."
+					"saved Story NPC [%s] does "
+					"not exist in the current World."
 				),
 				*NPCState
 				.StoryNPCID
@@ -603,8 +714,8 @@ ValidateLoadedSaveDataForWorld(
 				Error,
 				TEXT(
 					"Restore validation failed: "
-					"saved Story NPC [%s] "
-					"has invalid Stage=%d."
+					"Story NPC [%s] has negative "
+					"StoryStage=%d."
 				),
 				*NPCState
 				.StoryNPCID
@@ -622,8 +733,8 @@ ValidateLoadedSaveDataForWorld(
 				Error,
 				TEXT(
 					"Restore validation failed: "
-					"saved Story NPC [%s] "
-					"has AnchorID None."
+					"Story NPC [%s] has "
+					"AnchorID None."
 				),
 				*NPCState
 				.StoryNPCID
@@ -633,8 +744,13 @@ ValidateLoadedSaveDataForWorld(
 			return false;
 		}
 
-		if (!WorldAnchors.Contains(
-			NPCState.AnchorID))
+		AStoryAnchor* const* AnchorPtr =
+			WorldAnchors.Find(
+				NPCState.AnchorID
+			);
+
+		if (!AnchorPtr ||
+			!IsValid(*AnchorPtr))
 		{
 			UE_LOG(
 				LogWCStoryPersistence,
@@ -645,9 +761,7 @@ ValidateLoadedSaveDataForWorld(
 					"Story NPC [%s] does not "
 					"exist in the current World."
 				),
-				*NPCState
-				.AnchorID
-				.ToString(),
+				*NPCState.AnchorID.ToString(),
 				*NPCState
 				.StoryNPCID
 				.ToString()
@@ -657,9 +771,10 @@ ValidateLoadedSaveDataForWorld(
 		}
 
 		/*
-		* Anchor 不仅需要存在于地图中，
-		* 还必须属于这个 NPC 的 StoryAnchors 配置。
-		*/
+		 * Anchor 不仅要存在于地图，
+		 * 还必须属于这个 NPC 配置的 StoryAnchors。
+		 */
+
 		if (!(*StoryNPCPtr)->HasStoryAnchorID(
 			NPCState.AnchorID))
 		{
@@ -668,12 +783,10 @@ ValidateLoadedSaveDataForWorld(
 				Error,
 				TEXT(
 					"Restore validation failed: "
-					"Anchor [%s] is not configured "
-					"for Story NPC [%s]."
+					"Anchor [%s] is not assigned "
+					"to Story NPC [%s]."
 				),
-				*NPCState
-				.AnchorID
-				.ToString(),
+				*NPCState.AnchorID.ToString(),
 				*NPCState
 				.StoryNPCID
 				.ToString()
@@ -688,8 +801,11 @@ ValidateLoadedSaveDataForWorld(
 	}
 
 	/*
-	* 4. Objective Records
-	*/
+	 * ----------------------------------------------------
+	 * 5. Objective Records
+	 * ----------------------------------------------------
+	 */
+
 	for (const FWCSavedObjectiveState&
 		ObjectiveState :
 		SaveData->ObjectiveStates)
@@ -727,17 +843,22 @@ ValidateLoadedSaveDataForWorld(
 			return false;
 		}
 
-		if (!WorldObjectives.Contains(
-			ObjectiveState.ObjectiveID))
+		AStoryObjectiveBase* const*
+			ObjectivePtr =
+			WorldObjectives.Find(
+				ObjectiveState.ObjectiveID
+			);
+
+		if (!ObjectivePtr ||
+			!IsValid(*ObjectivePtr))
 		{
 			UE_LOG(
 				LogWCStoryPersistence,
 				Error,
 				TEXT(
 					"Restore validation failed: "
-					"saved Objective [%s] "
-					"does not exist in the "
-					"current World."
+					"saved Objective [%s] does "
+					"not exist in the current World."
 				),
 				*ObjectiveState
 				.ObjectiveID
@@ -758,8 +879,11 @@ ValidateLoadedSaveDataForWorld(
 	}
 
 	/*
-	* 5. Encounter Records
-	*/
+	 * ----------------------------------------------------
+	 * 6. Encounter Records
+	 * ----------------------------------------------------
+	 */
+
 	for (const FWCSavedEncounterState&
 		EncounterState :
 		SaveData->EncounterStates)
@@ -797,17 +921,22 @@ ValidateLoadedSaveDataForWorld(
 			return false;
 		}
 
-		if (!WorldEncounters.Contains(
-			EncounterState.EncounterID))
+		AStoryEncounter* const*
+			EncounterPtr =
+			WorldEncounters.Find(
+				EncounterState.EncounterID
+			);
+
+		if (!EncounterPtr ||
+			!IsValid(*EncounterPtr))
 		{
 			UE_LOG(
 				LogWCStoryPersistence,
 				Error,
 				TEXT(
 					"Restore validation failed: "
-					"saved Encounter [%s] "
-					"does not exist in the "
-					"current World."
+					"saved Encounter [%s] does "
+					"not exist in the current World."
 				),
 				*EncounterState
 				.EncounterID
@@ -828,13 +957,11 @@ ValidateLoadedSaveDataForWorld(
 	}
 
 	/*
-	* 6. Journal Records
-	*
-	* Journal 中的每个 Echo：
-	* - ID 不能为 None
-	* - 不能重复
-	* - 必须对应当前 World 中的 Echo Relic
-	*/
+	 * ----------------------------------------------------
+	 * 7. Journal Echo Records
+	 * ----------------------------------------------------
+	 */
+
 	for (const FMemoryEchoData& EchoData :
 		SaveData->RecordedMemoryEchoes)
 	{
@@ -863,29 +990,30 @@ ValidateLoadedSaveDataForWorld(
 					"duplicate saved Journal "
 					"Echo ID [%s]."
 				),
-				*EchoData
-				.EchoID
-				.ToString()
+				*EchoData.EchoID.ToString()
 			);
 
 			return false;
 		}
 
-		if (!WorldEchoRelics.Contains(
-			EchoData.EchoID))
+		AEchoRelic* const* EchoRelicPtr =
+			WorldEchoRelics.Find(
+				EchoData.EchoID
+			);
+
+		if (!EchoRelicPtr ||
+			!IsValid(*EchoRelicPtr))
 		{
 			UE_LOG(
 				LogWCStoryPersistence,
 				Error,
 				TEXT(
 					"Restore validation failed: "
-					"saved Journal Echo [%s] "
-					"does not exist in the "
-					"current World."
+					"Journal Echo [%s] does not "
+					"have a matching Echo Relic "
+					"in the current World."
 				),
-				*EchoData
-				.EchoID
-				.ToString()
+				*EchoData.EchoID.ToString()
 			);
 
 			return false;
@@ -897,22 +1025,24 @@ ValidateLoadedSaveDataForWorld(
 	}
 
 	/*
-	* 7. 验证 Encounter → Objective → Relic 关系
-	*
-	* 同时验证跨系统持久事实的一致性。
-	*/
+	 * ----------------------------------------------------
+	 * 8. Encounter → Objective → Echo Relic
+	 *    关系及状态一致性验证
+	 * ----------------------------------------------------
+	 */
+
+	TSet<FName> EncounterObjectiveIDs;
 	TSet<FName> EncounterRelicIDs;
 
-	for (const TPair<
-		FName,
-		AStoryEncounter*
-	>& Pair : WorldEncounters)
+	for (const TPair<FName, AStoryEncounter*>&
+		EncounterPair :
+		WorldEncounters)
 	{
 		const FName EncounterID =
-			Pair.Key;
+			EncounterPair.Key;
 
 		AStoryEncounter* Encounter =
-			Pair.Value;
+			EncounterPair.Value;
 
 		if (!IsValid(Encounter))
 		{
@@ -922,7 +1052,7 @@ ValidateLoadedSaveDataForWorld(
 				TEXT(
 					"Restore validation failed: "
 					"Encounter [%s] Actor "
-					"is invalid."
+					"pointer is invalid."
 				),
 				*EncounterID.ToString()
 			);
@@ -936,8 +1066,7 @@ ValidateLoadedSaveDataForWorld(
 		AEchoRelic* EchoRelic =
 			Encounter->GetEchoRelic();
 
-		if (!IsValid(Objective) ||
-			!IsValid(EchoRelic))
+		if (!IsValid(Objective))
 		{
 			UE_LOG(
 				LogWCStoryPersistence,
@@ -945,8 +1074,23 @@ ValidateLoadedSaveDataForWorld(
 				TEXT(
 					"Restore validation failed: "
 					"Encounter [%s] has an "
-					"invalid Objective or "
-					"Echo Relic reference."
+					"invalid Story Objective."
+				),
+				*EncounterID.ToString()
+			);
+
+			return false;
+		}
+
+		if (!IsValid(EchoRelic))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"Restore validation failed: "
+					"Encounter [%s] has an "
+					"invalid Echo Relic."
 				),
 				*EncounterID.ToString()
 			);
@@ -978,54 +1122,17 @@ ValidateLoadedSaveDataForWorld(
 			return false;
 		}
 
-		/*
-		* Encounter 配置中的 Objective / Relic
-		* 也必须存在于已经建立的 World Maps 中。
-		*/
 		if (!WorldObjectives.Contains(
-			ObjectiveID) ||
-			!WorldEchoRelics.Contains(
-				EchoID))
+			ObjectiveID))
 		{
 			UE_LOG(
 				LogWCStoryPersistence,
 				Error,
 				TEXT(
 					"Restore validation failed: "
-					"Encounter [%s] references "
-					"Objective [%s] or Echo [%s] "
-					"that is missing from the "
-					"World maps."
-				),
-				*EncounterID.ToString(),
-				*ObjectiveID.ToString(),
-				*EchoID.ToString()
-			);
-
-			return false;
-		}
-
-		const bool* SavedObjectiveComplete =
-			SavedObjectiveCompletion.Find(
-				ObjectiveID
-			);
-
-		const bool* SavedEncounterComplete =
-			SavedEncounterCompletion.Find(
-				EncounterID
-			);
-
-		if (!SavedObjectiveComplete)
-		{
-			UE_LOG(
-				LogWCStoryPersistence,
-				Error,
-				TEXT(
-					"Restore validation failed: "
-					"Encounter [%s] references "
-					"Objective [%s], but the "
-					"SaveGame has no matching "
-					"Objective record."
+					"Encounter [%s] Objective "
+					"[%s] is not registered in "
+					"the World Objective map."
 				),
 				*EncounterID.ToString(),
 				*ObjectiveID.ToString()
@@ -1034,26 +1141,56 @@ ValidateLoadedSaveDataForWorld(
 			return false;
 		}
 
-		if (!SavedEncounterComplete)
+		if (!WorldEchoRelics.Contains(
+			EchoID))
 		{
 			UE_LOG(
 				LogWCStoryPersistence,
 				Error,
 				TEXT(
 					"Restore validation failed: "
-					"SaveGame has no matching "
-					"record for Encounter [%s]."
+					"Encounter [%s] Echo Relic "
+					"[%s] is not registered in "
+					"the World Echo map."
 				),
-				*EncounterID.ToString()
+				*EncounterID.ToString(),
+				*EchoID.ToString()
 			);
 
 			return false;
 		}
 
 		/*
-		* 当前 Demo 约定一个 Echo Relic
-		* 只能属于一个 Encounter。
-		*/
+		 * 当前 Demo 中，一个 Objective 应只属于
+		 * 一个 Encounter。
+		 */
+
+		if (EncounterObjectiveIDs.Contains(
+			ObjectiveID))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"Restore validation failed: "
+					"Objective [%s] is assigned "
+					"to more than one Encounter."
+				),
+				*ObjectiveID.ToString()
+			);
+
+			return false;
+		}
+
+		EncounterObjectiveIDs.Add(
+			ObjectiveID
+		);
+
+		/*
+		 * 当前 Demo 中，一个 Echo Relic 应只属于
+		 * 一个 Encounter。
+		 */
+
 		if (EncounterRelicIDs.Contains(
 			EchoID))
 		{
@@ -1073,21 +1210,66 @@ ValidateLoadedSaveDataForWorld(
 
 		EncounterRelicIDs.Add(EchoID);
 
-		/*
-		* Encounter 完成意味着其 Objective
-		* 必须已经完成。
-		*/
-		if ((*SavedEncounterComplete) &&
-			!(*SavedObjectiveComplete))
+		const bool* SavedObjectiveComplete =
+			SavedObjectiveCompletion.Find(
+				ObjectiveID
+			);
+
+		const bool* SavedEncounterComplete =
+			SavedEncounterCompletion.Find(
+				EncounterID
+			);
+
+		if (!SavedObjectiveComplete)
 		{
 			UE_LOG(
 				LogWCStoryPersistence,
 				Error,
 				TEXT(
 					"Restore validation failed: "
-					"saved Encounter [%s] is "
-					"complete while Objective "
-					"[%s] is incomplete."
+					"Objective [%s] used by "
+					"Encounter [%s] has no "
+					"saved record."
+				),
+				*ObjectiveID.ToString(),
+				*EncounterID.ToString()
+			);
+
+			return false;
+		}
+
+		if (!SavedEncounterComplete)
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"Restore validation failed: "
+					"Encounter [%s] has no "
+					"saved completion record."
+				),
+				*EncounterID.ToString()
+			);
+
+			return false;
+		}
+
+		/*
+		 * Encounter 不可能在其 Objective
+		 * 尚未完成时已经完成。
+		 */
+
+		if (*SavedEncounterComplete &&
+			!*SavedObjectiveComplete)
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"Restore validation failed: "
+					"Encounter [%s] is complete "
+					"while Objective [%s] is "
+					"incomplete."
 				),
 				*EncounterID.ToString(),
 				*ObjectiveID.ToString()
@@ -1097,17 +1279,19 @@ ValidateLoadedSaveDataForWorld(
 		}
 
 		/*
-		* 当前剧情流程中：
-		*
-		* Encounter 完成
-		* ↔ 对应 Echo 已完整阅读并记录到 Journal
-		*/
+		 * 当前 Story 流程中：
+		 *
+		 * Encounter 完成
+		 * ⇔ 玩家已确认阅读该 Encounter 的 Echo
+		 * ⇔ Journal 包含对应 Echo
+		 */
+
 		const bool bJournalContainsEcho =
 			SavedJournalEchoIDs.Contains(
 				EchoID
 			);
 
-		if ((*SavedEncounterComplete) !=
+		if (*SavedEncounterComplete !=
 			bJournalContainsEcho)
 		{
 			UE_LOG(
@@ -1122,7 +1306,7 @@ ValidateLoadedSaveDataForWorld(
 				),
 				*EncounterID.ToString(),
 				*EchoID.ToString(),
-				(*SavedEncounterComplete)
+				*SavedEncounterComplete
 				? TEXT("True")
 				: TEXT("False"),
 				bJournalContainsEcho
@@ -1135,9 +1319,35 @@ ValidateLoadedSaveDataForWorld(
 	}
 
 	/*
-	* 每个 World Echo Relic 都必须且只能
-	* 由一个 Encounter 管理。
-	*/
+	 * 当前完整快照要求：
+	 * 每个正式 Objective 都被一个 Encounter 使用。
+	 */
+
+	if (EncounterObjectiveIDs.Num() !=
+		WorldObjectives.Num())
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Error,
+			TEXT(
+				"Restore validation failed: "
+				"not every Story Objective is "
+				"assigned to exactly one Encounter. "
+				"EncounterObjectives=%d, "
+				"WorldObjectives=%d."
+			),
+			EncounterObjectiveIDs.Num(),
+			WorldObjectives.Num()
+		);
+
+		return false;
+	}
+
+	/*
+	 * 每个正式 Echo Relic 都必须归属于
+	 * 一个且仅一个 Encounter。
+	 */
+
 	if (EncounterRelicIDs.Num() !=
 		WorldEchoRelics.Num())
 	{
@@ -1148,8 +1358,8 @@ ValidateLoadedSaveDataForWorld(
 				"Restore validation failed: "
 				"not every Echo Relic is assigned "
 				"to exactly one Encounter. "
-				"Encounter Relics=%d, "
-				"World Relics=%d."
+				"EncounterRelics=%d, "
+				"WorldRelics=%d."
 			),
 			EncounterRelicIDs.Num(),
 			WorldEchoRelics.Num()
@@ -1158,22 +1368,32 @@ ValidateLoadedSaveDataForWorld(
 		return false;
 	}
 
+	/*
+	 * ----------------------------------------------------
+	 * 9. 最终成功日志
+	 * ----------------------------------------------------
+	 */
+
 	UE_LOG(
 		LogWCStoryPersistence,
 		Display,
 		TEXT(
 			"Loaded Save validation succeeded. "
-			"Checkpoint=[%s], NPCs=%d, "
-			"Objectives=%d, Encounters=%d, "
-			"JournalEchoes=%d."
+			"Version=%d, "
+			"NPCs=%d, Objectives=%d, "
+			"Encounters=%d, JournalEchoes=%d, "
+			"UnlockedCheckpoints=%d, "
+			"CurrentCheckpoint=[%s]."
 		),
-		*SaveData
-		->CurrentCheckpointID
-		.ToString(),
+		SaveData->SaveVersion,
 		SaveData->StoryNPCStates.Num(),
 		SaveData->ObjectiveStates.Num(),
 		SaveData->EncounterStates.Num(),
-		SaveData->RecordedMemoryEchoes.Num()
+		SaveData->RecordedMemoryEchoes.Num(),
+		SaveData->UnlockedCheckpointIDs.Num(),
+		*SaveData
+		->CurrentCheckpointID
+		.ToString()
 	);
 
 	return true;
@@ -1182,6 +1402,21 @@ ValidateLoadedSaveDataForWorld(
 bool AWCStoryPersistenceCoordinator::
 LoadAndRestoreWorldState()
 {
+	if (!bStartupRestoreRequestInProgress &&
+		!bAllowDirectDebugPersistenceActions)
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Display,
+			TEXT(
+				"Direct Load/Restore request ignored. "
+				"Player-facing loading occurs only during startup."
+			)
+		);
+
+		return false;
+	}
+
 	UWCGameInstance* GameInstance =
 		GetWCGameInstance();
 
@@ -1576,6 +1811,20 @@ RestoreLoadedWorldState()
 	}
 
 	/*
+	* Checkpoint 的 Runtime Progress 与派生视觉必须在玩家移动前恢复。
+	*
+	* 这不会写入磁盘，也不会播放一次性的休憩成功表现。
+	*/
+	Player->ApplyRuntimeCheckpointProgress(
+		SaveData->CurrentCheckpointID,
+		SaveData->UnlockedCheckpointIDs
+	);
+
+	RefreshCheckpointPresentations(
+		SaveData->UnlockedCheckpointIDs
+	);
+
+	/*
 	* Phase 6: Player Checkpoint
 	*
 	* 玩家必须最后恢复，确保进入目标位置时，
@@ -1645,6 +1894,371 @@ RestoreLoadedWorldState()
 bool AWCStoryPersistenceCoordinator::GetHasRestoredLoadedWorld() const
 {
 	return bHasRestoredLoadedWorld;
+}
+
+bool AWCStoryPersistenceCoordinator::SaveAtCheckpoint(
+	AWCPlayerCheckpoint* Checkpoint)
+{
+	if (!IsValid(Checkpoint) ||
+		Checkpoint->GetWorld() != GetWorld() ||
+		Checkpoint->GetCheckpointID().IsNone() ||
+		bRestoreInProgress)
+	{
+		return false;
+	}
+
+	AWCCharacter* Player =
+		Cast<AWCCharacter>(
+			UGameplayStatics::GetPlayerCharacter(
+				this,
+				0
+			)
+		);
+
+	if (!IsValid(Player) ||
+		!Player->CanUseCheckpoint())
+	{
+		ShowPersistenceMessage(
+			TEXT("Cannot rest here right now."),
+			FColor::Yellow
+		);
+
+		return false;
+	}
+
+	if (!Checkpoint->IsPlayerWithinInteractionRange(
+		Player))
+	{
+		return false;
+	}
+
+	/*
+	* Capture 也会再次校验当前 Checkpoint，
+	* 这里先拒绝不安全的候选休憩点。
+	*/
+	FTransform SafeTransform;
+
+	if (!Checkpoint->BuildSafeResumeTransform(
+		Player,
+		SafeTransform))
+	{
+		return false;
+	}
+
+	const FName PreviousCurrentID =
+		Player->GetCurrentCheckpointID();
+
+	const TArray<FName> PreviousUnlockedIDs =
+		Player->GetUnlockedCheckpointIDs();
+
+	TArray<FName> CandidateUnlockedIDs =
+		PreviousUnlockedIDs;
+
+	CandidateUnlockedIDs.AddUnique(
+		Checkpoint->GetCheckpointID()
+	);
+
+	Player->ApplyRuntimeCheckpointProgress(
+		Checkpoint->GetCheckpointID(),
+		CandidateUnlockedIDs
+	);
+
+	TGuardValue<bool> SaveRequestGuard(
+		bCheckpointSaveRequestInProgress,
+		true
+	);
+
+	if (!CaptureAndSaveWorldState())
+	{
+		Player->ApplyRuntimeCheckpointProgress(
+			PreviousCurrentID,
+			PreviousUnlockedIDs
+		);
+
+		RefreshCheckpointPresentations(
+			PreviousUnlockedIDs
+		);
+
+		UE_LOG(
+			LogWCStoryPersistence,
+			Warning,
+			TEXT(
+				"Checkpoint save failed. Runtime progress "
+				"was rolled back to [%s]."
+			),
+			*PreviousCurrentID.ToString()
+		);
+
+		return false;
+	}
+
+	RefreshCheckpointPresentations(
+		CandidateUnlockedIDs
+	);
+
+	ShowPersistenceMessage(
+		FString::Printf(
+			TEXT("Memory anchored at %s."),
+			*Checkpoint
+				->GetCheckpointDisplayName()
+				.ToString()
+		),
+		FColor::Green
+	);
+
+	return true;
+}
+
+TArray<FWCCheckpointTravelOption>
+AWCStoryPersistenceCoordinator::
+GetCheckpointTravelOptions() const
+{
+	TArray<FWCCheckpointTravelOption> Options;
+
+	const AWCCharacter* Player =
+		Cast<AWCCharacter>(
+			UGameplayStatics::GetPlayerCharacter(
+				this,
+				0
+			)
+		);
+
+	if (!IsValid(Player))
+	{
+		return Options;
+	}
+
+	TArray<AActor*> FoundActors;
+
+	UGameplayStatics::GetAllActorsOfClass(
+		this,
+		AWCPlayerCheckpoint::StaticClass(),
+		FoundActors
+	);
+
+	Options.Reserve(FoundActors.Num());
+
+	for (AActor* Actor : FoundActors)
+	{
+		const AWCPlayerCheckpoint* Checkpoint =
+			Cast<AWCPlayerCheckpoint>(Actor);
+
+		if (!IsValid(Checkpoint) ||
+			Checkpoint->GetCheckpointID().IsNone())
+		{
+			continue;
+		}
+
+		FWCCheckpointTravelOption Option;
+		Option.CheckpointID =
+			Checkpoint->GetCheckpointID();
+		Option.DisplayName =
+			Checkpoint->GetCheckpointDisplayName();
+		Option.bUnlocked =
+			Player->HasUnlockedCheckpoint(
+				Option.CheckpointID
+			);
+		Option.bCurrent =
+			Player->GetCurrentCheckpointID() ==
+			Option.CheckpointID;
+		Option.TravelOrder =
+			Checkpoint->GetTravelOrder();
+
+		Options.Add(Option);
+	}
+
+	Options.Sort(
+		[](
+			const FWCCheckpointTravelOption& A,
+			const FWCCheckpointTravelOption& B)
+		{
+			return A.TravelOrder < B.TravelOrder;
+		}
+	);
+
+	return Options;
+}
+
+AWCPlayerCheckpoint*
+AWCStoryPersistenceCoordinator::FindCheckpointByID(
+	FName CheckpointID) const
+{
+	if (CheckpointID.IsNone())
+	{
+		return nullptr;
+	}
+
+	TArray<AActor*> FoundActors;
+
+	UGameplayStatics::GetAllActorsOfClass(
+		this,
+		AWCPlayerCheckpoint::StaticClass(),
+		FoundActors
+	);
+
+	AWCPlayerCheckpoint* Match = nullptr;
+
+	for (AActor* Actor : FoundActors)
+	{
+		AWCPlayerCheckpoint* Checkpoint =
+			Cast<AWCPlayerCheckpoint>(Actor);
+
+		if (!IsValid(Checkpoint) ||
+			Checkpoint->GetCheckpointID() !=
+			CheckpointID)
+		{
+			continue;
+		}
+
+		if (IsValid(Match))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"Checkpoint lookup failed: duplicate ID [%s]."
+				),
+				*CheckpointID.ToString()
+			);
+
+			return nullptr;
+		}
+
+		Match = Checkpoint;
+	}
+
+	return Match;
+}
+
+bool AWCStoryPersistenceCoordinator::
+TravelPlayerToCheckpoint(
+	FName TargetCheckpointID)
+{
+	if (TargetCheckpointID.IsNone() ||
+		bRestoreInProgress)
+	{
+		return false;
+	}
+
+	AWCCharacter* Player =
+		Cast<AWCCharacter>(
+			UGameplayStatics::GetPlayerCharacter(
+				this,
+				0
+			)
+		);
+
+	/*
+	* Fast Travel 是菜单中的玩家主动操作，
+	* 不是可以从任意 Blueprint 后台触发的自动传送。
+	*/
+	if (!IsValid(Player) ||
+		!Player->GetIsCheckpointMenuOpen() ||
+		!Player->HasUnlockedCheckpoint(
+			TargetCheckpointID
+		))
+	{
+		return false;
+	}
+
+	const FName SourceCheckpointID =
+		Player->GetCurrentCheckpointID();
+
+	if (SourceCheckpointID.IsNone() ||
+		SourceCheckpointID == TargetCheckpointID ||
+		!Player->HasUnlockedCheckpoint(
+			SourceCheckpointID
+		))
+	{
+		return false;
+	}
+
+	AWCPlayerCheckpoint* SourceCheckpoint =
+		FindCheckpointByID(SourceCheckpointID);
+
+	AWCPlayerCheckpoint* TargetCheckpoint =
+		FindCheckpointByID(TargetCheckpointID);
+
+	if (!IsValid(SourceCheckpoint) ||
+		!IsValid(TargetCheckpoint))
+	{
+		return false;
+	}
+
+	FTransform SourceTransform;
+	FTransform TargetTransform;
+
+	if (!SourceCheckpoint->BuildSafeResumeTransform(
+			Player,
+			SourceTransform) ||
+		!TargetCheckpoint->BuildSafeResumeTransform(
+			Player,
+			TargetTransform))
+	{
+		return false;
+	}
+
+	/*
+	* 所有验证完成后再关闭菜单和清理旧交互状态。
+	*/
+	Player->CloseCheckpointMenu();
+	Player->CurrentInteractable = nullptr;
+	Player->HideInteractionPrompt();
+
+	if (!Player->ApplySavedCheckpointState(
+		TargetCheckpointID,
+		TargetTransform))
+	{
+		SourceCheckpoint
+			->RefreshPlayerInteractionIfOverlapping();
+		return false;
+	}
+
+	TGuardValue<bool> SaveRequestGuard(
+		bCheckpointSaveRequestInProgress,
+		true
+	);
+
+	if (!CaptureAndSaveWorldState())
+	{
+		/*
+		* 磁盘保存失败时，将位置与 Current ID 一起回滚。
+		*/
+		if (!Player->ApplySavedCheckpointState(
+			SourceCheckpointID,
+			SourceTransform))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"Fast Travel rollback failed for source "
+					"Checkpoint [%s]."
+				),
+				*SourceCheckpointID.ToString()
+			);
+		}
+
+		SourceCheckpoint
+			->RefreshPlayerInteractionIfOverlapping();
+
+		return false;
+	}
+
+	TargetCheckpoint
+		->RefreshPlayerInteractionIfOverlapping();
+
+	ShowPersistenceMessage(
+		FString::Printf(
+			TEXT("Traveled to %s."),
+			*TargetCheckpoint
+				->GetCheckpointDisplayName()
+				.ToString()
+		),
+		FColor::Cyan
+	);
+
+	return true;
 }
 
 UWCGameInstance*
@@ -2090,6 +2704,82 @@ ValidateWorldPersistenceIDs() const
 bool AWCStoryPersistenceCoordinator::
 CaptureAndSaveWorldState()
 {
+	if (!bCheckpointSaveRequestInProgress &&
+		!bAllowDirectDebugPersistenceActions)
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Display,
+			TEXT(
+				"Direct World-state capture ignored. "
+				"Use a visible Checkpoint or Fast Travel."
+			)
+		);
+
+		return false;
+	}
+
+	/*
+	* Capture 只允许在非 Restore 阶段执行。
+	*
+	* 避免：
+	* Restore 正在修改 World
+	* → 同时 Capture 半恢复状态
+	* → 覆盖磁盘中的稳定存档
+	*/
+	if (bRestoreInProgress)
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Warning,
+			TEXT(
+				"World-state capture rejected: "
+				"a World Restore is currently in progress."
+			)
+		);
+
+		ShowPersistenceMessage(
+			TEXT(
+				"Save failed: World Restore is in progress."
+			),
+			FColor::Yellow
+		);
+
+		return false;
+	}
+
+	/*
+	* 首先验证当前 World 中所有正式持久化 Actor 的 ID。
+	*
+	* Day4 当前应包括：
+	* - Story NPC
+	* - Objective
+	* - Encounter
+	* - Echo Relic
+	* - Story Anchor
+	* - Player Checkpoint
+	*/
+	if (!ValidateWorldPersistenceIDs())
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Error,
+			TEXT(
+				"World-state capture failed: "
+				"World persistence ID validation failed."
+			)
+		);
+
+		ShowPersistenceMessage(
+			TEXT(
+				"Save failed: invalid World persistence IDs."
+			),
+			FColor::Red
+		);
+
+		return false;
+	}
+
 	UWCGameInstance* GameInstance =
 		GetWCGameInstance();
 
@@ -2100,32 +2790,14 @@ CaptureAndSaveWorldState()
 			Error,
 			TEXT(
 				"World-state capture failed: "
-				"active GameInstance is not UWCGameInstance."
+				"active GameInstance is not "
+				"a valid UWCGameInstance."
 			)
 		);
 
 		ShowPersistenceMessage(
 			TEXT(
-				"Save failed: invalid WCGameInstance."
-			),
-			FColor::Red
-		);
-
-		return false;
-	}
-
-	/*
-	* 必须先验证整个世界。
-	*
-	* 若存在空 ID、重复 ID、错误的 Default Checkpoint 数量，
-	* 不允许写出一份无法可靠恢复的存档。
-	*/
-	if (!ValidateWorldPersistenceIDs())
-	{
-		ShowPersistenceMessage(
-			TEXT(
-				"Save failed: Persistence ID "
-				"validation failed."
+				"Save failed: invalid GameInstance."
 			),
 			FColor::Red
 		);
@@ -2148,7 +2820,7 @@ CaptureAndSaveWorldState()
 			Error,
 			TEXT(
 				"World-state capture failed: "
-				"player 0 is not a valid AWCCharacter."
+				"Player 0 is not a valid AWCCharacter."
 			)
 		);
 
@@ -2163,11 +2835,12 @@ CaptureAndSaveWorldState()
 	}
 
 	/*
-	* Capture 当前 Runtime Checkpoint。
-	*
-	* Checkpoint 激活只更新 Player Runtime State。
-	* 真正写入磁盘发生在本函数中。
+	* ----------------------------------------------------------------
+	* Phase 1:
+	* 构造 Checkpoint 候选数据
+	* ----------------------------------------------------------------
 	*/
+
 	const FName CapturedCheckpointID =
 		Player->GetCurrentCheckpointID();
 
@@ -2192,58 +2865,24 @@ CaptureAndSaveWorldState()
 		return false;
 	}
 
-	/*
-	* CurrentCheckpointID 非 None 并不代表该 ID
-	* 一定对应当前 World 中的有效 Checkpoint Actor。
-	*
-	* 因此在保存前再次确认。
-	*/
-	TArray<AActor*> CheckpointActors;
+	const TArray<FName>&
+		RuntimeUnlockedCheckpointIDs =
+		Player->GetUnlockedCheckpointIDs();
 
-	UGameplayStatics::GetAllActorsOfClass(
-		this,
-		AWCPlayerCheckpoint::StaticClass(),
-		CheckpointActors
-	);
-
-	AWCPlayerCheckpoint* CapturedCheckpoint =
-		nullptr;
-
-	for (AActor* Actor : CheckpointActors)
-	{
-		AWCPlayerCheckpoint* Checkpoint =
-			Cast<AWCPlayerCheckpoint>(Actor);
-
-		if (!IsValid(Checkpoint))
-		{
-			continue;
-		}
-
-		if (Checkpoint->GetCheckpointID() ==
-			CapturedCheckpointID)
-		{
-			CapturedCheckpoint = Checkpoint;
-			break;
-		}
-	}
-
-	if (!IsValid(CapturedCheckpoint))
+	if (RuntimeUnlockedCheckpointIDs.IsEmpty())
 	{
 		UE_LOG(
 			LogWCStoryPersistence,
 			Error,
 			TEXT(
 				"World-state capture failed: "
-				"Checkpoint [%s] does not exist "
-				"in the current World."
-			),
-			*CapturedCheckpointID.ToString()
+				"Player has no unlocked Checkpoints."
+			)
 		);
 
 		ShowPersistenceMessage(
 			TEXT(
-				"Save failed: active Checkpoint "
-				"does not exist."
+				"Save failed: no unlocked Checkpoints."
 			),
 			FColor::Red
 		);
@@ -2252,37 +2891,258 @@ CaptureAndSaveWorldState()
 	}
 
 	/*
-	* 先将所有状态收集到局部数组。
+	* 复制到本地数组。
 	*
-	* 不直接边扫描边修改 LoadedSaveData，
-	* 避免采集中途失败后留下半份新数据。
+	* 后续所有验证都针对这个候选快照，
+	* 而不是直接修改 SaveData。
 	*/
-	TArray<FWCSavedStoryNPCState>
-		CapturedStoryNPCStates;
+	TArray<FName> CapturedUnlockedCheckpointIDs;
 
-	TArray<FWCSavedObjectiveState>
-		CapturedObjectiveStates;
-
-	TArray<FWCSavedEncounterState>
-		CapturedEncounterStates;
-
-	TArray<FMemoryEchoData>
-		CapturedMemoryEchoes;
+	CapturedUnlockedCheckpointIDs.Reserve(
+		RuntimeUnlockedCheckpointIDs.Num()
+	);
 
 	TArray<AActor*> FoundActors;
 
+	UGameplayStatics::GetAllActorsOfClass(
+		this,
+		AWCPlayerCheckpoint::StaticClass(),
+		FoundActors
+	);
+
+	TMap<FName, AWCPlayerCheckpoint*>
+		WorldCheckpoints;
+
+	for (AActor* Actor : FoundActors)
+	{
+		AWCPlayerCheckpoint* Checkpoint =
+			Cast<AWCPlayerCheckpoint>(Actor);
+
+		if (!IsValid(Checkpoint))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"World-state capture failed: "
+					"invalid Player Checkpoint Actor."
+				)
+			);
+
+			return false;
+		}
+
+		const FName CheckpointID =
+			Checkpoint->GetCheckpointID();
+
+		if (CheckpointID.IsNone())
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"World-state capture failed: "
+					"Checkpoint Actor [%s] has ID None."
+				),
+				*Checkpoint->GetName()
+			);
+
+			return false;
+		}
+
+		WorldCheckpoints.Add(
+			CheckpointID,
+			Checkpoint
+		);
+	}
+
+	AWCPlayerCheckpoint* const*
+		CapturedCheckpointPtr =
+		WorldCheckpoints.Find(
+			CapturedCheckpointID
+		);
+
+	if (!CapturedCheckpointPtr ||
+		!IsValid(*CapturedCheckpointPtr))
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Error,
+			TEXT(
+				"World-state capture failed: "
+				"active Checkpoint [%s] does not exist "
+				"in the current World."
+			),
+			*CapturedCheckpointID.ToString()
+		);
+
+		ShowPersistenceMessage(
+			TEXT(
+				"Save failed: active Checkpoint is invalid."
+			),
+			FColor::Red
+		);
+
+		return false;
+	}
+
 	/*
-	* Phase 1: Capture Story NPCs
+	* 当前 Checkpoint 还必须能提供一个安全恢复位置。
+	*
+	* SaveAtCheckpoint() 已经会提前验证一次，
+	* 这里再次验证是为了保证 Capture 本身仍然独立安全。
 	*/
+	FTransform TestResumeTransform;
+
+	if (!(*CapturedCheckpointPtr)
+		->BuildSafeResumeTransform(
+			Player,
+			TestResumeTransform
+		))
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Error,
+			TEXT(
+				"World-state capture failed: "
+				"Checkpoint [%s] cannot build a "
+				"safe Resume Transform."
+			),
+			*CapturedCheckpointID.ToString()
+		);
+
+		ShowPersistenceMessage(
+			TEXT(
+				"Save failed: unsafe Checkpoint position."
+			),
+			FColor::Red
+		);
+
+		return false;
+	}
+
+	TSet<FName>
+		CapturedUnlockedCheckpointIDSet;
+
+	bool bUnlockedListContainsCurrent =
+		false;
+
+	for (const FName CheckpointID :
+	RuntimeUnlockedCheckpointIDs)
+	{
+		if (CheckpointID.IsNone())
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"World-state capture failed: "
+					"UnlockedCheckpointIDs contains None."
+				)
+			);
+
+			return false;
+		}
+
+		if (CapturedUnlockedCheckpointIDSet.Contains(
+			CheckpointID))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"World-state capture failed: "
+					"duplicate unlocked Checkpoint ID [%s]."
+				),
+				*CheckpointID.ToString()
+			);
+
+			return false;
+		}
+
+		if (!WorldCheckpoints.Contains(
+			CheckpointID))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"World-state capture failed: "
+					"unlocked Checkpoint [%s] does not "
+					"exist in the current World."
+				),
+				*CheckpointID.ToString()
+			);
+
+			return false;
+		}
+
+		CapturedUnlockedCheckpointIDSet.Add(
+			CheckpointID
+		);
+
+		CapturedUnlockedCheckpointIDs.Add(
+			CheckpointID
+		);
+
+		if (CheckpointID ==
+			CapturedCheckpointID)
+		{
+			bUnlockedListContainsCurrent =
+				true;
+		}
+	}
+
+	if (!bUnlockedListContainsCurrent)
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Error,
+			TEXT(
+				"World-state capture failed: "
+				"CurrentCheckpointID [%s] is not present "
+				"in UnlockedCheckpointIDs."
+			),
+			*CapturedCheckpointID.ToString()
+		);
+
+		ShowPersistenceMessage(
+			TEXT(
+				"Save failed: current Checkpoint is not unlocked."
+			),
+			FColor::Red
+		);
+
+		return false;
+	}
+
+	/*
+	* ----------------------------------------------------------------
+	* Phase 2:
+	* 构造 Story NPC 候选快照
+	* ----------------------------------------------------------------
+	*/
+
+	TArray<FWCSavedStoryNPCState>
+		CapturedStoryNPCStates;
+
+	TSet<FName> CapturedStoryNPCIDs;
+
+	FoundActors.Reset();
+
 	UGameplayStatics::GetAllActorsOfClass(
 		this,
 		AWCStoryNPC::StaticClass(),
 		FoundActors
 	);
 
+	CapturedStoryNPCStates.Reserve(
+		FoundActors.Num()
+	);
+
 	for (AActor* Actor : FoundActors)
 	{
-		const AWCStoryNPC* StoryNPC =
+		AWCStoryNPC* StoryNPC =
 			Cast<AWCStoryNPC>(Actor);
 
 		if (!IsValid(StoryNPC))
@@ -2299,23 +3159,40 @@ CaptureAndSaveWorldState()
 			return false;
 		}
 
-		const EStoryNPCState CurrentState =
+		const FName StoryNPCID =
+			StoryNPC->GetStoryNPCID();
+
+		if (StoryNPCID.IsNone() ||
+			CapturedStoryNPCIDs.Contains(
+				StoryNPCID))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"World-state capture failed: "
+					"invalid or duplicate Story NPC "
+					"ID [%s]."
+				),
+				*StoryNPCID.ToString()
+			);
+
+			return false;
+		}
+
+		const EStoryNPCState StoryState =
 			StoryNPC->GetStoryState();
 
 		/*
-		* 不保存瞬时转移过程。
+		* 不允许保存 NPC 正在推进故事的中间状态。
 		*
-		* Encounter 完成后，NPC 会经历：
-		*
-		* EventResolved
-		* → Relocating
-		* → Available
-		*
-		* 只有最终 Available 状态才是稳定存档点。
+		* 否则可能出现：
+		* Encounter 已完成
+		* + NPC 仍在旧 Stage / Anchor
 		*/
-		if (CurrentState ==
+		if (StoryState ==
 			EStoryNPCState::EventResolved ||
-			CurrentState ==
+			StoryState ==
 			EStoryNPCState::Relocating)
 		{
 			UE_LOG(
@@ -2324,19 +3201,17 @@ CaptureAndSaveWorldState()
 				TEXT(
 					"World-state capture rejected: "
 					"Story NPC [%s] is in transitional "
-					"state [%d]. Wait for relocation "
-					"to finish before saving."
+					"state [%d]."
 				),
-				*StoryNPC
-				->GetStoryNPCID()
-				.ToString(),
-				static_cast<int32>(CurrentState)
+				*StoryNPCID.ToString(),
+				static_cast<int32>(
+					StoryState
+					)
 			);
 
 			ShowPersistenceMessage(
 				TEXT(
-					"Save postponed: NPC relocation "
-					"is still in progress."
+					"Cannot save while the story is changing."
 				),
 				FColor::Yellow
 			);
@@ -2350,7 +3225,8 @@ CaptureAndSaveWorldState()
 		const FName AnchorID =
 			StoryNPC->GetCurrentStoryAnchorID();
 
-		if (StoryStage < 0)
+		if (StoryStage < 0 ||
+			AnchorID.IsNone())
 		{
 			UE_LOG(
 				LogWCStoryPersistence,
@@ -2358,67 +3234,48 @@ CaptureAndSaveWorldState()
 				TEXT(
 					"World-state capture failed: "
 					"Story NPC [%s] has invalid "
-					"Stage %d."
+					"Stage=%d or Anchor=[%s]."
 				),
-				*StoryNPC
-				->GetStoryNPCID()
-				.ToString(),
-				StoryStage
+				*StoryNPCID.ToString(),
+				StoryStage,
+				*AnchorID.ToString()
 			);
 
 			return false;
 		}
 
-		if (AnchorID.IsNone())
-		{
-			UE_LOG(
-				LogWCStoryPersistence,
-				Error,
-				TEXT(
-					"World-state capture failed: "
-					"Story NPC [%s] Stage %d has no "
-					"valid stable Anchor ID."
-				),
-				*StoryNPC
-				->GetStoryNPCID()
-				.ToString(),
-				StoryStage
-			);
+		FWCSavedStoryNPCState SavedNPCState;
 
-			return false;
-		}
+		SavedNPCState.StoryNPCID =
+			StoryNPCID;
 
-		FWCSavedStoryNPCState SavedState;
-
-		SavedState.StoryNPCID =
-			StoryNPC->GetStoryNPCID();
-
-		SavedState.StoryStage =
+		SavedNPCState.StoryStage =
 			StoryStage;
 
-		SavedState.AnchorID =
+		SavedNPCState.AnchorID =
 			AnchorID;
 
-		CapturedStoryNPCStates.Add(
-			SavedState
+		CapturedStoryNPCIDs.Add(
+			StoryNPCID
 		);
 
-		UE_LOG(
-			LogWCStoryPersistence,
-			Display,
-			TEXT(
-				"Captured Story NPC [%s]: "
-				"Stage=%d, Anchor=[%s]."
-			),
-			*SavedState.StoryNPCID.ToString(),
-			SavedState.StoryStage,
-			*SavedState.AnchorID.ToString()
+		CapturedStoryNPCStates.Add(
+			MoveTemp(SavedNPCState)
 		);
 	}
 
 	/*
-	* Phase 2: Capture Objectives
+	* ----------------------------------------------------------------
+	* Phase 3:
+	* 构造 Objective 候选快照
+	* ----------------------------------------------------------------
 	*/
+
+	TArray<FWCSavedObjectiveState>
+		CapturedObjectiveStates;
+
+	TSet<FName> CapturedObjectiveIDs;
+
 	FoundActors.Reset();
 
 	UGameplayStatics::GetAllActorsOfClass(
@@ -2427,9 +3284,13 @@ CaptureAndSaveWorldState()
 		FoundActors
 	);
 
+	CapturedObjectiveStates.Reserve(
+		FoundActors.Num()
+	);
+
 	for (AActor* Actor : FoundActors)
 	{
-		const AStoryObjectiveBase* Objective =
+		AStoryObjectiveBase* Objective =
 			Cast<AStoryObjectiveBase>(Actor);
 
 		if (!IsValid(Objective))
@@ -2446,35 +3307,60 @@ CaptureAndSaveWorldState()
 			return false;
 		}
 
-		FWCSavedObjectiveState SavedState;
-
-		SavedState.ObjectiveID =
+		const FName ObjectiveID =
 			Objective->GetObjectiveID();
 
-		SavedState.bCompleted =
-			Objective->GetIsObjectiveComplete();
+		if (ObjectiveID.IsNone() ||
+			CapturedObjectiveIDs.Contains(
+				ObjectiveID))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"World-state capture failed: "
+					"invalid or duplicate Objective "
+					"ID [%s]."
+				),
+				*ObjectiveID.ToString()
+			);
 
-		CapturedObjectiveStates.Add(
-			SavedState
+			return false;
+		}
+
+		FWCSavedObjectiveState
+			SavedObjectiveState;
+
+		SavedObjectiveState.ObjectiveID =
+			ObjectiveID;
+
+		SavedObjectiveState.bCompleted =
+			Objective
+			->GetIsObjectiveComplete();
+
+		CapturedObjectiveIDs.Add(
+			ObjectiveID
 		);
 
-		UE_LOG(
-			LogWCStoryPersistence,
-			Display,
-			TEXT(
-				"Captured Objective [%s]: "
-				"Completed=%s."
-			),
-			*SavedState.ObjectiveID.ToString(),
-			SavedState.bCompleted
-			? TEXT("True")
-			: TEXT("False")
+		CapturedObjectiveStates.Add(
+			MoveTemp(
+				SavedObjectiveState
+			)
 		);
 	}
 
 	/*
-	* Phase 3: Capture Encounters
+	* ----------------------------------------------------------------
+	* Phase 4:
+	* 构造 Encounter 候选快照
+	* ----------------------------------------------------------------
 	*/
+
+	TArray<FWCSavedEncounterState>
+		CapturedEncounterStates;
+
+	TSet<FName> CapturedEncounterIDs;
+
 	FoundActors.Reset();
 
 	UGameplayStatics::GetAllActorsOfClass(
@@ -2483,9 +3369,13 @@ CaptureAndSaveWorldState()
 		FoundActors
 	);
 
+	CapturedEncounterStates.Reserve(
+		FoundActors.Num()
+	);
+
 	for (AActor* Actor : FoundActors)
 	{
-		const AStoryEncounter* Encounter =
+		AStoryEncounter* Encounter =
 			Cast<AStoryEncounter>(Actor);
 
 		if (!IsValid(Encounter))
@@ -2502,39 +3392,101 @@ CaptureAndSaveWorldState()
 			return false;
 		}
 
-		FWCSavedEncounterState SavedState;
-
-		SavedState.EncounterID =
+		const FName EncounterID =
 			Encounter->GetEncounterID();
 
-		SavedState.bCompleted =
-			Encounter->GetIsEncounterCompleted();
+		if (EncounterID.IsNone() ||
+			CapturedEncounterIDs.Contains(
+				EncounterID))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"World-state capture failed: "
+					"invalid or duplicate Encounter "
+					"ID [%s]."
+				),
+				*EncounterID.ToString()
+			);
 
-		CapturedEncounterStates.Add(
-			SavedState
+			return false;
+		}
+
+		FWCSavedEncounterState
+			SavedEncounterState;
+
+		SavedEncounterState.EncounterID =
+			EncounterID;
+
+		SavedEncounterState.bCompleted =
+			Encounter
+			->GetIsEncounterCompleted();
+
+		CapturedEncounterIDs.Add(
+			EncounterID
 		);
 
-		UE_LOG(
-			LogWCStoryPersistence,
-			Display,
-			TEXT(
-				"Captured Encounter [%s]: "
-				"Completed=%s."
-			),
-			*SavedState.EncounterID.ToString(),
-			SavedState.bCompleted
-			? TEXT("True")
-			: TEXT("False")
+		CapturedEncounterStates.Add(
+			MoveTemp(
+				SavedEncounterState
+			)
 		);
 	}
 
 	/*
-	* Phase 4: Capture Memory Journal
+	* ----------------------------------------------------------------
+	* Phase 5:
+	* 构造 Journal 候选快照
+	* ----------------------------------------------------------------
 	*/
-	TSet<FName> RecordedEchoIDs;
+
+	TSet<FName> WorldEchoIDs;
+
+	FoundActors.Reset();
+
+	UGameplayStatics::GetAllActorsOfClass(
+		this,
+		AEchoRelic::StaticClass(),
+		FoundActors
+	);
+
+	for (AActor* Actor : FoundActors)
+	{
+		const AEchoRelic* EchoRelic =
+			Cast<AEchoRelic>(Actor);
+
+		if (!IsValid(EchoRelic))
+		{
+			return false;
+		}
+
+		const FName EchoID =
+			EchoRelic->GetEchoID();
+
+		if (EchoID.IsNone())
+		{
+			return false;
+		}
+
+		WorldEchoIDs.Add(EchoID);
+	}
+
+	const TArray<FMemoryEchoData>&
+		RuntimeMemoryEchoes =
+		Player->GetRecordedMemoryEchoes();
+
+	TArray<FMemoryEchoData>
+		CapturedMemoryEchoes;
+
+	CapturedMemoryEchoes.Reserve(
+		RuntimeMemoryEchoes.Num()
+	);
+
+	TSet<FName> CapturedMemoryEchoIDs;
 
 	for (const FMemoryEchoData& EchoData :
-		Player->GetRecordedMemoryEchoes())
+		RuntimeMemoryEchoes)
 	{
 		if (EchoData.EchoID.IsNone())
 		{
@@ -2543,14 +3495,15 @@ CaptureAndSaveWorldState()
 				Error,
 				TEXT(
 					"World-state capture failed: "
-					"Recorded Memory Echo has ID None."
+					"Journal contains an Echo "
+					"with ID None."
 				)
 			);
 
 			return false;
 		}
 
-		if (RecordedEchoIDs.Contains(
+		if (CapturedMemoryEchoIDs.Contains(
 			EchoData.EchoID))
 		{
 			UE_LOG(
@@ -2558,7 +3511,7 @@ CaptureAndSaveWorldState()
 				Error,
 				TEXT(
 					"World-state capture failed: "
-					"duplicate recorded EchoID [%s]."
+					"duplicate Journal Echo ID [%s]."
 				),
 				*EchoData.EchoID.ToString()
 			);
@@ -2566,36 +3519,42 @@ CaptureAndSaveWorldState()
 			return false;
 		}
 
-		RecordedEchoIDs.Add(
+		if (!WorldEchoIDs.Contains(
+			EchoData.EchoID))
+		{
+			UE_LOG(
+				LogWCStoryPersistence,
+				Error,
+				TEXT(
+					"World-state capture failed: "
+					"Journal Echo [%s] has no matching "
+					"Echo Relic in the current World."
+				),
+				*EchoData.EchoID.ToString()
+			);
+
+			return false;
+		}
+
+		CapturedMemoryEchoIDs.Add(
 			EchoData.EchoID
 		);
 
+		/*
+		* 保留玩家 Journal 中的现有顺序。
+		*/
 		CapturedMemoryEchoes.Add(
 			EchoData
-		);
-
-		UE_LOG(
-			LogWCStoryPersistence,
-			Display,
-			TEXT(
-				"Captured Journal Echo [%s]: [%s]."
-			),
-			*EchoData.EchoID.ToString(),
-			*EchoData.Title.ToString()
 		);
 	}
 
 	/*
-	* 准备当前内存中的工作 SaveGame。
-	*
-	* 如果当前没有 LoadedSaveData：
-	*
-	* 磁盘已有 Slot
-	* → 先加载旧存档，避免无意创建空对象覆盖数据。
-	*
-	* 磁盘没有 Slot
-	* → 创建新的内存 SaveGame。
+	* ----------------------------------------------------------------
+	* Phase 6:
+	* 准备可写入的 SaveGame Object
+	* ----------------------------------------------------------------
 	*/
+
 	UWCGameSaveGame* SaveData =
 		GameInstance->GetLoadedSaveData();
 
@@ -2603,6 +3562,12 @@ CaptureAndSaveWorldState()
 	{
 		if (GameInstance->HasSavedGame())
 		{
+			/*
+			* 如果磁盘中已经有存档，则必须先加载。
+			*
+			* 加载失败时不能直接创建空存档覆盖它，
+			* 尤其是旧 Version 存档或损坏存档。
+			*/
 			if (!GameInstance->LoadSavedGame())
 			{
 				UE_LOG(
@@ -2610,30 +3575,32 @@ CaptureAndSaveWorldState()
 					Error,
 					TEXT(
 						"World-state capture failed: "
-						"existing disk save could not "
-						"be loaded."
+						"an existing disk save could "
+						"not be loaded safely."
 					)
 				);
 
 				ShowPersistenceMessage(
 					TEXT(
-						"Save failed: existing save "
-						"could not be loaded."
+						"Save failed: existing save is incompatible."
 					),
 					FColor::Red
 				);
 
 				return false;
 			}
-
-			SaveData =
-				GameInstance->GetLoadedSaveData();
 		}
 		else
 		{
-			SaveData =
-				GameInstance->CreateNewSave();
+			/*
+			* CreateNewSave 的返回类型即使是 void 或 bool，
+			* 都可以直接调用，随后通过 Getter 验证结果。
+			*/
+			GameInstance->CreateNewSave();
 		}
+
+		SaveData =
+			GameInstance->GetLoadedSaveData();
 	}
 
 	if (!IsValid(SaveData))
@@ -2643,14 +3610,13 @@ CaptureAndSaveWorldState()
 			Error,
 			TEXT(
 				"World-state capture failed: "
-				"no valid UWCGameSaveGame "
-				"is available."
+				"no valid LoadedSaveData is available."
 			)
 		);
 
 		ShowPersistenceMessage(
 			TEXT(
-				"Save failed: invalid SaveGame object."
+				"Save failed: could not create save data."
 			),
 			FColor::Red
 		);
@@ -2659,82 +3625,121 @@ CaptureAndSaveWorldState()
 	}
 
 	/*
-	* 所有 Capture 和验证都成功之后，
-	* 才替换 LoadedSaveData 中的旧快照。
+	* ----------------------------------------------------------------
+	* Phase 7:
+	* 备份当前内存 SaveData
+	* ----------------------------------------------------------------
 	*
-	* Reset + Append 可以防止重复保存时
-	* 不断向旧数组追加相同 Actor。
+	* 如果 SaveCurrentGame() 最后写盘失败，
+	* 不仅磁盘应保持旧状态，内存中的 LoadedSaveData
+	* 也应回滚。
 	*/
-	SaveData->StoryNPCStates.Reset(
-		CapturedStoryNPCStates.Num()
-	);
 
-	SaveData->StoryNPCStates.Append(
-		CapturedStoryNPCStates
-	);
+	const int32 PreviousSaveVersion =
+		SaveData->SaveVersion;
 
-	SaveData->ObjectiveStates.Reset(
-		CapturedObjectiveStates.Num()
-	);
+	const FName PreviousCheckpointID =
+		SaveData->CurrentCheckpointID;
 
-	SaveData->ObjectiveStates.Append(
-		CapturedObjectiveStates
-	);
+	const TArray<FName>
+		PreviousUnlockedCheckpointIDs =
+		SaveData->UnlockedCheckpointIDs;
 
-	SaveData->EncounterStates.Reset(
-		CapturedEncounterStates.Num()
-	);
+	const TArray<FWCSavedStoryNPCState>
+		PreviousStoryNPCStates =
+		SaveData->StoryNPCStates;
 
-	SaveData->EncounterStates.Append(
-		CapturedEncounterStates
-	);
+	const TArray<FWCSavedObjectiveState>
+		PreviousObjectiveStates =
+		SaveData->ObjectiveStates;
 
-	SaveData->RecordedMemoryEchoes.Reset(
-		CapturedMemoryEchoes.Num()
-	);
+	const TArray<FWCSavedEncounterState>
+		PreviousEncounterStates =
+		SaveData->EncounterStates;
 
-	SaveData->RecordedMemoryEchoes.Append(
-		CapturedMemoryEchoes
-	);
+	const TArray<FMemoryEchoData>
+		PreviousMemoryEchoes =
+		SaveData->RecordedMemoryEchoes;
 
 	/*
-	* 保存玩家最近激活的稳定 Checkpoint ID。
-	*
-	* 不保存玩家的原始 Transform。
-	* 加载时由当前地图中的 Checkpoint Actor
-	* 重新生成安全 Resume Transform。
+	* ----------------------------------------------------------------
+	* Phase 8:
+	* 一次性提交完整候选快照到内存 SaveData
+	* ----------------------------------------------------------------
 	*/
+
+	SaveData->SaveVersion =
+		UWCGameSaveGame::CurrentSaveVersion;
+
 	SaveData->CurrentCheckpointID =
 		CapturedCheckpointID;
 
-	UE_LOG(
-		LogWCStoryPersistence,
-		Display,
-		TEXT(
-			"Captured Player Checkpoint [%s]."
-		),
-		*SaveData
-		->CurrentCheckpointID
-		.ToString()
-	);
+	SaveData->UnlockedCheckpointIDs =
+		CapturedUnlockedCheckpointIDs;
+
+	SaveData->StoryNPCStates =
+		CapturedStoryNPCStates;
+
+	SaveData->ObjectiveStates =
+		CapturedObjectiveStates;
+
+	SaveData->EncounterStates =
+		CapturedEncounterStates;
+
+	SaveData->RecordedMemoryEchoes =
+		CapturedMemoryEchoes;
 
 	/*
-	* 只在完整快照准备完成后写入磁盘。
+	* ----------------------------------------------------------------
+	* Phase 9:
+	* 只调用一次磁盘写入
+	* ----------------------------------------------------------------
 	*/
+
 	if (!GameInstance->SaveCurrentGame())
 	{
+		/*
+		* 磁盘写入失败：
+		* 恢复之前的内存 SaveData。
+		*
+		* SaveAtCheckpoint() 随后还会负责回滚
+		* Player Runtime Checkpoint 状态。
+		*/
+		SaveData->SaveVersion =
+			PreviousSaveVersion;
+
+		SaveData->CurrentCheckpointID =
+			PreviousCheckpointID;
+
+		SaveData->UnlockedCheckpointIDs =
+			PreviousUnlockedCheckpointIDs;
+
+		SaveData->StoryNPCStates =
+			PreviousStoryNPCStates;
+
+		SaveData->ObjectiveStates =
+			PreviousObjectiveStates;
+
+		SaveData->EncounterStates =
+			PreviousEncounterStates;
+
+		SaveData->RecordedMemoryEchoes =
+			PreviousMemoryEchoes;
+
 		UE_LOG(
 			LogWCStoryPersistence,
 			Error,
 			TEXT(
-				"World-state capture succeeded "
-				"in memory, but disk save failed."
+				"World-state capture failed: "
+				"SaveCurrentGame could not write "
+				"the candidate snapshot to disk. "
+				"LoadedSaveData was rolled back."
 			)
 		);
 
 		ShowPersistenceMessage(
 			TEXT(
-				"World captured, but disk save failed."
+				"Save failed: disk write error."
 			),
 			FColor::Red
 		);
@@ -2746,14 +3751,14 @@ CaptureAndSaveWorldState()
 		LogWCStoryPersistence,
 		Display,
 		TEXT(
-			"World-state capture and save succeeded. "
-			"Checkpoint=[%s], NPCs=%d, "
-			"Objectives=%d, Encounters=%d, "
-			"Echoes=%d."
+			"World-state capture succeeded. "
+			"Version=%d, Checkpoint=[%s], "
+			"UnlockedCheckpoints=%d, NPCs=%d, "
+			"Objectives=%d, Encounters=%d, Echoes=%d."
 		),
-		*SaveData
-		->CurrentCheckpointID
-		.ToString(),
+		SaveData->SaveVersion,
+		*SaveData->CurrentCheckpointID.ToString(),
+		SaveData->UnlockedCheckpointIDs.Num(),
 		SaveData->StoryNPCStates.Num(),
 		SaveData->ObjectiveStates.Num(),
 		SaveData->EncounterStates.Num(),
@@ -2763,17 +3768,18 @@ CaptureAndSaveWorldState()
 	ShowPersistenceMessage(
 		FString::Printf(
 			TEXT(
-				"Story Saved | Checkpoint: %s | "
-				"NPCs %d | Objectives %d | "
-				"Encounters %d | Echoes %d"
+				"Memory Saved: %s | "
+				"Rest Points %d | Echoes %d"
 			),
 			*SaveData
 			->CurrentCheckpointID
 			.ToString(),
-			SaveData->StoryNPCStates.Num(),
-			SaveData->ObjectiveStates.Num(),
-			SaveData->EncounterStates.Num(),
-			SaveData->RecordedMemoryEchoes.Num()
+			SaveData
+			->UnlockedCheckpointIDs
+			.Num(),
+			SaveData
+			->RecordedMemoryEchoes
+			.Num()
 		),
 		FColor::Green
 	);
@@ -2945,8 +3951,7 @@ void AWCStoryPersistenceCoordinator::ShowPersistenceMessage(
 	);
 }
 
-bool AWCStoryPersistenceCoordinator::
-InitializeDefaultCheckpointForNewGame()
+bool AWCStoryPersistenceCoordinator::InitializeDefaultCheckpointForNewGame()
 {
 	AWCCharacter* Player =
 		Cast<AWCCharacter>(
@@ -2962,41 +3967,63 @@ InitializeDefaultCheckpointForNewGame()
 			LogWCStoryPersistence,
 			Error,
 			TEXT(
-				"Default Checkpoint initialization "
-				"failed: invalid Player."
+				"Default Checkpoint initialization failed: "
+				"Player 0 is not a valid AWCCharacter."
 			)
 		);
 
 		return false;
 	}
 
-	TArray<AActor*> FoundActors;
+	TArray<AActor*> FoundCheckpointActors;
 
 	UGameplayStatics::GetAllActorsOfClass(
 		this,
 		AWCPlayerCheckpoint::StaticClass(),
-		FoundActors
+		FoundCheckpointActors
 	);
 
-	AWCPlayerCheckpoint*
-		DefaultCheckpoint = nullptr;
+	if (FoundCheckpointActors.Num() == 0)
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Error,
+			TEXT(
+				"Default Checkpoint initialization failed: "
+				"no AWCPlayerCheckpoint exists "
+				"in the current World."
+			)
+		);
+
+		return false;
+	}
+
+	AWCPlayerCheckpoint* DefaultCheckpoint =
+		nullptr;
 
 	int32 DefaultCheckpointCount = 0;
 
-	for (AActor* Actor : FoundActors)
+	for (AActor* FoundActor :
+		FoundCheckpointActors)
 	{
 		AWCPlayerCheckpoint* Checkpoint =
-			Cast<AWCPlayerCheckpoint>(Actor);
+			Cast<AWCPlayerCheckpoint>(
+				FoundActor
+			);
 
-		if (!IsValid(Checkpoint) ||
-			!Checkpoint
+		if (!IsValid(Checkpoint))
+		{
+			continue;
+		}
+
+		if (!Checkpoint
 			->GetIsDefaultCheckpoint())
 		{
 			continue;
 		}
 
-		DefaultCheckpoint = Checkpoint;
 		++DefaultCheckpointCount;
+		DefaultCheckpoint = Checkpoint;
 	}
 
 	if (DefaultCheckpointCount != 1 ||
@@ -3006,9 +4033,9 @@ InitializeDefaultCheckpointForNewGame()
 			LogWCStoryPersistence,
 			Error,
 			TEXT(
-				"Default Checkpoint initialization "
-				"failed: expected exactly one "
-				"Default Checkpoint, found %d."
+				"Default Checkpoint initialization failed: "
+				"expected exactly one Default Checkpoint, "
+				"but found %d."
 			),
 			DefaultCheckpointCount
 		);
@@ -3016,21 +4043,113 @@ InitializeDefaultCheckpointForNewGame()
 		return false;
 	}
 
-	Player->SetCurrentCheckpointID(
-		DefaultCheckpoint->GetCheckpointID()
+	const FName DefaultCheckpointID =
+		DefaultCheckpoint->GetCheckpointID();
+
+	if (DefaultCheckpointID.IsNone())
+	{
+		UE_LOG(
+			LogWCStoryPersistence,
+			Error,
+			TEXT(
+				"Default Checkpoint initialization failed: "
+				"Default Checkpoint Actor [%s] "
+				"has CheckpointID None."
+			),
+			*DefaultCheckpoint->GetName()
+		);
+
+		return false;
+	}
+
+	/*
+	 * New Game 的 Runtime Checkpoint 状态：
+	 *
+	 * - CurrentCheckpointID = Default Checkpoint
+	 * - UnlockedCheckpointIDs = [Default Checkpoint]
+	 *
+	 * 这里只初始化 Runtime State。
+	 * 不移动玩家，也不创建或写入 SaveGame。
+	 */
+	TArray<FName> InitialUnlockedCheckpointIDs;
+
+	InitialUnlockedCheckpointIDs.Add(
+		DefaultCheckpointID
+	);
+
+	Player->ApplyRuntimeCheckpointProgress(
+		DefaultCheckpointID,
+		InitialUnlockedCheckpointIDs
+	);
+
+	/*
+	 * 根据 Runtime Unlocked IDs 恢复所有归魂碑的表现。
+	 *
+	 * 默认归魂碑显示为已解锁；
+	 * 其他归魂碑显示为未解锁。
+	 */
+	RefreshCheckpointPresentations(
+		InitialUnlockedCheckpointIDs
 	);
 
 	UE_LOG(
 		LogWCStoryPersistence,
 		Display,
 		TEXT(
-			"New Game Runtime Checkpoint initialized "
-			"to [%s]. Player was not moved."
+			"New Game Checkpoint state initialized. "
+			"Current=[%s], UnlockedCount=%d. "
+			"Player was not moved and no disk save "
+			"was performed."
 		),
-		*DefaultCheckpoint
-		->GetCheckpointID()
-		.ToString()
+		*DefaultCheckpointID.ToString(),
+		InitialUnlockedCheckpointIDs.Num()
+	);
+
+	ShowPersistenceMessage(
+		FString::Printf(
+			TEXT(
+				"Rest point initialized: %s"
+			),
+			*DefaultCheckpoint
+			->GetCheckpointDisplayName()
+			.ToString()
+		),
+		FColor::Silver
 	);
 
 	return true;
+}
+
+void AWCStoryPersistenceCoordinator::
+RefreshCheckpointPresentations(
+	const TArray<FName>&
+	UnlockedCheckpointIDs) const
+{
+	TArray<AActor*> FoundActors;
+
+	UGameplayStatics::GetAllActorsOfClass(
+		this,
+		AWCPlayerCheckpoint::StaticClass(),
+		FoundActors
+	);
+
+	for (AActor* Actor : FoundActors)
+	{
+		AWCPlayerCheckpoint* Checkpoint =
+			Cast<AWCPlayerCheckpoint>(Actor);
+
+		if (!IsValid(Checkpoint))
+		{
+			continue;
+		}
+
+		Checkpoint
+			->ApplyUnlockedPresentation(
+				UnlockedCheckpointIDs
+				.Contains(
+					Checkpoint
+					->GetCheckpointID()
+				)
+			);
+	}
 }

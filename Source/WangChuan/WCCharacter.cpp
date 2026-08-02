@@ -22,6 +22,8 @@
 #include "EchoRelic.h"
 #include "MemoryEchoWidget.h"
 #include "MemoryJournalWidget.h"
+#include "WCCheckpointMenuWidget.h"
+#include "WCStoryPersistenceCoordinator.h"
 
 // ******************** Construction ********************
 
@@ -108,6 +110,14 @@ void AWCCharacter::BeginPlay()
 
 void AWCCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (ActiveCheckpointMenuWidget)
+	{
+		ActiveCheckpointMenuWidget->RemoveFromParent();
+	}
+
+	ActiveCheckpointMenuWidget = nullptr;
+	bIsCheckpointMenuOpen = false;
+
 	if (ActiveMemoryJournalWidget)
 	{
 		ActiveMemoryJournalWidget->RemoveFromParent();
@@ -243,6 +253,15 @@ void AWCCharacter::Look(const FInputActionValue& Value)
 
 void AWCCharacter::Interact()
 {
+	/*
+	 * Checkpoint Menu 打开时，E 键只负责关闭菜单。
+	 */
+	if (bIsCheckpointMenuOpen)
+	{
+		CloseCheckpointMenu();
+		return;
+	}
+
 	if (bIsMemoryJournalOpen)
 	{
 		return;
@@ -316,6 +335,11 @@ void AWCCharacter::ToggleMemoryJournal()
 	UE_LOG(LogTemp, Log, TEXT("Memory Journal input received (open=%s)."),
 		   bIsMemoryJournalOpen ? TEXT("true") : TEXT("false"));
 
+	if (bIsCheckpointMenuOpen)
+	{
+		return;
+	}
+
 	if (bIsMemoryJournalOpen)
 	{
 		CloseMemoryJournal();
@@ -327,7 +351,8 @@ void AWCCharacter::ToggleMemoryJournal()
 
 bool AWCCharacter::OpenMemoryJournal()
 {
-	if (bIsDead || bIsInDialogue || bIsViewingMemoryEcho || bIsMemoryJournalOpen || bIsAttacking ||
+	if (bIsDead || bIsInDialogue || bIsViewingMemoryEcho || bIsMemoryJournalOpen ||
+		bIsCheckpointMenuOpen || bIsAttacking ||
 		bIsInCombat || bIsLockedOn)
 	{
 		if (bIsInCombat || bIsLockedOn)
@@ -431,7 +456,8 @@ bool AWCCharacter::StartDialogue(AWCStoryNPC* StoryNPC, const FDialogueSequence&
 		return false;
 	}
 
-	if (bIsInDialogue || bIsViewingMemoryEcho || bIsMemoryJournalOpen)
+	if (bIsInDialogue || bIsViewingMemoryEcho || bIsMemoryJournalOpen ||
+		bIsCheckpointMenuOpen)
 	{
 		return false;
 	}
@@ -600,7 +626,8 @@ bool AWCCharacter::StartMemoryEcho(const FMemoryEchoData& EchoData, AEchoRelic* 
 		return false;
 	}
 
-	if (bIsInDialogue || bIsViewingMemoryEcho || bIsMemoryJournalOpen)
+	if (bIsInDialogue || bIsViewingMemoryEcho || bIsMemoryJournalOpen ||
+		bIsCheckpointMenuOpen)
 	{
 		return false;
 	}
@@ -1308,6 +1335,11 @@ void AWCCharacter::Die()
 		CloseMemoryJournal();
 	}
 
+	if (bIsCheckpointMenuOpen || ActiveCheckpointMenuWidget)
+	{
+		CloseCheckpointMenu();
+	}
+
 	UnlockTarget();
 	bHasProcessedAttackHit = false;
 	bIsCurrentAttackHeavy = false;
@@ -1374,6 +1406,11 @@ bool AWCCharacter::CanAct() const
 	}
 
 	if (bIsMemoryJournalOpen)
+	{
+		return false;
+	}
+
+	if (bIsCheckpointMenuOpen)
 	{
 		return false;
 	}
@@ -2064,4 +2101,230 @@ bool AWCCharacter::ApplySavedCheckpointState(
 	);
 
 	return true;
+}
+
+bool AWCCharacter::UnlockCheckpoint(FName CheckpointID)
+{
+	if (CheckpointID.IsNone())
+	{
+		return false;
+	}
+
+	if (UnlockedCheckpointIDs.Contains(
+		CheckpointID))
+	{
+		return false;
+	}
+
+	UnlockedCheckpointIDs.Add(
+		CheckpointID
+	);
+
+	UE_LOG(
+		LogTemp,
+		Display,
+		TEXT(
+			"Player unlocked Checkpoint [%s]."
+		),
+		*CheckpointID.ToString()
+	);
+
+	return true;
+}
+
+bool AWCCharacter::HasUnlockedCheckpoint(FName CheckpointID) const
+{
+	return !CheckpointID.IsNone() &&
+		UnlockedCheckpointIDs.Contains(
+			CheckpointID
+		);
+}
+
+const TArray<FName>&
+AWCCharacter::GetUnlockedCheckpointIDs()
+const
+{
+	return UnlockedCheckpointIDs;
+}
+
+void AWCCharacter::
+ApplyRuntimeCheckpointProgress(
+	FName NewCurrentCheckpointID,
+	const TArray<FName>&
+	NewUnlockedCheckpointIDs)
+{
+	CurrentCheckpointID =
+		NewCurrentCheckpointID;
+
+	UnlockedCheckpointIDs.Reset(
+		NewUnlockedCheckpointIDs.Num()
+	);
+
+	TSet<FName> SeenIDs;
+
+	for (const FName CheckpointID :
+	NewUnlockedCheckpointIDs)
+	{
+		if (CheckpointID.IsNone() ||
+			SeenIDs.Contains(CheckpointID))
+		{
+			continue;
+		}
+
+		SeenIDs.Add(CheckpointID);
+		UnlockedCheckpointIDs.Add(
+			CheckpointID
+		);
+	}
+}
+
+bool AWCCharacter::CanUseCheckpoint() const
+{
+	const UCharacterMovementComponent*
+		MovementComponent =
+		GetCharacterMovement();
+
+	return
+		!bIsDead &&
+		!bIsInDialogue &&
+		!bIsViewingMemoryEcho &&
+		!bIsMemoryJournalOpen &&
+		!bIsCheckpointMenuOpen &&
+		!bIsAttacking &&
+		!bIsInCombat &&
+		!bIsLockedOn &&
+		MovementComponent &&
+		MovementComponent->IsMovingOnGround();
+}
+
+bool AWCCharacter::OpenCheckpointMenu(
+	AWCPlayerCheckpoint* SourceCheckpoint,
+	AWCStoryPersistenceCoordinator* Coordinator)
+{
+	if (bIsDead ||
+		bIsInDialogue ||
+		bIsViewingMemoryEcho ||
+		bIsMemoryJournalOpen ||
+		bIsCheckpointMenuOpen ||
+		bIsAttacking ||
+		bIsInCombat ||
+		bIsLockedOn ||
+		!IsValid(SourceCheckpoint) ||
+		!IsValid(Coordinator))
+	{
+		return false;
+	}
+
+	APlayerController* PlayerController =
+		Cast<APlayerController>(GetController());
+
+	if (!IsValid(PlayerController))
+	{
+		return false;
+	}
+
+	TSubclassOf<UWCCheckpointMenuWidget>
+		EffectiveWidgetClass =
+			CheckpointMenuWidgetClass;
+
+	if (!EffectiveWidgetClass)
+	{
+		EffectiveWidgetClass =
+			UWCCheckpointMenuWidget::StaticClass();
+	}
+
+	UWCCheckpointMenuWidget* Widget =
+		CreateWidget<UWCCheckpointMenuWidget>(
+			PlayerController,
+			EffectiveWidgetClass
+		);
+
+	if (!IsValid(Widget))
+	{
+		return false;
+	}
+
+	bIsCheckpointMenuOpen = true;
+	ActiveCheckpointMenuWidget = Widget;
+
+	if (UCharacterMovementComponent* MovementComponent =
+		GetCharacterMovement())
+	{
+		MovementComponent->StopMovementImmediately();
+	}
+
+	StopJumping();
+	HideInteractionPrompt();
+
+	Widget->AddToViewport(35);
+	Widget->InitializeCheckpointMenu(
+		this,
+		SourceCheckpoint,
+		Coordinator
+	);
+
+	FInputModeGameAndUI InputMode;
+	InputMode.SetWidgetToFocus(
+		Widget->TakeWidget()
+	);
+	InputMode.SetLockMouseToViewportBehavior(
+		EMouseLockMode::DoNotLock
+	);
+	InputMode.SetHideCursorDuringCapture(false);
+
+	PlayerController->SetInputMode(InputMode);
+	PlayerController->bShowMouseCursor = true;
+	PlayerController->SetIgnoreMoveInput(true);
+	PlayerController->SetIgnoreLookInput(true);
+
+	return true;
+}
+
+void AWCCharacter::CloseCheckpointMenu()
+{
+	if (!bIsCheckpointMenuOpen &&
+		!ActiveCheckpointMenuWidget)
+	{
+		return;
+	}
+
+	if (ActiveCheckpointMenuWidget)
+	{
+		ActiveCheckpointMenuWidget->RemoveFromParent();
+	}
+
+	ActiveCheckpointMenuWidget = nullptr;
+	bIsCheckpointMenuOpen = false;
+
+	APlayerController* PlayerController =
+		Cast<APlayerController>(GetController());
+
+	if (IsValid(PlayerController))
+	{
+		PlayerController->bShowMouseCursor = false;
+
+		FInputModeGameOnly InputMode;
+		PlayerController->SetInputMode(InputMode);
+
+		if (!bIsDead &&
+			!bIsInDialogue &&
+			!bIsViewingMemoryEcho &&
+			!bIsMemoryJournalOpen)
+		{
+			PlayerController->SetIgnoreMoveInput(false);
+			PlayerController->SetIgnoreLookInput(false);
+		}
+	}
+
+	if (!bIsDead && CurrentInteractable)
+	{
+		ShowInteractionPrompt(
+			CurrentInteractable->GetInteractionPrompt()
+		);
+	}
+}
+
+bool AWCCharacter::GetIsCheckpointMenuOpen() const
+{
+	return bIsCheckpointMenuOpen;
 }

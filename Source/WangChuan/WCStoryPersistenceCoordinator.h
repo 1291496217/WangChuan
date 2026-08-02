@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "WCPlayerCheckpoint.h"
 #include "WCStoryPersistenceCoordinator.generated.h"
 
 class AStoryAnchor;
@@ -9,7 +10,6 @@ class AStoryEncounter;
 class AStoryObjectiveBase;
 class AEchoRelic;
 class AWCCharacter;
-class AWCPlayerCheckpoint;
 class AWCStoryNPC;
 
 class UWCGameInstance;
@@ -94,11 +94,45 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Story Persistence")
 	bool GetHasRestoredLoadedWorld() const;
 
+	/*
+	* 可见休憩点的玩家主动保存入口。
+	* 保存失败时恢复 Player 的 Runtime Checkpoint 状态。
+	*/
+	UFUNCTION(
+		BlueprintCallable,
+		Category = "Story Persistence|Checkpoint"
+	)
+	bool SaveAtCheckpoint(
+		AWCPlayerCheckpoint* Checkpoint
+	);
+
+	UFUNCTION(
+		BlueprintCallable,
+		Category = "Story Persistence|Checkpoint"
+	)
+	bool TravelPlayerToCheckpoint(
+		FName TargetCheckpointID
+	);
+
+	UFUNCTION(
+		BlueprintPure,
+		Category = "Story Persistence|Checkpoint"
+	)
+	TArray<FWCCheckpointTravelOption>
+		GetCheckpointTravelOptions() const;
+
 protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Persistence|Debug")
 	bool bShowOnScreenDebug = true;
+
+	/*
+	* 默认关闭旧 Level Blueprint 的 P / L 调试入口。
+	* 需要专门回归旧接口时可在 Coordinator 实例上临时开启。
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Persistence|Debug")
+	bool bAllowDirectDebugPersistenceActions = false;
 
 	virtual void EndPlay(
 		const EEndPlayReason::Type EndPlayReason
@@ -130,6 +164,10 @@ private:
 	void HandleDeferredAutoRestore();
 
 	bool InitializeDefaultCheckpointForNewGame();
+
+	AWCPlayerCheckpoint* FindCheckpointByID(
+		FName CheckpointID
+	) const;
 
 	bool BuildWorldActorMaps(
 		TMap<FName, AWCStoryNPC*>&
@@ -166,6 +204,13 @@ private:
 
 	bool bRestoreInProgress = false;
 	bool bHasRestoredLoadedWorld = false;
+	bool bCheckpointSaveRequestInProgress = false;
+	bool bStartupRestoreRequestInProgress = false;
 
 	int32 SuccessfulRestoreCount = 0;
+
+	void RefreshCheckpointPresentations(
+		const TArray<FName>&
+		UnlockedCheckpointIDs
+	) const;
 };

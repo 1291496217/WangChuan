@@ -25,6 +25,9 @@ class UDialogueWidget;
 class AEchoRelic;
 class UMemoryEchoWidget;
 class UMemoryJournalWidget;
+class UWCCheckpointMenuWidget;
+class AWCPlayerCheckpoint;
+class AWCStoryPersistenceCoordinator;
 
 USTRUCT(BlueprintType)
 struct FPlayerAttackData
@@ -212,6 +215,63 @@ public:
 		FName SavedCheckpointID,
 		const FTransform& ResumeTransform
 	);
+
+	UFUNCTION(
+		BlueprintCallable,
+		Category = "Persistence|Checkpoint"
+	)
+	bool UnlockCheckpoint(
+		FName CheckpointID
+	);
+
+	UFUNCTION(
+		BlueprintPure,
+		Category = "Persistence|Checkpoint"
+	)
+	bool HasUnlockedCheckpoint(
+		FName CheckpointID
+	) const;
+
+	const TArray<FName>&
+		GetUnlockedCheckpointIDs() const;
+
+	/*
+	* 直接设置 Runtime Checkpoint 进度。
+	*
+	* 用于：
+	* - Save 失败时回滚
+	* - Load Restore
+	*
+	* 不移动玩家，不写入磁盘。
+	*/
+	void ApplyRuntimeCheckpointProgress(
+		FName NewCurrentCheckpointID,
+		const TArray<FName>&
+		NewUnlockedCheckpointIDs
+	);
+
+	UFUNCTION(
+		BlueprintPure,
+		Category = "Checkpoint"
+	)
+	bool CanUseCheckpoint() const;
+
+	bool OpenCheckpointMenu(
+		AWCPlayerCheckpoint* SourceCheckpoint,
+		AWCStoryPersistenceCoordinator* Coordinator
+	);
+
+	UFUNCTION(
+		BlueprintCallable,
+		Category = "Checkpoint|UI"
+	)
+	void CloseCheckpointMenu();
+
+	UFUNCTION(
+		BlueprintPure,
+		Category = "Checkpoint|UI"
+	)
+	bool GetIsCheckpointMenuOpen() const;
 protected:
 	// ******************** Components ********************
 
@@ -479,6 +539,26 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Memory Journal")
 	bool bIsMemoryJournalOpen = false;
 
+	UPROPERTY(
+		EditDefaultsOnly,
+		BlueprintReadOnly,
+		Category = "Checkpoint|UI"
+	)
+	TSubclassOf<UWCCheckpointMenuWidget>
+		CheckpointMenuWidgetClass;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UWCCheckpointMenuWidget>
+		ActiveCheckpointMenuWidget;
+
+	UPROPERTY(
+		VisibleInstanceOnly,
+		BlueprintReadOnly,
+		Transient,
+		Category = "Checkpoint|UI"
+	)
+	bool bIsCheckpointMenuOpen = false;
+
 	/*
 	* 当前 Gameplay Session 中，
 	* 玩家最近激活的 Checkpoint。
@@ -490,6 +570,11 @@ protected:
 		Category = "Persistence|Checkpoint"
 	)
 	FName CurrentCheckpointID = NAME_None;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient,
+		Category = "Persistence|Checkpoint"
+	)
+	TArray<FName> UnlockedCheckpointIDs;
 
 	// ******************** Input ********************
 

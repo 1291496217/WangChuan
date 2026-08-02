@@ -3,11 +3,16 @@
 #include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
+#include "UObject/ConstructorHelpers.h"
 
 #include "WCCharacter.h"
+#include "WCStoryPersistenceCoordinator.h"
 
 DEFINE_LOG_CATEGORY_STATIC(
 	LogWCPlayerCheckpoint,
@@ -26,6 +31,59 @@ AWCPlayerCheckpoint::AWCPlayerCheckpoint()
 
 	SetRootComponent(SceneRoot);
 
+	CheckpointMesh =
+		CreateDefaultSubobject<UStaticMeshComponent>(
+			TEXT("CheckpointMesh")
+		);
+
+	CheckpointMesh->SetupAttachment(SceneRoot);
+
+	/*
+	* The visible rest-point mesh should not block the player.
+	* If the final art needs collision, use a separate, deliberately
+	* configured collision component rather than coupling it to the mesh.
+	*/
+	CheckpointMesh->SetCollisionEnabled(
+		ECollisionEnabled::NoCollision
+	);
+
+	CheckpointMesh->SetCanEverAffectNavigation(false);
+
+	/*
+	* 原生 Actor 的可见后备模型。
+	* BP_SoulRestPoint 指定自定义 Mesh 后会覆盖此默认值。
+	*/
+	static ConstructorHelpers::FObjectFinder<UStaticMesh>
+		DefaultCheckpointMesh(
+			TEXT("/Engine/BasicShapes/Cylinder.Cylinder")
+		);
+
+	if (DefaultCheckpointMesh.Succeeded())
+	{
+		CheckpointMesh->SetStaticMesh(
+			DefaultCheckpointMesh.Object
+		);
+		CheckpointMesh->SetRelativeScale3D(
+			FVector(0.65f, 0.65f, 1.25f)
+		);
+	}
+
+	CheckpointLight =
+		CreateDefaultSubobject<UPointLightComponent>(
+			TEXT("CheckpointLight")
+		);
+
+	CheckpointLight->SetupAttachment(SceneRoot);
+	CheckpointLight->SetIntensity(
+		LockedLightIntensity
+	);
+	CheckpointLight->SetRelativeLocation(
+		FVector(0.0f, 0.0f, 110.0f)
+	);
+	CheckpointLight->SetLightColor(
+		FLinearColor(0.25f, 0.75f, 1.0f)
+	);
+
 	ActivationBox =
 		CreateDefaultSubobject<UBoxComponent>(
 			TEXT("ActivationBox")
@@ -34,7 +92,7 @@ AWCPlayerCheckpoint::AWCPlayerCheckpoint()
 	ActivationBox->SetupAttachment(SceneRoot);
 
 	ActivationBox->SetBoxExtent(
-		FVector(100.0f, 100.0f, 100.0f)
+		FVector(125.0f, 125.0f, 120.0f)
 	);
 
 	ActivationBox->SetCollisionEnabled(
@@ -51,16 +109,7 @@ AWCPlayerCheckpoint::AWCPlayerCheckpoint()
 	);
 
 	ActivationBox->SetGenerateOverlapEvents(true);
-
-	/*
-	* AddDynamic 会将函数指针表达式字符串化为 UFUNCTION 名称。
-	* 不要在作用域运算符与函数名之间换行或插入空白，
-	* 否则运行时可能尝试绑定带前导空格的错误函数名。
-	*/
-	ActivationBox->OnComponentBeginOverlap.AddDynamic(
-		this,
-		&AWCPlayerCheckpoint::HandleActivationBoxBeginOverlap
-	);
+	ActivationBox->SetCanEverAffectNavigation(false);
 
 	ResumeArrow =
 		CreateDefaultSubobject<UArrowComponent>(
@@ -68,18 +117,46 @@ AWCPlayerCheckpoint::AWCPlayerCheckpoint()
 		);
 
 	ResumeArrow->SetupAttachment(SceneRoot);
-
 	ResumeArrow->SetRelativeLocation(
 		FVector::ZeroVector
 	);
 
 	ResumeArrow->ArrowSize = 1.5f;
 	ResumeArrow->ArrowColor = FColor::Green;
+	ResumeArrow->SetHiddenInGame(true);
 }
 
 void AWCPlayerCheckpoint::BeginPlay()
 {
 	Super::BeginPlay();
+
+	/*
+	* Keep the full reflected member-function pointer contiguous.
+	*
+	* Do not split:
+	* &AWCPlayerCheckpoint::HandleActivationBoxBeginOverlap
+	* or:
+	* &AWCPlayerCheckpoint::HandleActivationBoxEndOverlap
+	*
+	* between "::" and the function name. Dynamic-delegate macros
+	* stringify the callback name for reflection.
+	*/
+	if (ActivationBox)
+	{
+		ActivationBox
+			->OnComponentBeginOverlap
+			.AddUniqueDynamic(
+				this,
+				&AWCPlayerCheckpoint::HandleActivationBoxBeginOverlap
+			);
+
+		ActivationBox
+			->OnComponentEndOverlap
+			.AddUniqueDynamic(
+				this,
+				&AWCPlayerCheckpoint::HandleActivationBoxEndOverlap
+			);
+	}
 
 	if (CheckpointID.IsNone())
 	{
@@ -93,33 +170,82 @@ void AWCPlayerCheckpoint::BeginPlay()
 			*GetName()
 		);
 	}
+
+	CachedPersistenceCoordinator =
+		Cast<AWCStoryPersistenceCoordinator>(
+			UGameplayStatics::GetActorOfClass(
+				this,
+				AWCStoryPersistenceCoordinator::StaticClass()
+			)
+		);
+
+	if (!IsValid(CachedPersistenceCoordinator))
+	{
+		UE_LOG(
+			LogWCPlayerCheckpoint,
+			Error,
+			TEXT(
+				"Checkpoint [%s] could not find "
+				"AWCStoryPersistenceCoordinator."
+			),
+			*CheckpointID.ToString()
+		);
+	}
+
+	/*
+	* The Coordinator will reapply the authoritative unlocked
+	* presentation after New Game initialization or SaveGame Restore.
+	*/
+	ApplyUnlockedPresentation(false);
 }
 
-FName AWCPlayerCheckpoint::
-GetCheckpointID() const
+FName AWCPlayerCheckpoint::GetCheckpointID() const
 {
 	return CheckpointID;
 }
 
-bool AWCPlayerCheckpoint::
-GetIsDefaultCheckpoint() const
+bool AWCPlayerCheckpoint::GetIsDefaultCheckpoint() const
 {
 	return bIsDefaultCheckpoint;
 }
 
-bool AWCPlayerCheckpoint::
-BuildSafeResumeTransform(
+FText AWCPlayerCheckpoint::GetCheckpointDisplayName() const
+{
+	return CheckpointDisplayName;
+}
+
+bool AWCPlayerCheckpoint::GetIsUnlocked() const
+{
+	return bIsUnlocked;
+}
+
+int32 AWCPlayerCheckpoint::GetTravelOrder() const
+{
+	return TravelOrder;
+}
+
+bool AWCPlayerCheckpoint::BuildSafeResumeTransform(
 	const AWCCharacter* Player,
 	FTransform& OutResumeTransform
 ) const
 {
-	OutResumeTransform =
-		FTransform::Identity;
+	OutResumeTransform = FTransform::Identity;
 
 	if (!IsValid(Player) ||
 		!IsValid(ResumeArrow) ||
 		!GetWorld())
 	{
+		UE_LOG(
+			LogWCPlayerCheckpoint,
+			Error,
+			TEXT(
+				"Checkpoint [%s] could not build a "
+				"Resume Transform because Player, "
+				"ResumeArrow, or World is invalid."
+			),
+			*CheckpointID.ToString()
+		);
+
 		return false;
 	}
 
@@ -128,6 +254,17 @@ BuildSafeResumeTransform(
 
 	if (!IsValid(Capsule))
 	{
+		UE_LOG(
+			LogWCPlayerCheckpoint,
+			Error,
+			TEXT(
+				"Checkpoint [%s] could not build a "
+				"Resume Transform because the Player "
+				"Capsule is invalid."
+			),
+			*CheckpointID.ToString()
+		);
+
 		return false;
 	}
 
@@ -173,17 +310,19 @@ BuildSafeResumeTransform(
 			Error,
 			TEXT(
 				"Checkpoint [%s] could not find "
-				"valid ground below ResumeArrow."
+				"valid ground below ResumeArrow. "
+				"TraceStart=%s, TraceEnd=%s."
 			),
-			*CheckpointID.ToString()
+			*CheckpointID.ToString(),
+			*TraceStart.ToCompactString(),
+			*TraceEnd.ToCompactString()
 		);
 
 		return false;
 	}
 
 	const float CapsuleHalfHeight =
-		Capsule
-		->GetScaledCapsuleHalfHeight();
+		Capsule->GetScaledCapsuleHalfHeight();
 
 	const FVector TargetActorLocation =
 		GroundHit.ImpactPoint +
@@ -192,12 +331,10 @@ BuildSafeResumeTransform(
 			GroundClearance);
 
 	FRotator TargetRotation =
-		ResumeArrow
-		->GetComponentRotation();
+		ResumeArrow->GetComponentRotation();
 
 	/*
-	* Checkpoint 只决定玩家平面朝向。
-	* 不把 Arrow 的 Pitch / Roll 应用给 Character。
+	* A Character resume point owns horizontal facing only.
 	*/
 	TargetRotation.Pitch = 0.0f;
 	TargetRotation.Roll = 0.0f;
@@ -212,8 +349,230 @@ BuildSafeResumeTransform(
 	return true;
 }
 
-void AWCPlayerCheckpoint::
-HandleActivationBoxBeginOverlap(
+bool AWCPlayerCheckpoint::IsPlayerWithinInteractionRange(
+	const AWCCharacter* Player
+) const
+{
+	return IsValid(Player) &&
+		IsValid(ActivationBox) &&
+		ActivationBox->IsOverlappingActor(
+			Player
+		);
+}
+
+void AWCPlayerCheckpoint::Interact()
+{
+	AWCCharacter* Player =
+		Cast<AWCCharacter>(
+			UGameplayStatics::GetPlayerCharacter(
+				this,
+				0
+			)
+		);
+
+	if (!IsValid(Player))
+	{
+		UE_LOG(
+			LogWCPlayerCheckpoint,
+			Warning,
+			TEXT(
+				"Checkpoint [%s] interaction rejected: "
+				"Player 0 is not a valid AWCCharacter."
+			),
+			*CheckpointID.ToString()
+		);
+
+		return;
+	}
+
+	if (!Player->CanUseCheckpoint())
+	{
+		UE_LOG(
+			LogWCPlayerCheckpoint,
+			Display,
+			TEXT(
+				"Checkpoint [%s] interaction rejected: "
+				"Player is not currently in a stable "
+				"rest-point state."
+			),
+			*CheckpointID.ToString()
+		);
+
+		return;
+	}
+
+	if (!IsValid(CachedPersistenceCoordinator))
+	{
+		UE_LOG(
+			LogWCPlayerCheckpoint,
+			Error,
+			TEXT(
+				"Checkpoint [%s] interaction rejected: "
+				"Persistence Coordinator is invalid."
+			),
+			*CheckpointID.ToString()
+		);
+
+		return;
+	}
+
+	if (!IsPlayerWithinInteractionRange(Player))
+	{
+		UE_LOG(
+			LogWCPlayerCheckpoint,
+			Warning,
+			TEXT(
+				"Checkpoint [%s] interaction rejected: "
+				"Player is outside ActivationBox."
+			),
+			*CheckpointID.ToString()
+		);
+
+		return;
+	}
+
+	/*
+	* Saving and unlocking are transactional inside the Coordinator.
+	* This Actor does not write the SaveGame directly.
+	*/
+	const bool bFirstUnlock =
+		!Player->HasUnlockedCheckpoint(
+			CheckpointID
+		);
+
+	if (!CachedPersistenceCoordinator
+		->SaveAtCheckpoint(this))
+	{
+		UE_LOG(
+			LogWCPlayerCheckpoint,
+			Warning,
+			TEXT(
+				"Checkpoint [%s] save request failed. "
+				"No menu was opened."
+			),
+			*CheckpointID.ToString()
+		);
+
+		return;
+	}
+
+	/*
+	* SaveAtCheckpoint normally refreshes all Checkpoint
+	* presentations. Keep this as a safe fallback without
+	* replaying the state event when already applied.
+	*/
+	if (!bIsUnlocked)
+	{
+		ApplyUnlockedPresentation(true);
+	}
+
+	OnCheckpointSaveSucceeded(
+		bFirstUnlock
+	);
+
+	if (!Player->OpenCheckpointMenu(
+		this,
+		CachedPersistenceCoordinator))
+	{
+		/*
+		* The save has already succeeded, so a UI failure must
+		* not roll back persistent progress.
+		*/
+		UE_LOG(
+			LogWCPlayerCheckpoint,
+			Warning,
+			TEXT(
+				"Checkpoint [%s] saved successfully, "
+				"but the Checkpoint Menu could not open."
+			),
+			*CheckpointID.ToString()
+		);
+	}
+}
+
+FString AWCPlayerCheckpoint::GetInteractionPrompt()
+{
+	return bIsUnlocked
+		? UnlockedInteractionPrompt
+		: LockedInteractionPrompt;
+}
+
+void AWCPlayerCheckpoint::ApplyUnlockedPresentation(
+	bool bUnlocked
+)
+{
+	bIsUnlocked = bUnlocked;
+
+	if (CheckpointLight)
+	{
+		CheckpointLight->SetIntensity(
+			bIsUnlocked
+			? UnlockedLightIntensity
+			: LockedLightIntensity
+		);
+	}
+
+	/*
+	* This Blueprint event should apply an idempotent state:
+	* material, steady VFX, steady light, etc.
+	*
+	* One-shot activation feedback belongs in
+	* OnCheckpointSaveSucceeded().
+	*/
+	OnCheckpointPresentationChanged(
+		bIsUnlocked
+	);
+
+	RefreshPlayerInteractionIfOverlapping();
+
+	UE_LOG(
+		LogWCPlayerCheckpoint,
+		Verbose,
+		TEXT(
+			"Checkpoint [%s] presentation applied. "
+			"Unlocked=%s."
+		),
+		*CheckpointID.ToString(),
+		bIsUnlocked
+		? TEXT("True")
+		: TEXT("False")
+	);
+}
+
+void AWCPlayerCheckpoint::RefreshPlayerInteractionIfOverlapping()
+{
+	AWCCharacter* Player =
+		Cast<AWCCharacter>(
+			UGameplayStatics::GetPlayerCharacter(
+				this,
+				0
+			)
+		);
+
+	if (!IsValid(Player) ||
+		!IsPlayerWithinInteractionRange(Player))
+	{
+		return;
+	}
+
+	/*
+	* Do not overwrite another interactable that currently owns
+	* the player's prompt.
+	*/
+	if (Player->CurrentInteractable &&
+		Player->CurrentInteractable != this)
+	{
+		return;
+	}
+
+	Player->CurrentInteractable = this;
+
+	Player->ShowInteractionPrompt(
+		GetInteractionPrompt()
+	);
+}
+
+void AWCPlayerCheckpoint::HandleActivationBoxBeginOverlap(
 	UPrimitiveComponent* OverlappedComponent,
 	AActor* OtherActor,
 	UPrimitiveComponent* OtherComponent,
@@ -226,63 +585,54 @@ HandleActivationBoxBeginOverlap(
 		Cast<AWCCharacter>(OtherActor);
 
 	if (!IsValid(Player) ||
-		CheckpointID.IsNone())
+		Player->GetIsDead())
 	{
 		return;
 	}
 
 	/*
-	* 激活前确认 Resume Transform 本身有效。
+	* Overlap only establishes interaction ownership.
 	*
-	* 避免玩家保存到一个无法安全恢复的位置。
+	* It must not:
+	* - unlock this Checkpoint;
+	* - change CurrentCheckpointID;
+	* - write a SaveGame;
+	* - open the menu.
 	*/
-	FTransform TestResumeTransform;
-
-	if (!BuildSafeResumeTransform(
-		Player,
-		TestResumeTransform))
+	if (Player->CurrentInteractable &&
+		Player->CurrentInteractable != this)
 	{
-		UE_LOG(
-			LogWCPlayerCheckpoint,
-			Error,
-			TEXT(
-				"Checkpoint [%s] activation "
-				"rejected because its Resume "
-				"Transform is invalid."
-			),
-			*CheckpointID.ToString()
-		);
-
 		return;
 	}
 
-	Player->SetCurrentCheckpointID(
-		CheckpointID
-	);
+	Player->CurrentInteractable = this;
 
-	UE_LOG(
-		LogWCPlayerCheckpoint,
-		Display,
-		TEXT(
-			"Player activated Checkpoint [%s]. "
-			"No disk save was performed."
-		),
-		*CheckpointID.ToString()
+	Player->ShowInteractionPrompt(
+		GetInteractionPrompt()
 	);
+}
 
-	if (bShowActivationDebug &&
-		GEngine)
+void AWCPlayerCheckpoint::HandleActivationBoxEndOverlap(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComponent,
+	int32 OtherBodyIndex
+)
+{
+	AWCCharacter* Player =
+		Cast<AWCCharacter>(OtherActor);
+
+	if (!IsValid(Player))
 	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			3.0f,
-			FColor::Green,
-			FString::Printf(
-				TEXT(
-					"Checkpoint Activated: %s"
-				),
-				*CheckpointID.ToString()
-			)
-		);
+		return;
+	}
+
+	if (Player->CurrentInteractable ==
+		this)
+	{
+		Player->CurrentInteractable =
+			nullptr;
+
+		Player->HideInteractionPrompt();
 	}
 }

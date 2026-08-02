@@ -30,7 +30,7 @@ public:
 	* Week7 不制作版本迁移系统，
 	* 但加载时仍需要识别不支持的格式。
 	*/
-	static constexpr int32 CurrentSaveVersion = 1;
+	static constexpr int32 CurrentSaveVersion = 2;
 
 	// ******************** Save Data ********************
 
@@ -42,7 +42,7 @@ public:
 		SaveGame,
 		Category = "Save Data|Meta"
 	)
-	int32 SaveVersion = 1;
+	int32 SaveVersion = CurrentSaveVersion;
 
 	/*
 	* 玩家应恢复到的稳定 Checkpoint。
@@ -99,4 +99,20 @@ public:
 		Category = "Save Data|Journal"
 	)
 	TArray<FMemoryEchoData> RecordedMemoryEchoes;
+
+	/*
+	* 已经通过休憩点交互正式解锁的 Checkpoint。
+	*
+	* 用于：
+	* - Checkpoint Presentation
+	* - 当前地图内 Fast Travel
+	*
+	* CurrentCheckpointID 必须包含在该数组中。
+	*/
+	UPROPERTY(
+		BlueprintReadWrite,
+		SaveGame,
+		Category = "Save Data|Checkpoint"
+	)
+	TArray<FName> UnlockedCheckpointIDs;
 };
