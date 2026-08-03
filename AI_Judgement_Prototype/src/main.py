@@ -13,7 +13,7 @@ def main() -> int:
     """
     project_root = Path(__file__).resolve().parent.parent
 
-    case_path = project_root / "cases" / "case_day1_stub.json"
+    case_path = project_root / "cases" / "case_knife_001.json"
     judge_path = project_root / "judges" / "judge_day1_stub.json"
     report_path = project_root / "reports" / "day1_sample_report.md"
 

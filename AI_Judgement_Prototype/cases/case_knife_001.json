@@ -1,0 +1,47 @@
+{
+  "case_id": "Case.Knife.001",
+  "case_version": "0.2",
+  "title": "染血的刀",
+  "premise": "一名档案残缺的亡魂等待黄泉路前站审核。案卷中没有完整生平，也不存在可供核对的隐藏真相；见习判员只能依据五条残存记忆提出解释与处置建议。",
+  "fragments": [
+    {
+      "fragment_id": "KnifeCase.Identity01",
+      "category": "identity",
+      "text": "灰白短褂，袖口缝着“济”字。"
+    },
+    {
+      "fragment_id": "KnifeCase.Relationship01",
+      "category": "relationship",
+      "text": "一张未寄出的便笺写着：“钱我会想办法。”"
+    },
+    {
+      "fragment_id": "KnifeCase.Action01",
+      "category": "action_or_result",
+      "text": "短刀刃口带着血痕。"
+    },
+    {
+      "fragment_id": "KnifeCase.Motive01",
+      "category": "motive_or_emotion",
+      "text": "钱袋，金额不多。"
+    },
+    {
+      "fragment_id": "KnifeCase.Contradiction01",
+      "category": "contradiction",
+      "text": "“若让他们看见还活着，我们谁也走不了！”"
+    }
+  ],
+  "allowed_dispositions": [
+    {
+      "disposition_id": "reincarnate",
+      "display_name": "准予轮回"
+    },
+    {
+      "disposition_id": "detain_for_review",
+      "display_name": "收押复审"
+    },
+    {
+      "disposition_id": "dissolve",
+      "display_name": "散魂处置"
+    }
+  ]
+}
