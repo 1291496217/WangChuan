@@ -1,0 +1,32 @@
+{
+  "case_id": "Case.Day1.Stub",
+  "case_version": "0.0",
+  "title": "Day 1 数据流测试案件",
+  "premise": "该案件只用于验证文件加载与 Prompt 构建，不属于正式实验内容。",
+  "fragments": [
+    {
+      "fragment_id": "Day1Stub.Fragment01",
+      "category": "identity",
+      "text": "一件被烧焦的白色外衣。"
+    },
+    {
+      "fragment_id": "Day1Stub.Fragment02",
+      "category": "action",
+      "text": "一把沾有暗色血迹的短刀。"
+    }
+  ],
+  "allowed_dispositions": [
+    {
+      "disposition_id": "reincarnate",
+      "display_name": "准予轮回"
+    },
+    {
+      "disposition_id": "detain_for_review",
+      "display_name": "收押复审"
+    },
+    {
+      "disposition_id": "dissolve",
+      "display_name": "散魂处置"
+    }
+  ]
+}

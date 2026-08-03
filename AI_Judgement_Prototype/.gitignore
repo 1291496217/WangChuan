@@ -1,0 +1,27 @@
+# Python virtual environment
+.venv/
+venv/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# IDE settings
+.vscode/
+.idea/
+
+# Test and runtime artifacts
+results/raw/*
+results/validated/*
+logs/*
+
+# Keep empty directories when needed
+!results/raw/.gitkeep
+!results/validated/.gitkeep
+!logs/.gitkeep

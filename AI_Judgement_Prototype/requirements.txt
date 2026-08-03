@@ -1,0 +1,2 @@
+# Day 1 uses only the Python standard Library.
+# External dependencies will be added only when they become necessary.
