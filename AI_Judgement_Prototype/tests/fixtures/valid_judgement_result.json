@@ -1,0 +1,43 @@
+{
+  "schema_version": "0.1",
+  "case_id": "Case.Knife.001",
+  "judge_profile_id": "Judge.Clerk.001",
+  "core_claim": "现有材料只能支持亡魂参与了一场涉及血迹、金钱与隐瞒的未决事件，尚不足以确定其在保护他人还是协助逃亡。",
+  "identity_hypothesis": "带“济”字的短褂提供了身份线索，但无法据此确认职业或组织。",
+  "motive_hypothesis": "少量钱财与便笺可能提示经济压力，但交易、债务或胁迫均未被证明。",
+  "recognized_disposition_id": "detain_for_review",
+  "used_fragment_ids": [
+    "KnifeCase.Identity01",
+    "KnifeCase.Relationship01",
+    "KnifeCase.Action01",
+    "KnifeCase.Motive01",
+    "KnifeCase.Contradiction01"
+  ],
+  "unsupported_assumptions": [
+    {
+      "claim": "少量钱来自一次秘密交易",
+      "severity": "minor",
+      "reason": "钱袋与便笺只能提示经济问题，未说明钱的来源或交换条件。"
+    }
+  ],
+  "contradiction_handling": {
+    "level": "integrated",
+    "explanation": "报告同时承认该话语可以表示保护，也可以表示隐瞒，没有把其中一种解释写成事实。"
+  },
+  "dimension_ratings": {
+    "narrative_coherence": "strong",
+    "evidence_grounding": "strong",
+    "rhetorical_effectiveness": "adequate",
+    "disposition_alignment": "strong"
+  },
+  "style_tags": [
+    "evidence_driven",
+    "cautious",
+    "contradiction_aware"
+  ],
+  "strongest_point": "报告清楚区分了血痕、钱财和话语本身，与这些材料可能支持的不同解释。",
+  "weakest_point": "对“济”字的意义没有提出更具体但仍受约束的解释。",
+  "judge_response": "案卷写得尚算克制。你没有把刀上的血直接写成杀人的凭据，也没有把一个“济”字擅自封成医者身份。只是钱袋来路仍悬而未决，那句不愿让“他们”看见活人的话也不可轻放。暂准收押复审，至少比凭几件旧物替人定生死稳妥。",
+  "archive_summary": "亡魂与染血短刀、少量钱财及一段隐瞒活人的残响有关；现有材料存在多种解释，收押复审。"
+}
+

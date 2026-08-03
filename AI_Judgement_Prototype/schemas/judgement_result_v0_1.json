@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "WangChuan.JudgementResult.0.1",
+  "title": "WangChuan Judgement Result v0.1",
+  "description": "Week8 structured output contract for one AI judgement result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "case_id",
+    "judge_profile_id",
+    "core_claim",
+    "identity_hypothesis",
+    "motive_hypothesis",
+    "recognized_disposition_id",
+    "used_fragment_ids",
+    "unsupported_assumptions",
+    "contradiction_handling",
+    "dimension_ratings",
+    "style_tags",
+    "strongest_point",
+    "weakest_point",
+    "judge_response",
+    "archive_summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.1"
+    },
+    "case_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^Case\\.[A-Za-z0-9_.-]+$"
+    },
+    "judge_profile_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^Judge\\.[A-Za-z0-9_.-]+$"
+    },
+    "core_claim": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "identity_hypothesis": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "motive_hypothesis": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "recognized_disposition_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "used_fragment_ids": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      }
+    },
+    "unsupported_assumptions": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claim",
+          "severity",
+          "reason"
+        ],
+        "properties": {
+          "claim": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "minor",
+              "major"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        }
+      }
+    },
+    "contradiction_handling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "explanation"
+      ],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": [
+            "ignored",
+            "minimized",
+            "acknowledged",
+            "integrated"
+          ]
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        }
+      }
+    },
+    "dimension_ratings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "narrative_coherence",
+        "evidence_grounding",
+        "rhetorical_effectiveness",
+        "disposition_alignment"
+      ],
+      "properties": {
+        "narrative_coherence": {
+          "type": "string",
+          "enum": [
+            "weak",
+            "adequate",
+            "strong"
+          ]
+        },
+        "evidence_grounding": {
+          "type": "string",
+          "enum": [
+            "weak",
+            "adequate",
+            "strong"
+          ]
+        },
+        "rhetorical_effectiveness": {
+          "type": "string",
+          "enum": [
+            "weak",
+            "adequate",
+            "strong"
+          ]
+        },
+        "disposition_alignment": {
+          "type": "string",
+          "enum": [
+            "weak",
+            "adequate",
+            "strong"
+          ]
+        }
+      }
+    },
+    "style_tags": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "evidence_driven",
+          "compassionate",
+          "legalistic",
+          "bureaucratic",
+          "rhetorical",
+          "speculative",
+          "sophistic",
+          "harsh",
+          "cautious",
+          "contradiction_aware"
+        ]
+      }
+    },
+    "strongest_point": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "weakest_point": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "judge_response": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 600
+    },
+    "archive_summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    }
+  }
+}
+
