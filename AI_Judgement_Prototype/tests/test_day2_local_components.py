@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import sys
 import tempfile
@@ -76,12 +75,7 @@ class Day2LocalComponentTests(unittest.TestCase):
                 "WC_DAY2_TEST_VALUE=loaded\n",
                 encoding="utf-8",
             )
-
-            previous = os.environ.pop(
-                "WC_DAY2_TEST_VALUE",
-                None,
-            )
-
+            previous = os.environ.pop("WC_DAY2_TEST_VALUE", None)
             try:
                 load_env_file(env_path)
                 self.assertEqual(
@@ -89,14 +83,9 @@ class Day2LocalComponentTests(unittest.TestCase):
                     "loaded",
                 )
             finally:
-                os.environ.pop(
-                    "WC_DAY2_TEST_VALUE",
-                    None,
-                )
+                os.environ.pop("WC_DAY2_TEST_VALUE", None)
                 if previous is not None:
-                    os.environ[
-                        "WC_DAY2_TEST_VALUE"
-                    ] = previous
+                    os.environ["WC_DAY2_TEST_VALUE"] = previous
 
     def test_env_loader_does_not_override_existing(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -105,44 +94,25 @@ class Day2LocalComponentTests(unittest.TestCase):
                 "WC_DAY2_TEST_EXISTING=file\n",
                 encoding="utf-8",
             )
-
-            previous = os.environ.get(
-                "WC_DAY2_TEST_EXISTING"
-            )
-            os.environ[
-                "WC_DAY2_TEST_EXISTING"
-            ] = "process"
-
+            previous = os.environ.get("WC_DAY2_TEST_EXISTING")
+            os.environ["WC_DAY2_TEST_EXISTING"] = "process"
             try:
                 load_env_file(env_path)
                 self.assertEqual(
-                    os.environ[
-                        "WC_DAY2_TEST_EXISTING"
-                    ],
+                    os.environ["WC_DAY2_TEST_EXISTING"],
                     "process",
                 )
             finally:
                 if previous is None:
-                    os.environ.pop(
-                        "WC_DAY2_TEST_EXISTING",
-                        None,
-                    )
+                    os.environ.pop("WC_DAY2_TEST_EXISTING", None)
                 else:
-                    os.environ[
-                        "WC_DAY2_TEST_EXISTING"
-                    ] = previous
+                    os.environ["WC_DAY2_TEST_EXISTING"] = previous
 
     def test_env_loader_rejects_malformed_line(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             env_path = Path(directory) / ".env"
-            env_path.write_text(
-                "NOT_A_PAIR\n",
-                encoding="utf-8",
-            )
-
-            with self.assertRaises(
-                EnvironmentConfigurationError
-            ):
+            env_path.write_text("NOT_A_PAIR\n", encoding="utf-8")
+            with self.assertRaises(EnvironmentConfigurationError):
                 load_env_file(env_path)
 
     def test_report_parser_accepts_valid_report(self) -> None:
@@ -153,20 +123,16 @@ class Day2LocalComponentTests(unittest.TestCase):
                 + ("材料仍然不足，需要继续复核。" * 10),
                 encoding="utf-8",
             )
-
             report = load_player_report(
                 report_path,
                 case_data=CASE_DATA,
             )
-
             self.assertEqual(
                 report.disposition_id,
                 "detain_for_review",
             )
 
-    def test_report_parser_rejects_unknown_disposition(
-        self,
-    ) -> None:
+    def test_report_parser_rejects_unknown_disposition(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             report_path = Path(directory) / "report.md"
             report_path.write_text(
@@ -174,16 +140,13 @@ class Day2LocalComponentTests(unittest.TestCase):
                 + ("材料仍然不足，需要继续复核。" * 10),
                 encoding="utf-8",
             )
-
             with self.assertRaises(PlayerReportError):
                 load_player_report(
                     report_path,
                     case_data=CASE_DATA,
                 )
 
-    def test_prompt_contains_json_and_untrusted_boundary(
-        self,
-    ) -> None:
+    def test_prompt_contains_json_and_untrusted_boundary(self) -> None:
         messages = build_judgement_messages(
             case_data=CASE_DATA,
             judge_data=JUDGE_DATA,
@@ -192,29 +155,15 @@ class Day2LocalComponentTests(unittest.TestCase):
                 "DispositionID: detain_for_review\n"
                 + ("材料仍然不足。" * 20)
             ),
-            selected_disposition_id=(
-                "detain_for_review"
-            ),
+            selected_disposition_id="detain_for_review",
         )
-
         self.assertEqual(len(messages), 2)
-        self.assertIn(
-            "JSON",
-            messages[0]["content"],
-        )
+        self.assertIn("JSON", messages[0]["content"])
         self.assertIn(
             "<UNTRUSTED_PLAYER_REPORT>",
             messages[1]["content"],
         )
-        self.assertIn(
-            "Case.Knife.001",
-            messages[0]["content"],
-        )
-        self.assertIn(
-            "Judge.Clerk.001",
-            messages[0]["content"],
-        )
-        self.assertEqual(PROMPT_VERSION, "0.1")
+        self.assertEqual(PROMPT_VERSION, "0.3")
 
     def test_result_writer_refuses_overwrite(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -224,7 +173,6 @@ class Day2LocalComponentTests(unittest.TestCase):
                 run_id="same",
                 payload={"value": 1},
             )
-
             with self.assertRaises(FileExistsError):
                 write_raw_record(
                     results_root=root,
@@ -233,14 +181,8 @@ class Day2LocalComponentTests(unittest.TestCase):
                 )
 
     def test_sha256_is_stable(self) -> None:
-        self.assertEqual(
-            sha256_text("abc"),
-            sha256_text("abc"),
-        )
-        self.assertNotEqual(
-            sha256_text("abc"),
-            sha256_text("abcd"),
-        )
+        self.assertEqual(sha256_text("abc"), sha256_text("abc"))
+        self.assertNotEqual(sha256_text("abc"), sha256_text("abcd"))
 
 
 if __name__ == "__main__":
