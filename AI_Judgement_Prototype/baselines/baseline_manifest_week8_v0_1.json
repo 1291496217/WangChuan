@@ -1,0 +1,96 @@
+{
+  "baseline_id": "Baseline.Week8.AIJudgement.001",
+  "baseline_version": "0.1",
+  "created_at_utc": "2026-08-05T15:13:03.335315+00:00",
+  "branch": "feature/ai-first-prototype",
+  "immutable_versions": {
+    "case_id": "Case.Knife.001",
+    "case_version": "0.2",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "prompt_version": "0.3",
+    "schema_version": "0.1",
+    "corpus_id": "Corpus.Knife.Week8.001",
+    "corpus_version": "0.1"
+  },
+  "model_configuration": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "thinking_mode": "disabled",
+    "temperature": 0.2,
+    "max_tokens": 2400,
+    "streaming": false,
+    "automatic_retry": false
+  },
+  "artifact_inventory": [
+    {
+      "path": "cases/case_knife_001.json",
+      "sha256": "A4B5B7481942DCDC9E6AC42804AEF353E7457FF26282434F09FAFD05F4842DCC"
+    },
+    {
+      "path": "judges/judge_clerk_001.json",
+      "sha256": "13E3D41B493E9D33F876621F70E25F1CB47E78679CBCCF693E232625CABB3A9A"
+    },
+    {
+      "path": "schemas/judgement_result_v0_1.json",
+      "sha256": "E61885BDC4634C20925C3F33672B41903B80B34811E14C80577A3CE0330DCF8E"
+    },
+    {
+      "path": "src/prompt_builder.py",
+      "sha256": "172387E1D4CA52C2908B037357EA626E685CBA263254B5CEC310331E7BDAF4BA"
+    },
+    {
+      "path": "reports/corpus_manifest_v0_1.json",
+      "sha256": "3FDAD982F689A56BC4B0352AF4A5DD229D28B268BBEF42E63BA70C0C5FD6751C"
+    },
+    {
+      "path": "reports/semantic_audit/semantic_audit_results_v0_1.json",
+      "sha256": "E2B5F2FDBA5C1BDD142CFC602FF863B7FDF2BB7E959CDC22C239C80BAA4EEA5D"
+    },
+    {
+      "path": "reports/week8_summary/week8_experiment_summary_v0_2.json",
+      "sha256": "F880465D442780D77AC80B40502F5920DF36A44B158D34AF9A9AEBC0AD2C3BF6"
+    }
+  ],
+  "result_inventory": {
+    "all_week8_real_calls": 21,
+    "prompt_v03_corpus_calls": 19,
+    "semantic_audit_report_count": 19,
+    "summary_source": "reports/week8_summary/week8_experiment_summary_v0_2.json"
+  },
+  "regression_reports": [
+    {
+      "report_id": "R03",
+      "issue": "fragment_false_positive_identity"
+    },
+    {
+      "report_id": "R05",
+      "issue": "fragment_missing_identity"
+    },
+    {
+      "report_id": "R09",
+      "issue": "fragment_missing_motive"
+    },
+    {
+      "report_id": "R10",
+      "issue": "complex_unsupported_claim_under_split"
+    },
+    {
+      "report_id": "R17",
+      "issue": "fragment_missing_contradiction_and_core_claim_split"
+    },
+    {
+      "report_id": "R18",
+      "issue": "game_language_leakage"
+    },
+    {
+      "report_id": "R19",
+      "issue": "disposition_override_attempt"
+    }
+  ],
+  "freeze_policy": {
+    "overwrite_old_artifacts": false,
+    "overwrite_old_results": false,
+    "reinterpret_old_results_as_new_schema": false
+  }
+}

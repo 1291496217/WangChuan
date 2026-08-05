@@ -1,0 +1,210 @@
+{
+  "case_id": "Case.DoorKnife.001",
+  "case_version": "0.1",
+  "title": "门后的刀",
+  "design_mode": "local_facts_open_moral_judgement",
+  "hidden_complete_truth": false,
+  "allowed_moral_judgements": [
+    {
+      "moral_judgement_id": "more_good_than_evil",
+      "display_name": "善多于恶"
+    },
+    {
+      "moral_judgement_id": "mixed_merit_and_fault",
+      "display_name": "功过难分"
+    },
+    {
+      "moral_judgement_id": "more_evil_than_good",
+      "display_name": "恶多于善"
+    },
+    {
+      "moral_judgement_id": "beyond_redemption",
+      "display_name": "罪无可赦"
+    }
+  ],
+  "allowed_dispositions": [
+    {
+      "disposition_id": "recommend_rebirth",
+      "display_name": "荐生",
+      "availability": "base"
+    },
+    {
+      "disposition_id": "ordinary_transfer",
+      "display_name": "平籍入殿",
+      "availability": "base"
+    },
+    {
+      "disposition_id": "send_to_prison",
+      "display_name": "押狱",
+      "availability": "base"
+    },
+    {
+      "disposition_id": "soul_dissolution",
+      "display_name": "魂灭",
+      "availability": "extreme_test"
+    }
+  ],
+  "relation_tag_definitions": [
+    {
+      "relation_tag": "killing_event",
+      "description": "围绕刺杀宅主及其直接后果"
+    },
+    {
+      "relation_tag": "child_confinement",
+      "description": "围绕后屋孩子及门锁"
+    },
+    {
+      "relation_tag": "long_term_fear_or_hatred",
+      "description": "围绕亡魂长期心念与宅主"
+    },
+    {
+      "relation_tag": "public_persona_conflict",
+      "description": "围绕邻里评价与实际暴力行为的冲突"
+    },
+    {
+      "relation_tag": "post_killing_aftermath",
+      "description": "围绕亡魂带伤死亡、土地庙外终局与后屋钥匙，不指定追击、逃亡、报复或牺牲经过"
+    }
+  ],
+  "fragments": [
+    {
+      "fragment_id": "DoorKnife.Action01",
+      "semantic_type": "action",
+      "source_type": "objective_trace",
+      "information_weight": 3,
+      "acquisition_type": "prototype_fixed",
+      "text": "亡魂把短刀刺入宅主胸口，宅主当场死亡。",
+      "relation_tags": [
+        "killing_event",
+        "public_persona_conflict"
+      ],
+      "disposition_support_tags": [
+        "ordinary_transfer",
+        "send_to_prison"
+      ],
+      "interpretation_hooks": [
+        "主动谋杀",
+        "被迫反击",
+        "保护他人",
+        "复仇",
+        "多重动机"
+      ]
+    },
+    {
+      "fragment_id": "DoorKnife.Personality01",
+      "semantic_type": "personality",
+      "source_type": "others_testimony",
+      "information_weight": 2,
+      "acquisition_type": "prototype_fixed",
+      "text": "邻里都说他低声寡言，遇到争执便退让，是最没胆子惹事的人。",
+      "relation_tags": [
+        "public_persona_conflict"
+      ],
+      "disposition_support_tags": [
+        "recommend_rebirth",
+        "ordinary_transfer",
+        "send_to_prison"
+      ],
+      "interpretation_hooks": [
+        "长期伪装",
+        "长期受迫",
+        "邻里误解",
+        "紧急状态突破恐惧",
+        "性格评价与行为不一致"
+      ]
+    },
+    {
+      "fragment_id": "DoorKnife.Thought01",
+      "semantic_type": "thought",
+      "source_type": "soul_self_knowledge",
+      "information_weight": 2,
+      "acquisition_type": "prototype_fixed",
+      "text": "在许多个夜里，他都想象过宅主死去的样子。",
+      "relation_tags": [
+        "killing_event",
+        "long_term_fear_or_hatred"
+      ],
+      "disposition_support_tags": [
+        "ordinary_transfer",
+        "send_to_prison"
+      ],
+      "interpretation_hooks": [
+        "预谋",
+        "仇恨",
+        "恐惧中的反复想象",
+        "无力状态下的幻想",
+        "动机混合"
+      ]
+    },
+    {
+      "fragment_id": "DoorKnife.Outcome01",
+      "semantic_type": "outcome",
+      "source_type": "objective_trace",
+      "information_weight": 3,
+      "acquisition_type": "prototype_fixed",
+      "text": "宅主倒下后，锁在后屋的孩子从门中逃了出来。",
+      "relation_tags": [
+        "killing_event",
+        "child_confinement"
+      ],
+      "disposition_support_tags": [
+        "recommend_rebirth",
+        "ordinary_transfer",
+        "send_to_prison"
+      ],
+      "interpretation_hooks": [
+        "杀人带来救助结果",
+        "善意结果不能自动洗去杀人责任",
+        "孩子逃出可能是目的，也可能是行为后的结果",
+        "结果与动机不应自动等同"
+      ]
+    },
+    {
+      "fragment_id": "DoorKnife.Relationship01",
+      "semantic_type": "relationship",
+      "source_type": "others_testimony",
+      "information_weight": 2,
+      "acquisition_type": "prototype_fixed",
+      "text": "“他答应过我，不会再让那个人进来。”",
+      "relation_tags": [
+        "child_confinement",
+        "long_term_fear_or_hatred"
+      ],
+      "disposition_support_tags": [
+        "recommend_rebirth",
+        "ordinary_transfer",
+        "send_to_prison"
+      ],
+      "interpretation_hooks": [
+        "保护承诺",
+        "私人关系",
+        "对宅主的长期冲突",
+        "孩子陈述改变责任解释",
+        "不得自行确定孩子与亡魂的血缘或身份"
+      ]
+    },
+    {
+      "fragment_id": "DoorKnife.Death01",
+      "semantic_type": "death",
+      "source_type": "objective_trace",
+      "information_weight": 3,
+      "acquisition_type": "prototype_fixed",
+      "text": "亡魂死在土地庙外，背上有新伤，手中仍握着后屋门锁的钥匙。",
+      "relation_tags": [
+        "post_killing_aftermath",
+        "child_confinement"
+      ],
+      "disposition_support_tags": [
+        "ordinary_transfer",
+        "send_to_prison"
+      ],
+      "interpretation_hooks": [
+        "杀人后的追捕或冲突",
+        "保护行为的代价",
+        "钥匙意味着接触过门锁但不说明动机",
+        "背伤来源未知",
+        "死亡后果不自动抵消生前行为"
+      ]
+    }
+  ]
+}
