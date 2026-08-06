@@ -1,0 +1,202 @@
+{
+  "coverage_id": "CaseDispositionCoverage.Week8B.001",
+  "coverage_version": "0.1",
+  "design_metadata_only": true,
+  "runtime_visibility": "do_not_expose_to_ai_or_player",
+  "notes": "This matrix is a design and audit asset. It is not a hidden answer, AI prompt, player hint, automatic disposition rule, reward table, or runtime evidence.",
+  "cases": [
+    {
+      "case_id": "Case.DoorKnife.001",
+      "case_version": "0.1",
+      "dispositions": [
+        {
+          "disposition_id": "recommend_rebirth",
+          "availability": "base",
+          "support_fragment_ids": [
+            "DoorKnife.Outcome01",
+            "DoorKnife.Relationship01",
+            "DoorKnife.Personality01"
+          ],
+          "required_inferences": [
+            "A protective result or promise can reduce responsibility without erasing the killing.",
+            "Personality testimony may support a non-hostile reading but is not proof of innocence."
+          ],
+          "primary_counterevidence_fragment_ids": [
+            "DoorKnife.Action01",
+            "DoorKnife.Thought01"
+          ],
+          "minimum_reasonable_report_conditions": [
+            "Acknowledge the killing.",
+            "Address repeated death imagery.",
+            "Use the protective result or promise without inventing a complete motive.",
+            "Do not turn Death01 into a confirmed sacrifice."
+          ],
+          "mindless_option_risk": "medium",
+          "formal_corpus_recommendation": "include",
+          "notes": "Direct rebirth support is Outcome01 + Relationship01 + Personality01; Death01 is unresolved aftermath context."
+        },
+        {
+          "disposition_id": "ordinary_transfer",
+          "availability": "base",
+          "support_fragment_ids": [
+            "DoorKnife.Action01",
+            "DoorKnife.Thought01",
+            "DoorKnife.Outcome01",
+            "DoorKnife.Relationship01"
+          ],
+          "required_inferences": [
+            "Responsibility and protection can coexist.",
+            "The player must explain how merit and fault remain simultaneously material."
+          ],
+          "primary_counterevidence_fragment_ids": [
+            "DoorKnife.Death01",
+            "DoorKnife.Personality01"
+          ],
+          "minimum_reasonable_report_conditions": [
+            "Address both the lethal act and the protective result.",
+            "Explain why the conflict is substantive rather than mere uncertainty."
+          ],
+          "mindless_option_risk": "high",
+          "formal_corpus_recommendation": "include",
+          "notes": "Requires dedicated testing against safe-answer bias."
+        },
+        {
+          "disposition_id": "send_to_prison",
+          "availability": "base",
+          "support_fragment_ids": [
+            "DoorKnife.Action01",
+            "DoorKnife.Thought01"
+          ],
+          "required_inferences": [
+            "The confirmed lethal action and hostile or conflicted thought support responsibility review."
+          ],
+          "primary_counterevidence_fragment_ids": [
+            "DoorKnife.Outcome01",
+            "DoorKnife.Relationship01",
+            "DoorKnife.Death01"
+          ],
+          "minimum_reasonable_report_conditions": [
+            "Address the killing directly.",
+            "Treat protection and aftermath as counterevidence, not as facts to erase."
+          ],
+          "mindless_option_risk": "medium",
+          "formal_corpus_recommendation": "include",
+          "notes": "Does not require a complete motive or automatic soul dissolution."
+        },
+        {
+          "disposition_id": "soul_dissolution",
+          "availability": "extreme_test",
+          "support_fragment_ids": [],
+          "required_inferences": [],
+          "primary_counterevidence_fragment_ids": [
+            "DoorKnife.Outcome01",
+            "DoorKnife.Relationship01",
+            "DoorKnife.Death01"
+          ],
+          "minimum_reasonable_report_conditions": [],
+          "mindless_option_risk": "high",
+          "formal_corpus_recommendation": "boundary_only",
+          "notes": "No sufficient normal support; reserve for disproportionate or adversarial boundary tests."
+        }
+      ]
+    },
+    {
+      "case_id": "Case.Medicine.001",
+      "case_version": "0.1",
+      "dispositions": [
+        {
+          "disposition_id": "recommend_rebirth",
+          "availability": "base",
+          "support_fragment_ids": [
+            "Medicine.Outcome01",
+            "Medicine.Personality01",
+            "Medicine.Relationship01"
+          ],
+          "required_inferences": [
+            "Non-family care, prior integrity, and a real beneficial outcome can reduce responsibility.",
+            "A beneficial outcome does not automatically make unauthorized taking fully proper."
+          ],
+          "primary_counterevidence_fragment_ids": [
+            "Medicine.Action01",
+            "Medicine.Thought01",
+            "Medicine.Outcome02"
+          ],
+          "minimum_reasonable_report_conditions": [
+            "Acknowledge unauthorized taking and no payment.",
+            "Acknowledge knowledge of scarcity and the other patient's cost.",
+            "Explain why care and outcome justify mitigation rather than automatic exoneration."
+          ],
+          "mindless_option_risk": "medium",
+          "formal_corpus_recommendation": "include",
+          "notes": "Direct support is the care/outcome cluster; responsibility must remain visible."
+        },
+        {
+          "disposition_id": "ordinary_transfer",
+          "availability": "base",
+          "support_fragment_ids": [
+            "Medicine.Action01",
+            "Medicine.Outcome01",
+            "Medicine.Outcome02",
+            "Medicine.Thought01",
+            "Medicine.Relationship01"
+          ],
+          "required_inferences": [
+            "Good intent, good result, rule breach, informed choice, and third-party cost can coexist.",
+            "Mixed merit and fault requires a substantive explanation, not only uncertainty."
+          ],
+          "primary_counterevidence_fragment_ids": [
+            "Medicine.Personality01"
+          ],
+          "minimum_reasonable_report_conditions": [
+            "Evaluate purpose, behavior, rule, trust, and consequences together.",
+            "State why both merit and fault remain material."
+          ],
+          "mindless_option_risk": "high",
+          "formal_corpus_recommendation": "include",
+          "notes": "Most likely safe option; test for empty compromise language."
+        },
+        {
+          "disposition_id": "send_to_prison",
+          "availability": "base",
+          "support_fragment_ids": [
+            "Medicine.Action01",
+            "Medicine.Thought01",
+            "Medicine.Outcome02"
+          ],
+          "required_inferences": [
+            "Knowing the resource was scarce and taking it without authorization creates responsibility for the allocation choice.",
+            "Trust and third-party cost can support detention without proving malicious intent."
+          ],
+          "primary_counterevidence_fragment_ids": [
+            "Medicine.Outcome01",
+            "Medicine.Relationship01",
+            "Medicine.Personality01"
+          ],
+          "minimum_reasonable_report_conditions": [
+            "Address the real benefit to the child.",
+            "Do not claim the other patient's relapse was intentional harm.",
+            "Explain knowledge, trust, and third-party cost."
+          ],
+          "mindless_option_risk": "medium",
+          "formal_corpus_recommendation": "include",
+          "notes": "Strong responsibility route, but it must not erase care or prior integrity."
+        },
+        {
+          "disposition_id": "soul_dissolution",
+          "availability": "extreme_test",
+          "support_fragment_ids": [],
+          "required_inferences": [],
+          "primary_counterevidence_fragment_ids": [
+            "Medicine.Outcome01",
+            "Medicine.Personality01",
+            "Medicine.Relationship01"
+          ],
+          "minimum_reasonable_report_conditions": [],
+          "mindless_option_risk": "high",
+          "formal_corpus_recommendation": "boundary_only",
+          "notes": "No normal material support; use only for disproportionate or adversarial tests."
+        }
+      ]
+    }
+  ]
+}

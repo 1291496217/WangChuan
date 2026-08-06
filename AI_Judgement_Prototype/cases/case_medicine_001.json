@@ -1,0 +1,217 @@
+{
+  "case_id": "Case.Medicine.001",
+  "case_version": "0.1",
+  "title": "未归还的药",
+  "design_mode": "local_facts_open_moral_judgement",
+  "hidden_complete_truth": false,
+  "allowed_moral_judgements": [
+    {
+      "moral_judgement_id": "more_good_than_evil",
+      "display_name": "善多于恶"
+    },
+    {
+      "moral_judgement_id": "mixed_merit_and_fault",
+      "display_name": "功过难分"
+    },
+    {
+      "moral_judgement_id": "more_evil_than_good",
+      "display_name": "恶多于善"
+    },
+    {
+      "moral_judgement_id": "beyond_redemption",
+      "display_name": "罪无可赦"
+    }
+  ],
+  "allowed_dispositions": [
+    {
+      "disposition_id": "recommend_rebirth",
+      "display_name": "荐生",
+      "availability": "base"
+    },
+    {
+      "disposition_id": "ordinary_transfer",
+      "display_name": "平籍入殿",
+      "availability": "base"
+    },
+    {
+      "disposition_id": "send_to_prison",
+      "display_name": "押狱",
+      "availability": "base"
+    },
+    {
+      "disposition_id": "soul_dissolution",
+      "display_name": "魂灭",
+      "availability": "extreme_test"
+    }
+  ],
+  "relation_tag_definitions": [
+    {
+      "relation_tag": "unregistered_medicine_removal",
+      "description": "围绕药材未经登记、未付款而被取走的行为"
+    },
+    {
+      "relation_tag": "child_treatment_outcome",
+      "description": "围绕孩子服药后呼吸缓解的实际结果"
+    },
+    {
+      "relation_tag": "scarce_medicine_competition",
+      "description": "围绕最后一包药和不同求药者之间的资源冲突"
+    },
+    {
+      "relation_tag": "other_patient_unserved",
+      "description": "围绕另一名病人未能得到该药及其之后再次发作"
+    },
+    {
+      "relation_tag": "public_integrity_conflict",
+      "description": "围绕亡魂此前诚信评价与本次未登记取药的冲突"
+    },
+    {
+      "relation_tag": "foreseen_resource_tradeoff",
+      "description": "围绕亡魂知道药品稀缺并意识到可能还有其他求药者"
+    },
+    {
+      "relation_tag": "non_family_care_commitment",
+      "description": "围绕亡魂与孩子非亲属关系下作出的送药承诺"
+    }
+  ],
+  "fragments": [
+    {
+      "fragment_id": "Medicine.Action01",
+      "semantic_type": "action",
+      "source_type": "objective_trace",
+      "information_weight": 3,
+      "acquisition_type": "prototype_fixed",
+      "text": "夜里，亡魂从药铺取走店中最后一包定喘散，没有登记，也没有留下药钱。",
+      "relation_tags": [
+        "unregistered_medicine_removal",
+        "scarce_medicine_competition",
+        "public_integrity_conflict"
+      ],
+      "disposition_support_tags": [
+        "ordinary_transfer",
+        "send_to_prison"
+      ],
+      "interpretation_hooks": [
+        "紧急取药",
+        "未经授权的取用",
+        "对稀缺资源的擅自分配",
+        "违背药铺信任",
+        "善意目的与行为规则冲突"
+      ]
+    },
+    {
+      "fragment_id": "Medicine.Outcome01",
+      "semantic_type": "outcome",
+      "source_type": "objective_trace",
+      "information_weight": 3,
+      "acquisition_type": "prototype_fixed",
+      "text": "药被送到河边棚屋后，一个喘息急促的孩子服下；当夜，孩子的呼吸缓了下来。",
+      "relation_tags": [
+        "child_treatment_outcome",
+        "non_family_care_commitment"
+      ],
+      "disposition_support_tags": [
+        "recommend_rebirth",
+        "ordinary_transfer"
+      ],
+      "interpretation_hooks": [
+        "真实善果",
+        "非亲属救助",
+        "善果不能自动洗去取药责任",
+        "结果与动机不应自动等同"
+      ]
+    },
+    {
+      "fragment_id": "Medicine.Outcome02",
+      "semantic_type": "outcome",
+      "source_type": "objective_trace",
+      "information_weight": 3,
+      "acquisition_type": "prototype_fixed",
+      "text": "第二日清晨，药铺因没有定喘散，未能给另一名来求药的病人配药；那人回村途中再次发作，被同行者抬回家。",
+      "relation_tags": [
+        "scarce_medicine_competition",
+        "other_patient_unserved",
+        "foreseen_resource_tradeoff"
+      ],
+      "disposition_support_tags": [
+        "ordinary_transfer",
+        "send_to_prison"
+      ],
+      "interpretation_hooks": [
+        "资源挤占",
+        "第三人实际代价",
+        "因果链仍不完整",
+        "不得把发作写成故意伤害"
+      ]
+    },
+    {
+      "fragment_id": "Medicine.Personality01",
+      "semantic_type": "personality",
+      "source_type": "others_testimony",
+      "information_weight": 2,
+      "acquisition_type": "prototype_fixed",
+      "text": "掌柜和两个伙计都说，他在药铺做了三年，账目从未少过一文，也从未私取药材。",
+      "relation_tags": [
+        "public_integrity_conflict",
+        "unregistered_medicine_removal"
+      ],
+      "disposition_support_tags": [
+        "recommend_rebirth",
+        "ordinary_transfer",
+        "send_to_prison"
+      ],
+      "interpretation_hooks": [
+        "一次紧急越界",
+        "过去诚信降低长期占有疑虑",
+        "受信任身份使本次行为更严重",
+        "先前形象与本次行为冲突",
+        "他人评价只覆盖工作表现"
+      ]
+    },
+    {
+      "fragment_id": "Medicine.Thought01",
+      "semantic_type": "thought",
+      "source_type": "soul_self_knowledge",
+      "information_weight": 3,
+      "acquisition_type": "prototype_fixed",
+      "text": "取药前，他知道那是店里最后一包，也想过天亮后可能还有人来求药。",
+      "relation_tags": [
+        "scarce_medicine_competition",
+        "foreseen_resource_tradeoff"
+      ],
+      "disposition_support_tags": [
+        "ordinary_transfer",
+        "send_to_prison"
+      ],
+      "interpretation_hooks": [
+        "明知资源稀缺",
+        "预见可能的第三人代价",
+        "知情不等于恶意",
+        "风险认知增加责任张力"
+      ]
+    },
+    {
+      "fragment_id": "Medicine.Relationship01",
+      "semantic_type": "relationship",
+      "source_type": "others_testimony",
+      "information_weight": 2,
+      "acquisition_type": "prototype_fixed",
+      "text": "孩子的母亲说：“我们与他并非亲故。他去年见过孩子发病，答应若再遇到有药的时候，会替我送来。”",
+      "relation_tags": [
+        "non_family_care_commitment",
+        "child_treatment_outcome"
+      ],
+      "disposition_support_tags": [
+        "recommend_rebirth",
+        "ordinary_transfer"
+      ],
+      "interpretation_hooks": [
+        "非亲属救助承诺",
+        "私人承诺影响判断",
+        "承诺不授予取药权",
+        "不得自行补写隐藏血缘",
+        "善意与规则边界冲突"
+      ]
+    }
+  ]
+}
