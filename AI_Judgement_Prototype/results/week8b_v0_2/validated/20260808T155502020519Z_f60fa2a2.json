@@ -1,0 +1,120 @@
+{
+  "run_id": "20260808T155502020519Z_f60fa2a2",
+  "case_id": "Case.Medicine.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "more_good_than_evil",
+  "disposition_id": "recommend_rebirth",
+  "selected_key_fragment_ids": [
+    "Medicine.Action01",
+    "Medicine.Outcome01",
+    "Medicine.Personality01",
+    "Medicine.Relationship01"
+  ],
+  "metadata": {
+    "run_id": "20260808T155502020519Z_f60fa2a2",
+    "timestamp_utc": "2026-08-08T15:55:09.998945+00:00",
+    "started_at_utc": "2026-08-08T15:55:02.020559+00:00",
+    "completed_at_utc": "2026-08-08T15:55:09.998945+00:00",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4",
+    "schema_version": "0.2",
+    "case_id": "Case.Medicine.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR15",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR15_medicine_rigorous_rebirth.md",
+    "formal_moral_judgement_id": "more_good_than_evil",
+    "formal_disposition_id": "recommend_rebirth",
+    "selected_key_fragment_ids": [
+      "Medicine.Action01",
+      "Medicine.Outcome01",
+      "Medicine.Personality01",
+      "Medicine.Relationship01"
+    ],
+    "elapsed_ms": 7978,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 2732,
+      "completion_tokens": 745,
+      "total_tokens": 3477,
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 2732,
+      "reasoning_tokens": null
+    },
+    "response_id": "31d6f124-ea88-44c5-bab6-f6f4b66cae94",
+    "messages_sha256": "e8211d8c2f11cb9449ce07902c966218d411b831ef6c61582e35e1389a86372e",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.Medicine.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂在夜里从药铺取走最后一包定喘散，未登记未付钱。药被送到河边棚屋，一个喘息急促的孩子服下后呼吸缓和。次日清晨，药铺因缺药未能给另一名病人配药，该病人回村途中再次发作被抬回家。亡魂在药铺工作三年，账目从未出错，也从未私取药材。取药前他知道那是最后一包，也想过天亮后可能还有人来求药。孩子的母亲称他们并非亲故，亡魂去年见过孩子发病，答应若再遇到有药时会送来。",
+    "recognized_action_claims": [
+      "亡魂未经登记取走最后一包定喘散",
+      "药被送到河边棚屋，孩子服下后呼吸缓和",
+      "次日药铺缺药，另一名病人未能配药并再次发作"
+    ],
+    "recognized_motive_claims": [
+      "救助的是非亲属的孩子",
+      "三年诚信记录支持这是紧急选择",
+      "救人动机较重"
+    ],
+    "personality_action_relation": "plausible",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "acknowledged",
+    "moral_reasoning_tier": "adequate",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "明确承认了越界责任，同时用三年诚信和救助非亲属的事实支撑救人动机，没有把善果当作完全免责理由。",
+    "weakest_point": "对另一名病人未能配药的代价处理较简略，仅作为背景提及，未深入讨论资源分配的责任归属。",
+    "judge_response": "本官阅卷毕。你既认其擅取之过，又据三年诚信与救助非亲之实，判善多于恶，荐生并记明责任，处置与论证尚算一致。然须留意：善果不能抹去代价，你虽提及资源之失，却未深究药铺缺药致他人再发之责。材料未明此人是否预见次日求药者，故不可妄断其全责，亦不可全然豁免。念你未虚构证据，亦未强称唯一真相，此判可入档。",
+    "archive_summary": "亡魂擅取最后一包定喘散救非亲孩童，致次日他人缺药再发。玩家判善多于恶、荐生并记明擅取责任。审核认可其承认越界、以诚信与救助动机支撑判断，但指出对资源代价的讨论略浅。处置与论证一致，无虚构证据，准予归档。",
+    "fragment_roles": [
+      {
+        "fragment_id": "Medicine.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Outcome02",
+        "role": "context"
+      },
+      {
+        "fragment_id": "Medicine.Personality01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Thought01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "Medicine.Relationship01",
+        "role": "core_support"
+      }
+    ],
+    "unsupported_assumptions": [
+      {
+        "claim": "整体显示救人动机较重",
+        "severity": "minor",
+        "reason": "动机轻重是玩家综合推断，材料支持救助意图，但无法量化比较善恶"
+      },
+      {
+        "claim": "善果不能抹去资源代价",
+        "severity": "minor",
+        "reason": "这是价值判断而非事实断言，但作为论证可接受"
+      }
+    ]
+  }
+}

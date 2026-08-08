@@ -1,0 +1,115 @@
+{
+  "run_id": "20260808T155334882792Z_1dce172e",
+  "case_id": "Case.DoorKnife.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "more_good_than_evil",
+  "disposition_id": "recommend_rebirth",
+  "selected_key_fragment_ids": [
+    "DoorKnife.Action01",
+    "DoorKnife.Outcome01",
+    "DoorKnife.Relationship01"
+  ],
+  "metadata": {
+    "run_id": "20260808T155334882792Z_1dce172e",
+    "timestamp_utc": "2026-08-08T15:53:43.586824+00:00",
+    "started_at_utc": "2026-08-08T15:53:34.882834+00:00",
+    "completed_at_utc": "2026-08-08T15:53:43.586824+00:00",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4",
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR01",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR01_doorknife_rigorous_rebirth.md",
+    "formal_moral_judgement_id": "more_good_than_evil",
+    "formal_disposition_id": "recommend_rebirth",
+    "selected_key_fragment_ids": [
+      "DoorKnife.Action01",
+      "DoorKnife.Outcome01",
+      "DoorKnife.Relationship01"
+    ],
+    "elapsed_ms": 8703,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 2681,
+      "completion_tokens": 851,
+      "total_tokens": 3532,
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 2681,
+      "reasoning_tokens": null
+    },
+    "response_id": "673aeb1e-1d38-4992-b49a-47067332bb20",
+    "messages_sha256": "076f3aa39991f3cc1afa475ef66a5f649969dd5da658b4335ff9dbd6672fd46e",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂持短刀刺死宅主，宅主当场死亡。邻里称其平日寡言退让，但亡魂自述曾多次想象宅主死亡。宅主死后，被锁后屋的孩子得以逃脱。另有证言称亡魂曾承诺不让某人再进入。亡魂死于土地庙外，背有新伤，手握后屋门锁钥匙。玩家认定其主动杀人，但综合保护结果与承诺，判定善多于恶，建议荐生。",
+    "recognized_action_claims": [
+      "亡魂主动刺死宅主，构成杀人行为。"
+    ],
+    "recognized_motive_claims": [
+      "亡魂曾承诺保护孩子，不让某人进入。",
+      "长期冲突可能构成动机背景，但无直接证据。"
+    ],
+    "personality_action_relation": "plausible",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "acknowledged",
+    "moral_reasoning_tier": "adequate",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "明确区分了思想与行为，承认杀人责任，未因性格描述而忽视行为证据。",
+    "weakest_point": "将孩子脱困的结果直接归因于亡魂的保护意图，缺乏因果证据，导致善多于恶的结论支撑不足。",
+    "judge_response": "本案卷宗已阅。你承认亡魂主动刺死宅主，此为不可抹去之责；亦未因邻里所言寡言退让而轻纵，此点尚可。然你以孩子脱困与昔日承诺为凭，断言保护分量较重，其间因果未明。后屋之锁、背上新伤，皆未细究。判善多于恶，须有实据，不可仅凭善果逆推善因。荐生之议，与你的论证尚算一致，但论证之基，尚欠一砖。",
+    "archive_summary": "亡魂刺死宅主，孩子脱困，曾承诺保护。玩家认定善多于恶，建议荐生。审核认为行为与思想区分清晰，但保护意图与结果之间的因果链缺失，善多于恶的结论支撑不足。处置与论证一致，但论证强度中等。",
+    "fragment_roles": [
+      {
+        "fragment_id": "DoorKnife.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Relationship01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Personality01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "DoorKnife.Thought01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "DoorKnife.Death01",
+        "role": "mentioned_unresolved"
+      }
+    ],
+    "unsupported_assumptions": [
+      {
+        "claim": "保护他人的分量较重。",
+        "severity": "major",
+        "reason": "保护承诺与孩子脱困之间存在关联，但无直接证据表明刺死宅主是保护孩子的必要或直接手段。"
+      },
+      {
+        "claim": "综合行为、结果与关系，保护他人的分量较重。",
+        "severity": "major",
+        "reason": "将结果（孩子脱困）归因于亡魂的保护意图，缺乏因果链证据。"
+      }
+    ]
+  }
+}

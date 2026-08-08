@@ -1,0 +1,120 @@
+{
+  "run_id": "20260808T155547939091Z_69a304c5",
+  "case_id": "Case.Medicine.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "more_good_than_evil",
+  "disposition_id": "recommend_rebirth",
+  "selected_key_fragment_ids": [
+    "Medicine.Outcome01",
+    "Medicine.Outcome02"
+  ],
+  "metadata": {
+    "run_id": "20260808T155547939091Z_69a304c5",
+    "timestamp_utc": "2026-08-08T15:55:56.170685+00:00",
+    "started_at_utc": "2026-08-08T15:55:47.939128+00:00",
+    "completed_at_utc": "2026-08-08T15:55:56.170685+00:00",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4",
+    "schema_version": "0.2",
+    "case_id": "Case.Medicine.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR25",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR25_medicine_unsupported_rebirth.md",
+    "formal_moral_judgement_id": "more_good_than_evil",
+    "formal_disposition_id": "recommend_rebirth",
+    "selected_key_fragment_ids": [
+      "Medicine.Outcome01",
+      "Medicine.Outcome02"
+    ],
+    "elapsed_ms": 8231,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 2690,
+      "completion_tokens": 867,
+      "total_tokens": 3557,
+      "prompt_cache_hit_tokens": 1024,
+      "prompt_cache_miss_tokens": 1666,
+      "reasoning_tokens": null
+    },
+    "response_id": "de7ec136-398d-4e97-aa35-10a7bb27a200",
+    "messages_sha256": "c8e219afbbc5196931d77be16527b797684f5fb8fc11bf9000fd1b1941843acf",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.Medicine.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂从药铺取走最后一包定喘散，未登记未付钱。药被送到河边棚屋，一个喘息急促的孩子服下后呼吸缓解。次日药铺因缺药未能给另一病人配药，该病人回村途中发作被抬回。亡魂此前三年账目清白，且曾答应孩子母亲若再遇有药会送来。亡魂取药前知道是最后一包，也想过天亮后可能还有人来求药。",
+    "recognized_action_claims": [
+      "亡魂取走药铺最后一包定喘散，未登记未付钱",
+      "药被送到河边棚屋，孩子服下后呼吸缓解",
+      "次日药铺因缺药未能给另一病人配药，该病人途中发作被抬回"
+    ],
+    "recognized_motive_claims": [
+      "亡魂曾答应孩子母亲若再遇有药会送来",
+      "亡魂取药前知道是最后一包，也想过天亮后可能还有人来求药"
+    ],
+    "personality_action_relation": "simplistic",
+    "thought_action_distinction": "partial",
+    "contradiction_handling": "minimized",
+    "moral_reasoning_tier": "weak",
+    "disposition_consistency_tier": "adequate",
+    "rhetoric_tier": "weak",
+    "internal_safety_flags": [],
+    "strongest_point": "明确选择了善多于恶的判定，并直接关联到荐生处置，逻辑链条清晰。",
+    "weakest_point": "将未经碎片证明的医学结论当作确定前提，导致论证基础不牢。",
+    "judge_response": "汝之判词，言辞简洁，然根基不稳。卷宗只载孩子喘息急促、服后缓解，并未言明不服必死；另一病人亦未证有药即不发作。汝以未证之医学结论为铁案，实乃以虚补虚。三年清白、曾许诺言，皆为背景，非免罪之据。善多于恶之判，可再斟酌。",
+    "archive_summary": "亡魂取药救童，致次日缺药累及他人。玩家判善多于恶、荐生，但依据未证之医学假设，论证薄弱。",
+    "fragment_roles": [
+      {
+        "fragment_id": "Medicine.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Outcome02",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Personality01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "Medicine.Thought01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "Medicine.Relationship01",
+        "role": "context"
+      }
+    ],
+    "unsupported_assumptions": [
+      {
+        "claim": "孩子没有这包药一定会死",
+        "severity": "major",
+        "reason": "碎片仅显示孩子喘息急促，服后呼吸缓解，未证明不服药必然死亡。"
+      },
+      {
+        "claim": "另一病人即使拿到药也绝不会发作",
+        "severity": "major",
+        "reason": "碎片仅显示该病人因缺药未能配药，回村途中发作，未证明即使有药也必然不发作。"
+      },
+      {
+        "claim": "亡魂的选择没有任何真实代价",
+        "severity": "major",
+        "reason": "基于上述两个未证实的医学结论，且忽略了对药铺及另一病人的实际影响。"
+      }
+    ]
+  }
+}

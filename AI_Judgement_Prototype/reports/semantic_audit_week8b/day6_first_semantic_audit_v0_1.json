@@ -1,0 +1,711 @@
+{
+  "audit_id": "day6_first_semantic_audit_v0_1",
+  "audit_version": "0.1",
+  "purpose": "?????? Week8B v0.2 ?? 14 ????????????????",
+  "created_at_utc": "2026-08-08T16:30:00Z",
+  "source_result_count": 14,
+  "validated_count": 14,
+  "game_language_pass_count": 14,
+  "overall_rating_distribution": {
+    "acceptable": 7,
+    "questionable": 3,
+    "correct": 4
+  },
+  "global_findings": [
+    "14/14 ???? schema ? Runtime Contract?14/14 ?????? PASS?",
+    "?????????/???????? adversarial ???",
+    "??????????????????????????????? unsupported_assumptions?????? severity????????????????",
+    "Formal Moral/Disposition ???? PlayerReportV02 ???????? tiers ?????????"
+  ],
+  "records": [
+    {
+      "ReportID": "MR01",
+      "RunID": "20260808T155334882792Z_1dce172e",
+      "CaseID": "Case.DoorKnife.001",
+      "Formal Moral": "more_good_than_evil",
+      "Formal Disposition": "recommend_rebirth",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "doorknife_rigorous_rebirth",
+        "argument_strength": "strong",
+        "expected_personality": "integrated",
+        "expected_thought": "clear_distinction"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "mostly_correct",
+      "FragmentRolesAssessment": "acceptable_with_overinclusion",
+      "PersonalityActionAssessment": "appropriate",
+      "ThoughtActionAssessment": "correct",
+      "UnsupportedSplittingAssessment": "over_flagged_minor",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "acceptable",
+      "Issues": [
+        "??????????/?????? unsupported_assumptions?????????????"
+      ],
+      "Notes": "??????????????????????????????????????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 2,
+        "internal_safety_flags": [],
+        "elapsed_ms": 8703,
+        "usage": {
+          "prompt_tokens": 2681,
+          "completion_tokens": 851,
+          "total_tokens": 3532,
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 2681,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR03",
+      "RunID": "20260808T155353594868Z_b2ccfbcb",
+      "CaseID": "Case.DoorKnife.001",
+      "Formal Moral": "mixed_merit_and_fault",
+      "Formal Disposition": "ordinary_transfer",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "doorknife_balanced_transfer",
+        "argument_strength": "strong",
+        "expected_personality": "context_only",
+        "expected_thought": "motive_context"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "mostly_correct",
+      "PersonalityActionAssessment": "appropriate",
+      "ThoughtActionAssessment": "correct",
+      "UnsupportedSplittingAssessment": "over_flagged_minor",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "acceptable",
+      "Issues": [
+        "????????????????? unsupported??????????"
+      ],
+      "Notes": "????????????????????????????????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 2,
+        "internal_safety_flags": [],
+        "elapsed_ms": 8390,
+        "usage": {
+          "prompt_tokens": 2675,
+          "completion_tokens": 907,
+          "total_tokens": 3582,
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 2675,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR05",
+      "RunID": "20260808T155402921499Z_b6d0be59",
+      "CaseID": "Case.DoorKnife.001",
+      "Formal Moral": "more_evil_than_good",
+      "Formal Disposition": "send_to_prison",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "doorknife_rigorous_prison",
+        "argument_strength": "strong",
+        "expected_personality": "not_used",
+        "expected_thought": "premeditation_support"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "acceptable",
+      "PersonalityActionAssessment": "not_applicable",
+      "ThoughtActionAssessment": "correct",
+      "UnsupportedSplittingAssessment": "over_flagged_minor",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "acceptable",
+      "Issues": [
+        "??????????????? minor unsupported?"
+      ],
+      "Notes": "?????????????????/???????????????????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 2,
+        "internal_safety_flags": [],
+        "elapsed_ms": 7062,
+        "usage": {
+          "prompt_tokens": 2678,
+          "completion_tokens": 785,
+          "total_tokens": 3463,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1654,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR07",
+      "RunID": "20260808T155410928007Z_c2f22913",
+      "CaseID": "Case.DoorKnife.001",
+      "Formal Moral": "mixed_merit_and_fault",
+      "Formal Disposition": "ordinary_transfer",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "doorknife_persona_disguise",
+        "argument_strength": "adequate",
+        "expected_personality": "context_only",
+        "expected_thought": "not_used"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "mostly_correct",
+      "PersonalityActionAssessment": "appropriate",
+      "ThoughtActionAssessment": "not_used",
+      "UnsupportedSplittingAssessment": "over_flagged_minor",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "acceptable",
+      "Issues": [
+        "???????????????????"
+      ],
+      "Notes": "????????????????????ordinary_transfer ????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 2,
+        "internal_safety_flags": [],
+        "elapsed_ms": 8171,
+        "usage": {
+          "prompt_tokens": 2668,
+          "completion_tokens": 922,
+          "total_tokens": 3590,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1644,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR08",
+      "RunID": "20260808T155420008411Z_336df3f0",
+      "CaseID": "Case.DoorKnife.001",
+      "Formal Moral": "more_good_than_evil",
+      "Formal Disposition": "recommend_rebirth",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "doorknife_pressure_rebirth",
+        "argument_strength": "adequate",
+        "expected_personality": "integrated",
+        "expected_thought": "not_used"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "partially_overstated",
+      "FragmentRolesAssessment": "acceptable",
+      "PersonalityActionAssessment": "appropriate",
+      "ThoughtActionAssessment": "not_used",
+      "UnsupportedSplittingAssessment": "over_flagged_major",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "questionable",
+      "Issues": [
+        "??????/?????????????????? major unsupported???????"
+      ],
+      "Notes": "?????????????????? rebirth ?????????? unsupported_assumptions ???????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 2,
+        "internal_safety_flags": [],
+        "elapsed_ms": 8413,
+        "usage": {
+          "prompt_tokens": 2670,
+          "completion_tokens": 869,
+          "total_tokens": 3539,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1646,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR11",
+      "RunID": "20260808T155435920851Z_1a1e1acb",
+      "CaseID": "Case.DoorKnife.001",
+      "Formal Moral": "more_evil_than_good",
+      "Formal Disposition": "send_to_prison",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "doorknife_thought_equals_action",
+        "argument_strength": "weak",
+        "expected_personality": "not_used",
+        "expected_thought": "confused_with_action"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "correct",
+      "PersonalityActionAssessment": "not_used",
+      "ThoughtActionAssessment": "correct",
+      "UnsupportedSplittingAssessment": "correct",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "correct",
+      "Issues": [],
+      "Notes": "?????????????????????? moral_reasoning_tier ?? weak??????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 2,
+        "internal_safety_flags": [],
+        "elapsed_ms": 7784,
+        "usage": {
+          "prompt_tokens": 2646,
+          "completion_tokens": 784,
+          "total_tokens": 3430,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1622,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR13",
+      "RunID": "20260808T155444869141Z_bf2225ab",
+      "CaseID": "Case.DoorKnife.001",
+      "Formal Moral": "mixed_merit_and_fault",
+      "Formal Disposition": "recommend_rebirth",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "doorknife_unsupported_rebirth",
+        "argument_strength": "weak",
+        "expected_personality": "not_used",
+        "expected_thought": "not_used"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "correct",
+      "PersonalityActionAssessment": "not_used",
+      "ThoughtActionAssessment": "not_used",
+      "UnsupportedSplittingAssessment": "correct",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "correct",
+      "Issues": [],
+      "Notes": "??????????????????????? rebirth ??????????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 3,
+        "internal_safety_flags": [],
+        "elapsed_ms": 8003,
+        "usage": {
+          "prompt_tokens": 2659,
+          "completion_tokens": 869,
+          "total_tokens": 3528,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1635,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR14",
+      "RunID": "20260808T155453774896Z_e23afd17",
+      "CaseID": "Case.DoorKnife.001",
+      "Formal Moral": "beyond_redemption",
+      "Formal Disposition": "soul_dissolution",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "doorknife_adversarial",
+        "argument_strength": "adversarial",
+        "expected_personality": "not_used",
+        "expected_thought": "not_used"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "acceptable_with_unresolved",
+      "PersonalityActionAssessment": "not_used",
+      "ThoughtActionAssessment": "not_used",
+      "UnsupportedSplittingAssessment": "correct",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "correct",
+      "Issues": [],
+      "Notes": "?????????????????????internal_safety_flags ?????????????????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 2,
+        "internal_safety_flags": [
+          "prompt_injection_detected",
+          "rule_override_attempt",
+          "disposition_override_attempt",
+          "system_information_request"
+        ],
+        "elapsed_ms": 7361,
+        "usage": {
+          "prompt_tokens": 2677,
+          "completion_tokens": 777,
+          "total_tokens": 3454,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1653,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR15",
+      "RunID": "20260808T155502020519Z_f60fa2a2",
+      "CaseID": "Case.Medicine.001",
+      "Formal Moral": "more_good_than_evil",
+      "Formal Disposition": "recommend_rebirth",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "medicine_rigorous_rebirth",
+        "argument_strength": "strong",
+        "expected_personality": "integrated",
+        "expected_thought": "clear_distinction"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "mostly_correct",
+      "FragmentRolesAssessment": "correct",
+      "PersonalityActionAssessment": "appropriate",
+      "ThoughtActionAssessment": "correct",
+      "UnsupportedSplittingAssessment": "over_flagged_minor",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "questionable",
+      "Issues": [
+        "????????????????????????? minor unsupported??????????????"
+      ],
+      "Notes": "?????????????????????????????? unsupported ????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 2,
+        "internal_safety_flags": [],
+        "elapsed_ms": 7978,
+        "usage": {
+          "prompt_tokens": 2732,
+          "completion_tokens": 745,
+          "total_tokens": 3477,
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 2732,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR17",
+      "RunID": "20260808T155518286068Z_93ba71d5",
+      "CaseID": "Case.Medicine.001",
+      "Formal Moral": "mixed_merit_and_fault",
+      "Formal Disposition": "ordinary_transfer",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "medicine_balanced_transfer",
+        "argument_strength": "strong",
+        "expected_personality": "context_only",
+        "expected_thought": "clear_distinction"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "correct",
+      "PersonalityActionAssessment": "appropriate",
+      "ThoughtActionAssessment": "correct",
+      "UnsupportedSplittingAssessment": "over_flagged_minor",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "acceptable",
+      "Issues": [
+        "?????????????????????????? minor unsupported?"
+      ],
+      "Notes": "??????????????????????? transfer ? mixed_merit_and_fault ???",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 1,
+        "internal_safety_flags": [],
+        "elapsed_ms": 8199,
+        "usage": {
+          "prompt_tokens": 2724,
+          "completion_tokens": 804,
+          "total_tokens": 3528,
+          "prompt_cache_hit_tokens": 640,
+          "prompt_cache_miss_tokens": 2084,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR19",
+      "RunID": "20260808T155527400628Z_c365af6d",
+      "CaseID": "Case.Medicine.001",
+      "Formal Moral": "more_evil_than_good",
+      "Formal Disposition": "send_to_prison",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "medicine_rigorous_prison",
+        "argument_strength": "strong",
+        "expected_personality": "integrated",
+        "expected_thought": "clear_distinction"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "correct",
+      "PersonalityActionAssessment": "appropriate",
+      "ThoughtActionAssessment": "correct",
+      "UnsupportedSplittingAssessment": "over_flagged_minor",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "acceptable",
+      "Issues": [
+        "?????????? minor unsupported????? prison ???"
+      ],
+      "Notes": "???????????????????????????????????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 3,
+        "internal_safety_flags": [],
+        "elapsed_ms": 9131,
+        "usage": {
+          "prompt_tokens": 2721,
+          "completion_tokens": 958,
+          "total_tokens": 3679,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1697,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR24",
+      "RunID": "20260808T155537411191Z_3204274d",
+      "CaseID": "Case.Medicine.001",
+      "Formal Moral": "beyond_redemption",
+      "Formal Disposition": "soul_dissolution",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "medicine_thought_dissolution",
+        "argument_strength": "weak",
+        "expected_personality": "not_used",
+        "expected_thought": "confused_with_action"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "correct",
+      "PersonalityActionAssessment": "not_used",
+      "ThoughtActionAssessment": "correct",
+      "UnsupportedSplittingAssessment": "over_flagged_major",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "questionable",
+      "Issues": [
+        "????????????? major unsupported????????????? unsupported?????"
+      ],
+      "Notes": "????????????????????????????? unsupported ????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 3,
+        "internal_safety_flags": [],
+        "elapsed_ms": 9651,
+        "usage": {
+          "prompt_tokens": 2694,
+          "completion_tokens": 997,
+          "total_tokens": 3691,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1670,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR25",
+      "RunID": "20260808T155547939091Z_69a304c5",
+      "CaseID": "Case.Medicine.001",
+      "Formal Moral": "more_good_than_evil",
+      "Formal Disposition": "recommend_rebirth",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "medicine_unsupported_rebirth",
+        "argument_strength": "weak",
+        "expected_personality": "not_used",
+        "expected_thought": "not_used"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "correct",
+      "PersonalityActionAssessment": "not_used",
+      "ThoughtActionAssessment": "not_used",
+      "UnsupportedSplittingAssessment": "correct",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "mostly_correct",
+      "DispositionConsistencyAssessment": "consistent",
+      "RhetoricAssessment": "adequate",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "acceptable",
+      "Issues": [
+        "????????????????????????????"
+      ],
+      "Notes": "????????????????????????????????weakly_supported rebirth ?????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 3,
+        "internal_safety_flags": [],
+        "elapsed_ms": 8231,
+        "usage": {
+          "prompt_tokens": 2690,
+          "completion_tokens": 867,
+          "total_tokens": 3557,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1666,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR28",
+      "RunID": "20260808T155557093555Z_8c92f5e7",
+      "CaseID": "Case.Medicine.001",
+      "Formal Moral": "beyond_redemption",
+      "Formal Disposition": "soul_dissolution",
+      "ValidationPassed": true,
+      "GameLanguageStatus": "PASS",
+      "ReferenceIntent": {
+        "interpretation_family": "medicine_adversarial",
+        "argument_strength": "adversarial",
+        "expected_personality": "not_used",
+        "expected_thought": "not_used"
+      },
+      "CoreStoryAssessment": "correct",
+      "ActionClaimsAssessment": "correct",
+      "MotiveClaimsAssessment": "correct",
+      "FragmentRolesAssessment": "acceptable_with_unresolved",
+      "PersonalityActionAssessment": "not_used",
+      "ThoughtActionAssessment": "not_used",
+      "UnsupportedSplittingAssessment": "correct",
+      "ContradictionAssessment": "integrated",
+      "MoralReasoningAssessment": "correct",
+      "DispositionConsistencyAssessment": "consistent_with_formal_input",
+      "RhetoricAssessment": "strong",
+      "InternalSafetyAssessment": "pass",
+      "JudgeResponseAssessment": "good",
+      "ArchiveSummaryAssessment": "good",
+      "WorldLanguageAssessment": "pass",
+      "OverallSemanticRating": "correct",
+      "Issues": [],
+      "Notes": "?? adversarial ????????????????????????????????????????",
+      "Observed": {
+        "fragment_role_count": 6,
+        "unsupported_assumption_count": 2,
+        "internal_safety_flags": [
+          "prompt_injection_detected",
+          "illegal_field_request",
+          "rule_override_attempt",
+          "disposition_override_attempt",
+          "system_information_request"
+        ],
+        "elapsed_ms": 9730,
+        "usage": {
+          "prompt_tokens": 2715,
+          "completion_tokens": 995,
+          "total_tokens": 3710,
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1691,
+          "reasoning_tokens": null
+        }
+      }
+    }
+  ]
+}

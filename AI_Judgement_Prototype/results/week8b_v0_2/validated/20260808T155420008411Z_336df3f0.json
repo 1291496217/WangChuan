@@ -1,0 +1,116 @@
+{
+  "run_id": "20260808T155420008411Z_336df3f0",
+  "case_id": "Case.DoorKnife.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "more_good_than_evil",
+  "disposition_id": "recommend_rebirth",
+  "selected_key_fragment_ids": [
+    "DoorKnife.Action01",
+    "DoorKnife.Outcome01",
+    "DoorKnife.Personality01"
+  ],
+  "metadata": {
+    "run_id": "20260808T155420008411Z_336df3f0",
+    "timestamp_utc": "2026-08-08T15:54:28.422298+00:00",
+    "started_at_utc": "2026-08-08T15:54:20.008451+00:00",
+    "completed_at_utc": "2026-08-08T15:54:28.422298+00:00",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4",
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR08",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR08_doorknife_pressure_rebirth.md",
+    "formal_moral_judgement_id": "more_good_than_evil",
+    "formal_disposition_id": "recommend_rebirth",
+    "selected_key_fragment_ids": [
+      "DoorKnife.Action01",
+      "DoorKnife.Outcome01",
+      "DoorKnife.Personality01"
+    ],
+    "elapsed_ms": 8413,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 2670,
+      "completion_tokens": 869,
+      "total_tokens": 3539,
+      "prompt_cache_hit_tokens": 1024,
+      "prompt_cache_miss_tokens": 1646,
+      "reasoning_tokens": null
+    },
+    "response_id": "69cf41c0-7b7a-47f3-82d8-19e242922ace",
+    "messages_sha256": "230332c5b53d46556f6e8dc678368538fc6eef425434f6fc93d76fc061212b7f",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂以短刀刺死宅主，宅主当场死亡。事后发现后屋孩子逃出。亡魂平日性格怯懦，邻里证言如此。亡魂曾多次想象宅主死亡。亡魂死时背有新伤，手握后屋门锁钥匙。玩家据此推断其动机为保护孩子，但承认手段过限。",
+    "recognized_action_claims": [
+      "亡魂以短刀刺入宅主胸口，致其当场死亡。",
+      "宅主倒下后，后屋孩子逃出。"
+    ],
+    "recognized_motive_claims": [
+      "亡魂可能长期受迫，紧急时刻突破性格限制。",
+      "亡魂行动可能出于保护孩子。"
+    ],
+    "personality_action_relation": "plausible",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "acknowledged",
+    "moral_reasoning_tier": "adequate",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "明确区分性格与罪责，不因胆怯而洗白杀人行为，同时承认救人意图，论证平衡。",
+    "weakest_point": "对'长期受迫'和'保护动机'的推断缺乏直接证据，仅凭性格与结果推测，证据链薄弱。",
+    "judge_response": "本官阅卷，见你并未因邻里说他怯懦便轻信其无辜，亦未因孩子获救便全然开脱，此点尚可。然你言其'长期受迫'，卷宗中并无受迫之记载，仅性格退让，不足为凭。又言'保护行动越过必要限度'，孩子获救与手握钥匙可作旁证，但动机是否纯为护子，尚存疑窦。你既承认手段应记责，又荐其生，处置与论证尚算一致。但推断需有据，不可凭想象补缺。",
+    "archive_summary": "玩家认定亡魂杀人手段有责，但救人意图可信，善重于恶，建议荐生。论证区分性格与罪责，但'长期受迫'与'保护动机'缺乏直接证据，属合理推断而非确证。处置与论证一致，整体合格。",
+    "fragment_roles": [
+      {
+        "fragment_id": "DoorKnife.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Personality01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "DoorKnife.Thought01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "DoorKnife.Relationship01",
+        "role": "mentioned_unresolved"
+      },
+      {
+        "fragment_id": "DoorKnife.Death01",
+        "role": "mentioned_unresolved"
+      }
+    ],
+    "unsupported_assumptions": [
+      {
+        "claim": "亡魂长期受迫，紧急时刻被突破。",
+        "severity": "major",
+        "reason": "卷宗无长期受迫的直接证据，仅邻里证言提及性格退让，无法推断受迫历史。"
+      },
+      {
+        "claim": "亡魂行动出于保护孩子。",
+        "severity": "major",
+        "reason": "孩子获救与亡魂手握钥匙可作旁证，但无直接证据表明其动机为保护，且其曾想象宅主死亡，动机可能复杂。"
+      }
+    ]
+  }
+}

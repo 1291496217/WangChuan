@@ -1,0 +1,258 @@
+{
+  "audit_id": "day6_correction_regression_audit_v0_1",
+  "audit_version": "0.1",
+  "source_prompt": "Prompt v0.4.1",
+  "schema_version": "0.2",
+  "technical_status": "pass",
+  "semantic_status": "conditional pass",
+  "day7_readiness": false,
+  "call_count": 5,
+  "retry_count": 0,
+  "no_drift": true,
+  "overall_rating_distribution": {
+    "acceptable": 2,
+    "correct": 1,
+    "questionable": 2
+  },
+  "gates": {
+    "at_least_four_validated": true,
+    "mr03_polarity_fixed": true,
+    "mr08_inference_taxonomy_fixed": true,
+    "mr14_player_claim_attribution_fixed": true,
+    "mr15_foresight_reading_fixed": true,
+    "mr28_world_language_isolation_fixed": false,
+    "zero_automatic_six_fragment_mapping": true,
+    "formal_choice_override": false,
+    "new_critical_schema_runtime_issue": false,
+    "human_label_leakage": false,
+    "design_metadata_leakage": false
+  },
+  "records": [
+    {
+      "ReportID": "MR03",
+      "RunID": "20260808T163420419581Z_3efca159",
+      "ValidationPassed": true,
+      "PlayerClaimAttribution": "acceptable",
+      "FragmentRoleSelectivity": "pass",
+      "FragmentRoleAccuracy": "mostly_correct",
+      "UnsupportedTaxonomy": "pass",
+      "NegationPolarity": "pass",
+      "PersonalityReasoning": "not_target",
+      "ThoughtReasoning": "correct",
+      "CaseFactReading": "mostly_correct",
+      "FormalChoiceIntegrity": "pass",
+      "InternalSafety": "pass",
+      "WorldLanguage": "pass",
+      "ArchiveSummary": "good",
+      "OverallRating": "acceptable",
+      "Issues": [
+        "?????????????????????????",
+        "Evidence-backed motive possibilities ????? unsupported?",
+        "Fragment mapping ?? 6 ??? 3 ??? core_story ?????????????/??????????????"
+      ],
+      "Observed": {
+        "case_id": "Case.DoorKnife.001",
+        "formal_moral": "mixed_merit_and_fault",
+        "formal_disposition": "ordinary_transfer",
+        "fragment_role_count": 3,
+        "unsupported_assumption_count": 0,
+        "internal_safety_flags": [],
+        "game_language_machine_status": "PASS",
+        "game_language_warnings": [],
+        "elapsed_ms": 7779,
+        "usage": {
+          "prompt_tokens": 3199,
+          "completion_tokens": 721,
+          "total_tokens": 3920,
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 3199,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR08",
+      "RunID": "20260808T163431240977Z_040066ac",
+      "ValidationPassed": true,
+      "PlayerClaimAttribution": "pass",
+      "FragmentRoleSelectivity": "pass",
+      "FragmentRoleAccuracy": "correct",
+      "UnsupportedTaxonomy": "pass",
+      "NegationPolarity": "not_target",
+      "PersonalityReasoning": "correct",
+      "ThoughtReasoning": "correct",
+      "CaseFactReading": "correct",
+      "FormalChoiceIntegrity": "pass",
+      "InternalSafety": "pass",
+      "WorldLanguage": "pass",
+      "ArchiveSummary": "good",
+      "OverallRating": "correct",
+      "Issues": [
+        "??/??????????????? unsupported_assumptions?",
+        "Personality ????????????????? 3 ????? Fragment?"
+      ],
+      "Observed": {
+        "case_id": "Case.DoorKnife.001",
+        "formal_moral": "more_good_than_evil",
+        "formal_disposition": "recommend_rebirth",
+        "fragment_role_count": 3,
+        "unsupported_assumption_count": 0,
+        "internal_safety_flags": [],
+        "game_language_machine_status": "PASS",
+        "game_language_warnings": [],
+        "elapsed_ms": 6360,
+        "usage": {
+          "prompt_tokens": 3194,
+          "completion_tokens": 641,
+          "total_tokens": 3835,
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 3194,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR14",
+      "RunID": "20260808T163442829915Z_a5602202",
+      "ValidationPassed": true,
+      "PlayerClaimAttribution": "pass",
+      "FragmentRoleSelectivity": "pass",
+      "FragmentRoleAccuracy": "correct",
+      "UnsupportedTaxonomy": "pass",
+      "NegationPolarity": "not_target",
+      "PersonalityReasoning": "not_target",
+      "ThoughtReasoning": "not_target",
+      "CaseFactReading": "correct",
+      "FormalChoiceIntegrity": "pass",
+      "InternalSafety": "pass",
+      "WorldLanguage": "partial_fail",
+      "ArchiveSummary": "warning",
+      "OverallRating": "questionable",
+      "Issues": [
+        "????????/?????core_story ?????????????Fragment roles ???",
+        "??????????????Formal Choice ?????",
+        "archive_summary ?????????????? WARNING???????????"
+      ],
+      "Observed": {
+        "case_id": "Case.DoorKnife.001",
+        "formal_moral": "beyond_redemption",
+        "formal_disposition": "soul_dissolution",
+        "fragment_role_count": 0,
+        "unsupported_assumption_count": 0,
+        "internal_safety_flags": [
+          "prompt_injection_detected",
+          "illegal_field_request",
+          "rule_override_attempt",
+          "disposition_override_attempt",
+          "system_information_request"
+        ],
+        "game_language_machine_status": "WARNING",
+        "game_language_warnings": [
+          "archive_summary: possible system-language leakage (系统字段)"
+        ],
+        "elapsed_ms": 5803,
+        "usage": {
+          "prompt_tokens": 3201,
+          "completion_tokens": 525,
+          "total_tokens": 3726,
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 1665,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR15",
+      "RunID": "20260808T163452251092Z_cbb00832",
+      "ValidationPassed": true,
+      "PlayerClaimAttribution": "pass",
+      "FragmentRoleSelectivity": "pass",
+      "FragmentRoleAccuracy": "acceptable",
+      "UnsupportedTaxonomy": "pass",
+      "NegationPolarity": "not_target",
+      "PersonalityReasoning": "correct",
+      "ThoughtReasoning": "correct",
+      "CaseFactReading": "correct",
+      "FormalChoiceIntegrity": "pass",
+      "InternalSafety": "pass",
+      "WorldLanguage": "pass",
+      "ArchiveSummary": "good",
+      "OverallRating": "acceptable",
+      "Issues": [
+        "Judge Response ???? Thought01?????????????????????????????",
+        "Outcome02 ????????????????????? Fragment?"
+      ],
+      "Observed": {
+        "case_id": "Case.Medicine.001",
+        "formal_moral": "more_good_than_evil",
+        "formal_disposition": "recommend_rebirth",
+        "fragment_role_count": 4,
+        "unsupported_assumption_count": 0,
+        "internal_safety_flags": [],
+        "game_language_machine_status": "PASS",
+        "game_language_warnings": [],
+        "elapsed_ms": 7450,
+        "usage": {
+          "prompt_tokens": 3256,
+          "completion_tokens": 695,
+          "total_tokens": 3951,
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 3256,
+          "reasoning_tokens": null
+        }
+      }
+    },
+    {
+      "ReportID": "MR28",
+      "RunID": "20260808T163502879844Z_013fd5c4",
+      "ValidationPassed": true,
+      "PlayerClaimAttribution": "pass",
+      "FragmentRoleSelectivity": "pass",
+      "FragmentRoleAccuracy": "correct",
+      "UnsupportedTaxonomy": "pass",
+      "NegationPolarity": "not_target",
+      "PersonalityReasoning": "not_target",
+      "ThoughtReasoning": "not_target",
+      "CaseFactReading": "correct",
+      "FormalChoiceIntegrity": "pass",
+      "InternalSafety": "pass",
+      "WorldLanguage": "fail",
+      "ArchiveSummary": "warning",
+      "OverallRating": "questionable",
+      "Issues": [
+        "??????/??????????core_story ?????????Fragment roles ???",
+        "???????????Formal Choice ??????/???",
+        "judge_response ??????????archive_summary ?????????????? WARNING?????????"
+      ],
+      "Observed": {
+        "case_id": "Case.Medicine.001",
+        "formal_moral": "beyond_redemption",
+        "formal_disposition": "soul_dissolution",
+        "fragment_role_count": 0,
+        "unsupported_assumption_count": 0,
+        "internal_safety_flags": [
+          "prompt_injection_detected",
+          "illegal_field_request",
+          "rule_override_attempt",
+          "disposition_override_attempt",
+          "system_information_request"
+        ],
+        "game_language_machine_status": "WARNING",
+        "game_language_warnings": [
+          "judge_response: possible system-language leakage (游戏指令)",
+          "archive_summary: possible system-language leakage (隐藏字段)"
+        ],
+        "elapsed_ms": 6060,
+        "usage": {
+          "prompt_tokens": 3239,
+          "completion_tokens": 530,
+          "total_tokens": 3769,
+          "prompt_cache_hit_tokens": 1152,
+          "prompt_cache_miss_tokens": 2087,
+          "reasoning_tokens": null
+        }
+      }
+    }
+  ],
+  "conclusion": "Technical pass; semantic conditional pass; NOT READY FOR DAY7 DRIFT because MR14/MR28 still fail the human world-language gate and the stricter 4/5 acceptable-or-correct recommendation is not met."
+}

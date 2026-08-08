@@ -1,0 +1,18 @@
+WEEK8 DAY6 PROMPT v0.4.4 REAL CALL GATE
+
+Residual Root Cause: SelectedKeyFragmentIDs anchoring confirmed by v0.4.3 MR15
+Selected-Key De-Anchoring: PASS
+Clause-to-Fragment Coverage Tests: PASS
+Targeted v0.4.4 Tests: PASS (14/14)
+All Unit Tests: PASS (Ran 288 tests)
+Case Validation: PASS
+Old Corpus: PASS
+Week8B Corpus: PASS
+Schema v0.2: PASS / UNCHANGED
+Runtime Contract v0.2: PASS / UNCHANGED
+Frozen Baseline: PASS (7/7)
+Visible Language Publication Gate: PASS
+API Secret Literal Scan: PASS
+.env: IGNORED
+
+PROMPT v0.4.4 REAL CALL GATE: OPEN

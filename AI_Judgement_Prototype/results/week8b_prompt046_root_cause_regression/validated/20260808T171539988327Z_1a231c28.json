@@ -1,0 +1,107 @@
+{
+  "run_id": "20260808T171539988327Z_1a231c28",
+  "case_id": "Case.Medicine.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "more_good_than_evil",
+  "disposition_id": "recommend_rebirth",
+  "selected_key_fragment_ids": [
+    "Medicine.Action01",
+    "Medicine.Outcome01",
+    "Medicine.Personality01",
+    "Medicine.Relationship01"
+  ],
+  "metadata": {
+    "run_id": "20260808T171539988327Z_1a231c28",
+    "timestamp_utc": "2026-08-08T17:15:45.395718+00:00",
+    "started_at_utc": "2026-08-08T17:15:39.988363+00:00",
+    "completed_at_utc": "2026-08-08T17:15:45.395718+00:00",
+    "correction_stage": "Week8 Day6 Strict Visible-World Correction",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4.6",
+    "schema_version": "0.2",
+    "language_audit_version": "0.3",
+    "case_id": "Case.Medicine.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR15",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR15_medicine_rigorous_rebirth.md",
+    "formal_moral_judgement_id": "more_good_than_evil",
+    "formal_disposition_id": "recommend_rebirth",
+    "selected_key_fragment_ids": [
+      "Medicine.Action01",
+      "Medicine.Outcome01",
+      "Medicine.Personality01",
+      "Medicine.Relationship01"
+    ],
+    "elapsed_ms": 5407,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 4535,
+      "completion_tokens": 546,
+      "total_tokens": 5081,
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 4535,
+      "reasoning_tokens": null
+    },
+    "response_id": "823699f2-03b4-41c6-9851-8f425f20d4d8",
+    "messages_sha256": "3422b8def28a3be98e71bce7bb6f12b6814165820cfa8286770564ee38fed1bc",
+    "validation_status": "passed",
+    "publication_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.Medicine.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂未经登记取走药铺最后一包定喘散，孩子服药后好转，但另一病人因缺药发作。呈文人认为行为有过但救人动机较重，判善多于恶，建议荐生。",
+    "recognized_action_claims": [
+      "亡魂未经登记取走最后一包药",
+      "孩子服药后好转",
+      "三年诚信记录"
+    ],
+    "recognized_motive_claims": [
+      "救助非亲属的孩子",
+      "救人动机较重"
+    ],
+    "personality_action_relation": "plausible",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "integrated",
+    "moral_reasoning_tier": "strong",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "明确区分了行为过错与救人善果，并承认资源代价，论证平衡。",
+    "weakest_point": "未提及亡魂事先知道可能有人缺药，但呈文人未使用该思想，故不构成缺陷。",
+    "judge_response": "呈文所陈，取药越界之责与救人之善并见，善果虽实，资源代价亦不可掩。三年诚信为背景，非定罪之据。判善多于恶，荐生，并记擅取之责。",
+    "archive_summary": "呈文人主张行为有过但救人动机较重，善果不能抹去资源代价，判善多于恶，建议荐生。论证兼顾过错与善果，处置与论证一致。",
+    "fragment_roles": [
+      {
+        "fragment_id": "Medicine.Action01",
+        "role": "counterevidence"
+      },
+      {
+        "fragment_id": "Medicine.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Personality01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "Medicine.Relationship01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Outcome02",
+        "role": "counterevidence"
+      }
+    ],
+    "unsupported_assumptions": []
+  }
+}

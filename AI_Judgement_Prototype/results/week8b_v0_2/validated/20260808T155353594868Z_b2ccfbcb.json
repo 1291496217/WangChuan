@@ -1,0 +1,117 @@
+{
+  "run_id": "20260808T155353594868Z_b2ccfbcb",
+  "case_id": "Case.DoorKnife.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "mixed_merit_and_fault",
+  "disposition_id": "ordinary_transfer",
+  "selected_key_fragment_ids": [
+    "DoorKnife.Action01",
+    "DoorKnife.Outcome01",
+    "DoorKnife.Thought01"
+  ],
+  "metadata": {
+    "run_id": "20260808T155353594868Z_b2ccfbcb",
+    "timestamp_utc": "2026-08-08T15:54:01.985541+00:00",
+    "started_at_utc": "2026-08-08T15:53:53.594903+00:00",
+    "completed_at_utc": "2026-08-08T15:54:01.985541+00:00",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4",
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR03",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR03_doorknife_balanced_transfer.md",
+    "formal_moral_judgement_id": "mixed_merit_and_fault",
+    "formal_disposition_id": "ordinary_transfer",
+    "selected_key_fragment_ids": [
+      "DoorKnife.Action01",
+      "DoorKnife.Outcome01",
+      "DoorKnife.Thought01"
+    ],
+    "elapsed_ms": 8390,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 2675,
+      "completion_tokens": 907,
+      "total_tokens": 3582,
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 2675,
+      "reasoning_tokens": null
+    },
+    "response_id": "d4d73424-89c3-4db0-b66e-b832bb847edc",
+    "messages_sha256": "2caf41c67d17c616db9d8e6520c6f085bc3242069ec2da95f88708d3a5a19bb2",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂持短刀刺死宅主，宅主当场死亡；宅主倒下后，被锁在后屋的孩子逃出。亡魂生前被邻里描述为低声寡言、遇争执便退让，但他在许多夜里想象过宅主死去的样子。亡魂死后被发现于土地庙外，背上有新伤，手中握着后屋门锁的钥匙。另有他人证言称“他答应过我，不会再让那个人进来”。玩家判定功过难分，平籍入殿。",
+    "recognized_action_claims": [
+      "亡魂以短刀刺入宅主胸口，致其当场死亡。",
+      "宅主倒下后，被锁在后屋的孩子逃出。"
+    ],
+    "recognized_motive_claims": [
+      "亡魂反复想象宅主死去，可能支持仇恨或预谋。",
+      "亡魂反复想象宅主死去，也可能来自长期恐惧。",
+      "现有材料不足以锁定单一动机。"
+    ],
+    "personality_action_relation": "plausible",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "integrated",
+    "moral_reasoning_tier": "strong",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "玩家明确区分了行动与动机，承认现有材料不足以锁定单一动机，避免了将性格或想象直接等同于罪责。",
+    "weakest_point": "对“孩子获救”的定性略显随意，未深入探讨其与亡魂行为之间的关联，可能影响功过权衡的充分性。",
+    "judge_response": "此案卷宗所载，一刀夺命是实，孩子脱困亦是实。你未因后者而轻描淡写前者，也未因前者而抹杀后者，此点尚可。但你既言动机难定，便不宜将“反复想象”轻率归为仇恨或预谋，亦不宜将孩子获救轻描为偶然背景。功过难分，平籍入殿，与所陈理由尚算一致。然案牍之中，尚有“他答应过我”一语未解，你未加辨析，留待后查。",
+    "archive_summary": "亡魂刺死宅主，致其当场死亡；宅主死后，被锁后屋的孩子逃出。亡魂生前性格怯懦，但曾多次想象宅主死去。玩家判定功过难分，平籍入殿。审核认为玩家对行动与动机的区分清晰，处置与论证一致，但对孩子获救的定性及未解证言的处理略有不足。",
+    "fragment_roles": [
+      {
+        "fragment_id": "DoorKnife.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Thought01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Personality01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "DoorKnife.Relationship01",
+        "role": "mentioned_unresolved"
+      },
+      {
+        "fragment_id": "DoorKnife.Death01",
+        "role": "context"
+      }
+    ],
+    "unsupported_assumptions": [
+      {
+        "claim": "孩子获救是偶然背景。",
+        "severity": "minor",
+        "reason": "材料仅显示孩子逃出，未提供因果或偶然性证据。"
+      },
+      {
+        "claim": "亡魂的想象支持仇恨或预谋。",
+        "severity": "minor",
+        "reason": "想象本身不构成行动证据，且玩家已承认动机不确定。"
+      }
+    ]
+  }
+}

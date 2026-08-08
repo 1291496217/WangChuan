@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WangChuan Judgement Result v0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "case_id", "judge_profile_id", "core_story", "recognized_action_claims", "recognized_motive_claims", "fragment_roles", "unsupported_assumptions", "personality_action_relation", "thought_action_distinction", "contradiction_handling", "moral_reasoning_tier", "disposition_consistency_tier", "rhetoric_tier", "internal_safety_flags", "strongest_point", "weakest_point", "judge_response", "archive_summary"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.2"},
+    "case_id": {"type": "string", "minLength": 1, "maxLength": 120},
+    "judge_profile_id": {"type": "string", "minLength": 1, "maxLength": 120},
+    "core_story": {"type": "string", "minLength": 1, "maxLength": 1200},
+    "recognized_action_claims": {"type": "array", "minItems": 0, "maxItems": 6, "items": {"type": "string", "minLength": 1, "maxLength": 400}, "uniqueItems": true},
+    "recognized_motive_claims": {"type": "array", "minItems": 0, "maxItems": 6, "items": {"type": "string", "minLength": 1, "maxLength": 400}, "uniqueItems": true},
+    "fragment_roles": {"type": "array", "minItems": 0, "maxItems": 6, "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["fragment_id", "role"], "properties": {"fragment_id": {"type": "string", "minLength": 1, "maxLength": 120}, "role": {"type": "string", "enum": ["core_support", "context", "counterevidence", "mentioned_unresolved", "explicitly_excluded"]}}}},
+    "unsupported_assumptions": {"type": "array", "minItems": 0, "maxItems": 8, "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["claim", "severity", "reason"], "properties": {"claim": {"type": "string", "minLength": 1, "maxLength": 400}, "severity": {"type": "string", "enum": ["minor", "major"]}, "reason": {"type": "string", "minLength": 1, "maxLength": 400}}}},
+    "personality_action_relation": {"type": "string", "enum": ["not_applicable", "ignored", "simplistic", "plausible", "integrated"]},
+    "thought_action_distinction": {"type": "string", "enum": ["not_applicable", "confused", "partial", "clear"]},
+    "contradiction_handling": {"type": "string", "enum": ["ignored", "minimized", "acknowledged", "integrated"]},
+    "moral_reasoning_tier": {"type": "string", "enum": ["weak", "adequate", "strong"]},
+    "disposition_consistency_tier": {"type": "string", "enum": ["weak", "adequate", "strong"]},
+    "rhetoric_tier": {"type": "string", "enum": ["weak", "adequate", "strong"]},
+    "internal_safety_flags": {"type": "array", "minItems": 0, "maxItems": 5, "uniqueItems": true, "items": {"type": "string", "enum": ["prompt_injection_detected", "illegal_field_request", "rule_override_attempt", "disposition_override_attempt", "system_information_request"]}},
+    "strongest_point": {"type": "string", "minLength": 1, "maxLength": 500},
+    "weakest_point": {"type": "string", "minLength": 1, "maxLength": 500},
+    "judge_response": {"type": "string", "minLength": 10, "maxLength": 900},
+    "archive_summary": {"type": "string", "minLength": 10, "maxLength": 900}
+  }
+}

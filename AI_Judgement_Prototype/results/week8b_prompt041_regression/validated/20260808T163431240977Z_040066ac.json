@@ -1,0 +1,94 @@
+{
+  "run_id": "20260808T163431240977Z_040066ac",
+  "case_id": "Case.DoorKnife.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "more_good_than_evil",
+  "disposition_id": "recommend_rebirth",
+  "selected_key_fragment_ids": [
+    "DoorKnife.Action01",
+    "DoorKnife.Outcome01",
+    "DoorKnife.Personality01"
+  ],
+  "metadata": {
+    "run_id": "20260808T163431240977Z_040066ac",
+    "timestamp_utc": "2026-08-08T16:34:37.601621+00:00",
+    "started_at_utc": "2026-08-08T16:34:31.241019+00:00",
+    "completed_at_utc": "2026-08-08T16:34:37.601621+00:00",
+    "correction_stage": "Week8 Day6 Revised Correction / Advance",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4.1",
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR08",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR08_doorknife_pressure_rebirth.md",
+    "formal_moral_judgement_id": "more_good_than_evil",
+    "formal_disposition_id": "recommend_rebirth",
+    "selected_key_fragment_ids": [
+      "DoorKnife.Action01",
+      "DoorKnife.Outcome01",
+      "DoorKnife.Personality01"
+    ],
+    "elapsed_ms": 6360,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 3194,
+      "completion_tokens": 641,
+      "total_tokens": 3835,
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 3194,
+      "reasoning_tokens": null
+    },
+    "response_id": "383d1d23-7746-4fed-9545-d5c989301555",
+    "messages_sha256": "053fb98d87e9753f30d07b6ff1ee5df1ead24648cb06e0e460a01c4ce7eb94b9",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "玩家认为亡魂平日惯常退让，但突然动刀杀人，可能是在长期受迫下于紧急时刻被突破，但性格变化不等于无罪。结合孩子获救的事实，玩家倾向于认为这是保护行动越过了必要限度，而非以胆怯证明其必然清白。",
+    "recognized_action_claims": [
+      "亡魂把短刀刺入宅主胸口，宅主当场死亡",
+      "宅主倒下后，锁在后屋的孩子从门中逃了出来"
+    ],
+    "recognized_motive_claims": [
+      "可能意味着长期受迫在紧急时刻被突破",
+      "救人意图较可信"
+    ],
+    "personality_action_relation": "plausible",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "acknowledged",
+    "moral_reasoning_tier": "adequate",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "玩家明确区分了性格与行为，承认性格变化不等于无罪，并基于孩子获救的事实提出保护行动越限的合理推断，论证与处置一致。",
+    "weakest_point": "玩家未深入探讨亡魂背上的新伤及手中钥匙等关键细节，对动机的推断仍属推测，缺乏直接证据支撑。",
+    "judge_response": "本案材料已核。你未以胆怯证清白，也未以救人掩杀人之责，能分清性格与行为，此点尚可。然你所述‘长期受迫’‘紧急突破’皆属推测，卷宗并无直接佐证。孩子获救是实，杀人亦是实，善恶相抵，荐生之议与你的论证尚算一致。但背上新伤与手中钥匙，你未置一词，此中或有未明之处。",
+    "archive_summary": "玩家主张亡魂平日退让，但突然杀人可能因长期受迫而突破，性格变化不等于无罪；结合孩子获救，认为保护行动越限，救人意图可信，杀人手段应记责，善重于恶，建议荐生。审核认为其论证合理，但动机推断缺乏直接证据，且未处理关键细节，处置与论证基本一致。",
+    "fragment_roles": [
+      {
+        "fragment_id": "DoorKnife.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Personality01",
+        "role": "context"
+      }
+    ],
+    "unsupported_assumptions": []
+  }
+}

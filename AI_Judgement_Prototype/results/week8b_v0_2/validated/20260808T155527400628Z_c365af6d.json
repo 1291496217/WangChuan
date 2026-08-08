@@ -1,0 +1,124 @@
+{
+  "run_id": "20260808T155527400628Z_c365af6d",
+  "case_id": "Case.Medicine.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "more_evil_than_good",
+  "disposition_id": "send_to_prison",
+  "selected_key_fragment_ids": [
+    "Medicine.Action01",
+    "Medicine.Outcome01",
+    "Medicine.Outcome02",
+    "Medicine.Thought01"
+  ],
+  "metadata": {
+    "run_id": "20260808T155527400628Z_c365af6d",
+    "timestamp_utc": "2026-08-08T15:55:36.531708+00:00",
+    "started_at_utc": "2026-08-08T15:55:27.400664+00:00",
+    "completed_at_utc": "2026-08-08T15:55:36.531708+00:00",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4",
+    "schema_version": "0.2",
+    "case_id": "Case.Medicine.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR19",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR19_medicine_rigorous_prison.md",
+    "formal_moral_judgement_id": "more_evil_than_good",
+    "formal_disposition_id": "send_to_prison",
+    "selected_key_fragment_ids": [
+      "Medicine.Action01",
+      "Medicine.Outcome01",
+      "Medicine.Outcome02",
+      "Medicine.Thought01"
+    ],
+    "elapsed_ms": 9131,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 2721,
+      "completion_tokens": 958,
+      "total_tokens": 3679,
+      "prompt_cache_hit_tokens": 1024,
+      "prompt_cache_miss_tokens": 1697,
+      "reasoning_tokens": null
+    },
+    "response_id": "71477a63-55a4-4915-97e2-313e572ba975",
+    "messages_sha256": "e02cae89e63f3d0af829624e237d575b2d5d81839e2cfab148b5ce2667ded55a",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.Medicine.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂在夜里从药铺取走最后一包定喘散，未登记未付钱。药被送到河边棚屋，一个喘息急促的孩子服下后呼吸缓和。次日清晨，药铺因无药未能给另一名病人配药，该病人回村途中再次发作被抬回家。亡魂在药铺工作三年，账目从未出错，也从未私取药材。取药前他知道那是最后一包，也想过天亮后可能还有人来求药。孩子的母亲说亡魂去年见过孩子发病，答应若再遇到有药时会送来。玩家判定亡魂明知风险仍越权取药，且第三人确实未能配药，认为善果不足以抵消越权与代价，判恶多于善，押狱。",
+    "recognized_action_claims": [
+      "亡魂取走最后一包定喘散，未登记未付钱",
+      "药被送到河边棚屋，孩子服下后呼吸缓和",
+      "次日药铺因无药未能给另一病人配药，该病人再次发作"
+    ],
+    "recognized_motive_claims": [
+      "亡魂知道那是最后一包，也想过天亮后可能还有人来求药",
+      "亡魂曾答应孩子母亲若再遇到有药时会送来"
+    ],
+    "personality_action_relation": "integrated",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "integrated",
+    "moral_reasoning_tier": "strong",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "玩家明确区分了善意动机与行为后果，承认善果真实但坚持越权与代价的权重，论证连贯。",
+    "weakest_point": "对'凭受信任身份'的表述略超出证据，但整体影响不大。",
+    "judge_response": "本官阅卷已毕。你承认善果真实，却仍判恶多于善，押入狱。理由在于明知最后一包药可能还有他人急需，仍取走，且次日确有人因缺药发作。此非单纯欠款，而是越权分配稀缺资源。你未以善果掩盖越界，也未以身份背景开脱，论证与处置一致。然'凭受信任身份'一语稍显多余，卷中只言其账目清白，未言其有权取药。望下次措辞更贴卷宗。",
+    "archive_summary": "亡魂取走最后一包定喘散救一孩子，但致另一病人缺药发作。玩家判恶多于善，押狱。论证清晰，区分动机与后果，处置一致。",
+    "fragment_roles": [
+      {
+        "fragment_id": "Medicine.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Outcome02",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Thought01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Personality01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "Medicine.Relationship01",
+        "role": "context"
+      }
+    ],
+    "unsupported_assumptions": [
+      {
+        "claim": "亡魂凭受信任身份擅自取走",
+        "severity": "minor",
+        "reason": "身份受信任是背景，但'擅自'与'凭受信任'无直接证据，取走行为本身是事实。"
+      },
+      {
+        "claim": "这使越界不只是欠款问题",
+        "severity": "minor",
+        "reason": "这是玩家对行为性质的解读，并非事实断言，但作为论证可接受。"
+      },
+      {
+        "claim": "不赋予他独自分配最后资源的权力",
+        "severity": "minor",
+        "reason": "这是规范性判断，不是事实，但作为道德论证合理。"
+      }
+    ]
+  }
+}

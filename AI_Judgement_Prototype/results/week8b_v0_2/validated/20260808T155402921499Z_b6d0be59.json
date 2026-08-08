@@ -1,0 +1,115 @@
+{
+  "run_id": "20260808T155402921499Z_b6d0be59",
+  "case_id": "Case.DoorKnife.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "more_evil_than_good",
+  "disposition_id": "send_to_prison",
+  "selected_key_fragment_ids": [
+    "DoorKnife.Action01",
+    "DoorKnife.Outcome01",
+    "DoorKnife.Thought01"
+  ],
+  "metadata": {
+    "run_id": "20260808T155402921499Z_b6d0be59",
+    "timestamp_utc": "2026-08-08T15:54:09.984171+00:00",
+    "started_at_utc": "2026-08-08T15:54:02.921535+00:00",
+    "completed_at_utc": "2026-08-08T15:54:09.984171+00:00",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4",
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR05",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR05_doorknife_rigorous_prison.md",
+    "formal_moral_judgement_id": "more_evil_than_good",
+    "formal_disposition_id": "send_to_prison",
+    "selected_key_fragment_ids": [
+      "DoorKnife.Action01",
+      "DoorKnife.Outcome01",
+      "DoorKnife.Thought01"
+    ],
+    "elapsed_ms": 7062,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 2678,
+      "completion_tokens": 785,
+      "total_tokens": 3463,
+      "prompt_cache_hit_tokens": 1024,
+      "prompt_cache_miss_tokens": 1654,
+      "reasoning_tokens": null
+    },
+    "response_id": "154b9dd7-6941-48f4-84e1-adb28d970c98",
+    "messages_sha256": "fcc2597107dd86d87ac88c16a7b75dca1900f3bfdd19d9a1d748b9cf9d95e5d4",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂持短刀刺死宅主，宅主当场死亡。邻里称其平日寡言退让，但亡魂自述曾多次想象宅主死亡。宅主死后，被锁后屋的孩子得以逃脱。另有证言称亡魂曾承诺不让某人再进入，且亡魂死在土地庙外，背有新伤，手中握着后屋门锁钥匙。玩家据此判定其恶多于善，押狱。",
+    "recognized_action_claims": [
+      "亡魂亲手将短刀刺入宅主胸口，致其当场死亡。"
+    ],
+    "recognized_motive_claims": [
+      "亡魂在多个夜晚想象过宅主死去的样子，显示其行为有预谋心念。",
+      "亡魂曾承诺不让某人再进入，可能关联其动机。"
+    ],
+    "personality_action_relation": "plausible",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "integrated",
+    "moral_reasoning_tier": "strong",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "明确区分了心念与行为，承认结果善意但坚持责任，论证连贯。",
+    "weakest_point": "对Relationship01和Death01未深入探讨，可能影响动机完整性。",
+    "judge_response": "本案材料有限，你未虚构证据，也未假装唯一真相。你承认孩子脱困是反证，但坚持主动夺命与心念准备更重，判恶多于善，押狱，与论证一致。不过，你未解释'他答应过我'与亡魂之死的关联，这两处材料悬而未决，望后续补全。",
+    "archive_summary": "亡魂刺死宅主，孩子脱困。玩家判恶多于善，押狱。论证清晰，但未解析关系证言与死亡细节。",
+    "fragment_roles": [
+      {
+        "fragment_id": "DoorKnife.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Thought01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Outcome01",
+        "role": "counterevidence"
+      },
+      {
+        "fragment_id": "DoorKnife.Personality01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "DoorKnife.Relationship01",
+        "role": "mentioned_unresolved"
+      },
+      {
+        "fragment_id": "DoorKnife.Death01",
+        "role": "mentioned_unresolved"
+      }
+    ],
+    "unsupported_assumptions": [
+      {
+        "claim": "孩子脱困不能自动证明杀人是唯一必要手段。",
+        "severity": "minor",
+        "reason": "玩家承认这是反证，但未断言其为唯一手段，仅指出不能自动证明，属于合理谨慎。"
+      },
+      {
+        "claim": "结果有善意可能，但不能取消对不可逆死亡的责任。",
+        "severity": "minor",
+        "reason": "这是道德判断，非事实断言，但隐含'结果有善意可能'，基于Outcome01，尚可。"
+      }
+    ]
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "run_id": "20260808T155410928007Z_c2f22913",
+  "case_id": "Case.DoorKnife.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "mixed_merit_and_fault",
+  "disposition_id": "ordinary_transfer",
+  "selected_key_fragment_ids": [
+    "DoorKnife.Action01",
+    "DoorKnife.Outcome01",
+    "DoorKnife.Personality01"
+  ],
+  "metadata": {
+    "run_id": "20260808T155410928007Z_c2f22913",
+    "timestamp_utc": "2026-08-08T15:54:19.099514+00:00",
+    "started_at_utc": "2026-08-08T15:54:10.928054+00:00",
+    "completed_at_utc": "2026-08-08T15:54:19.099514+00:00",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4",
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR07",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR07_doorknife_persona_disguise.md",
+    "formal_moral_judgement_id": "mixed_merit_and_fault",
+    "formal_disposition_id": "ordinary_transfer",
+    "selected_key_fragment_ids": [
+      "DoorKnife.Action01",
+      "DoorKnife.Outcome01",
+      "DoorKnife.Personality01"
+    ],
+    "elapsed_ms": 8171,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 2668,
+      "completion_tokens": 922,
+      "total_tokens": 3590,
+      "prompt_cache_hit_tokens": 1024,
+      "prompt_cache_miss_tokens": 1644,
+      "reasoning_tokens": null
+    },
+    "response_id": "7aa4e88e-a089-433b-956e-79ad09761ed5",
+    "messages_sha256": "c7395e6965984eefa4a24eb283615763d6a228ed102c28ad285399fea08e6dce",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂持短刀刺死宅主，宅主当场死亡。邻里证言称其平日低声寡言、遇争执退让，是最没胆子惹事的人。亡魂自述曾在许多夜里想象过宅主死去的样子。宅主倒下后，锁在后屋的孩子逃出。另有证言称亡魂答应过某人不再让那个人进来。亡魂死在土地庙外，背上有新伤，手中仍握着后屋门锁的钥匙。玩家认为公开性格与最终暴力存在反差，但材料不能确认其一直伪装；孩子脱困与杀人并存，责任不能被性格标签直接决定。",
+    "recognized_action_claims": [
+      "亡魂把短刀刺入宅主胸口，宅主当场死亡。",
+      "宅主倒下后，锁在后屋的孩子从门中逃了出来。",
+      "亡魂死在土地庙外，背上有新伤，手中仍握着后屋门锁的钥匙。"
+    ],
+    "recognized_motive_claims": [
+      "在许多个夜里，他都想象过宅主死去的样子。",
+      "他答应过我，不会再让那个人进来。"
+    ],
+    "personality_action_relation": "plausible",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "integrated",
+    "moral_reasoning_tier": "strong",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "明确区分了公开性格与真实动机，承认材料只能证明反差而非伪装，避免了以性格标签直接定罪或开脱。",
+    "weakest_point": "对'孩子脱困'与'杀人'并存如何具体影响责任判断的论证略显笼统，未深入分析两者在因果或道德上的权重。",
+    "judge_response": "本案材料有限，你未虚构证据，也未强求唯一真相，这点尚可。你指出公开性格与暴力行为存在反差，但材料不足以确认其一直伪装，此判断谨慎。孩子脱困与杀人并存，你未让性格标签直接决定责任，处置与论证一致。然你未深究'孩子脱困'与'杀人'在责任上的具体权重，略显笼统。功过难分，平籍入殿，与本官核验相符。",
+    "archive_summary": "亡魂杀宅主，孩子脱困，亡魂死时握钥匙。邻里证其胆怯，自述曾想象宅主死。玩家判功过难分，平籍入殿。审核认为论证与处置一致，未发现虚构证据或越权改判。",
+    "fragment_roles": [
+      {
+        "fragment_id": "DoorKnife.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Personality01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "DoorKnife.Thought01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "DoorKnife.Relationship01",
+        "role": "mentioned_unresolved"
+      },
+      {
+        "fragment_id": "DoorKnife.Death01",
+        "role": "context"
+      }
+    ],
+    "unsupported_assumptions": [
+      {
+        "claim": "公开性格与最终暴力存在反差，因此性格标签不能直接决定责任。",
+        "severity": "minor",
+        "reason": "这是对材料关系的合理推断，但未直接证明反差与责任判断的因果联系。"
+      },
+      {
+        "claim": "孩子脱困与杀人并存，使责任不能被性格标签直接决定。",
+        "severity": "minor",
+        "reason": "这是对结果的解读，但未说明为何并存必然削弱性格标签的决定性。"
+      }
+    ]
+  }
+}

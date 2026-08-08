@@ -1,0 +1,16 @@
+WEEK8 DAY6 ROOT-CAUSE REAL CALL GATE
+
+Case Validation: PASS
+Old Corpus: PASS
+Week8B Corpus: PASS
+Prompt v0.4.3 Targeted Tests: PASS (29/29)
+All Unit Tests: PASS (Ran 274 tests)
+Schema v0.2: PASS / UNCHANGED
+Runtime Contract v0.2: PASS / UNCHANGED
+Frozen Hashes: PASS (7/7)
+Trust Boundary: PASS (untrusted player report is user-message only)
+Visible Language Publication Gate: PASS
+API Secret Literal Scan: PASS
+.env: IGNORED
+
+ROOT-CAUSE REAL CALL GATE: OPEN

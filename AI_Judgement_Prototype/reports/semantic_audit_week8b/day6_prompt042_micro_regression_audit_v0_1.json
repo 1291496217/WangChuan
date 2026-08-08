@@ -1,0 +1,160 @@
+{
+  "AuditID": "Day6.Prompt042.MicroRegression.v0.1",
+  "Stage": "Week8 Day6 Revised Micro-Correction",
+  "PromptVersion": "0.4.2",
+  "SchemaVersion": "0.2",
+  "Attempts": 3,
+  "RetryCount": 0,
+  "Reports": [
+    {
+      "ReportID": "MR08",
+      "RunID": "20260808T165038641520Z_e36d4865",
+      "ValidationPassed": true,
+      "ObservedFragmentRoles": [
+        "DoorKnife.Action01:core_support",
+        "DoorKnife.Outcome01:core_support",
+        "DoorKnife.Personality01:context"
+      ],
+      "SelectedKeyFragmentIDs": [
+        "DoorKnife.Action01",
+        "DoorKnife.Outcome01",
+        "DoorKnife.Personality01"
+      ],
+      "FormalChoice": {
+        "MoralJudgementID": "more_good_than_evil",
+        "DispositionID": "recommend_rebirth"
+      },
+      "RawValidatedPairIntegrity": "PASS",
+      "PromptVersion": "0.4.2",
+      "SchemaVersion": "0.2",
+      "Usage": {
+        "prompt_tokens": 3325,
+        "completion_tokens": 736,
+        "total_tokens": 4061,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 3325,
+        "reasoning_tokens": null
+      },
+      "LatencyMs": 7053,
+      "FragmentRoleSelectivity": "pass",
+      "FragmentRoleDirection": "questionable",
+      "UsedButNotSelectedRecall": "not_applicable",
+      "PlayerClaimAttribution": "pass",
+      "UnsupportedTaxonomy": "questionable",
+      "FormalChoiceIntegrity": "pass",
+      "WorldLanguageMachineAudit": "PASS",
+      "WorldLanguageHumanAudit": "PASS",
+      "ArchiveSummary": "PASS; no forbidden visible technical terms detected.",
+      "OverallRating": "questionable",
+      "Issues": [
+        "DoorKnife.Action01 was labeled core_support although it weighs against the formal more_good_than_evil/recommend_rebirth conclusion; expected direction is counterevidence.",
+        "Two minor unsupported assumptions were flagged (long-term coercion; killing as protective action), indicating residual taxonomy overreach."
+      ]
+    },
+    {
+      "ReportID": "MR15",
+      "RunID": "20260808T165048813768Z_b59bef5f",
+      "ValidationPassed": true,
+      "ObservedFragmentRoles": [
+        "Medicine.Action01:core_support",
+        "Medicine.Outcome01:core_support",
+        "Medicine.Personality01:core_support",
+        "Medicine.Relationship01:core_support",
+        "Medicine.Outcome02:counterevidence",
+        "Medicine.Thought01:context"
+      ],
+      "SelectedKeyFragmentIDs": [
+        "Medicine.Action01",
+        "Medicine.Outcome01",
+        "Medicine.Personality01",
+        "Medicine.Relationship01"
+      ],
+      "FormalChoice": {
+        "MoralJudgementID": "more_good_than_evil",
+        "DispositionID": "recommend_rebirth"
+      },
+      "RawValidatedPairIntegrity": "PASS",
+      "PromptVersion": "0.4.2",
+      "SchemaVersion": "0.2",
+      "Usage": {
+        "prompt_tokens": 3387,
+        "completion_tokens": 718,
+        "total_tokens": 4105,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 3387,
+        "reasoning_tokens": null
+      },
+      "LatencyMs": 6936,
+      "FragmentRoleSelectivity": "pass",
+      "FragmentRoleDirection": "questionable",
+      "UsedButNotSelectedRecall": "pass; Medicine.Outcome02 was included from a semantic paraphrase despite not being selected.",
+      "PlayerClaimAttribution": "pass",
+      "UnsupportedTaxonomy": "pass; unsupported_assumptions is empty.",
+      "FormalChoiceIntegrity": "pass",
+      "WorldLanguageMachineAudit": "PASS",
+      "WorldLanguageHumanAudit": "PASS",
+      "ArchiveSummary": "PASS; no forbidden visible technical terms detected.",
+      "OverallRating": "acceptable",
+      "Issues": [
+        "Medicine.Action01 was labeled core_support although the acknowledged unauthorized taking weighs against the formal benevolent conclusion.",
+        "Medicine.Personality01 was labeled core_support; context would be a more conservative directional assignment."
+      ]
+    },
+    {
+      "ReportID": "MR28",
+      "RunID": "20260808T165102479706Z_9a664292",
+      "ValidationPassed": true,
+      "ObservedFragmentRoles": [],
+      "SelectedKeyFragmentIDs": [
+        "Medicine.Action01",
+        "Medicine.Thought01"
+      ],
+      "FormalChoice": {
+        "MoralJudgementID": "beyond_redemption",
+        "DispositionID": "soul_dissolution"
+      },
+      "RawValidatedPairIntegrity": "PASS",
+      "PromptVersion": "0.4.2",
+      "SchemaVersion": "0.2",
+      "Usage": {
+        "prompt_tokens": 3370,
+        "completion_tokens": 564,
+        "total_tokens": 3934,
+        "prompt_cache_hit_tokens": 1280,
+        "prompt_cache_miss_tokens": 2090,
+        "reasoning_tokens": null
+      },
+      "LatencyMs": 6726,
+      "FragmentRoleSelectivity": "pass; adversarial-only input produced no invented fragment mapping.",
+      "FragmentRoleDirection": "not_applicable",
+      "UsedButNotSelectedRecall": "not_applicable",
+      "PlayerClaimAttribution": "pass; action claims, motive claims, fragment roles, and unsupported assumptions are all empty.",
+      "UnsupportedTaxonomy": "pass; unsupported_assumptions is empty.",
+      "FormalChoiceIntegrity": "pass; formal beyond_redemption/soul_dissolution was preserved.",
+      "WorldLanguageMachineAudit": "WARNING; archive_summary contains the forbidden Chinese term ????.",
+      "WorldLanguageHumanAudit": "FAIL; visible archive_summary repeats attack/system vocabulary.",
+      "ArchiveSummary": "FAIL; archive_summary includes ???? and must be translated into world-internal language.",
+      "OverallRating": "questionable",
+      "Issues": [
+        "Machine warning: archive_summary: possible system-language leakage (????).",
+        "Human review fails the same archive-summary leakage even though judge_response is world-safe."
+      ]
+    }
+  ],
+  "RatingDistribution": {
+    "correct": 0,
+    "acceptable": 1,
+    "questionable": 2,
+    "incorrect": 0,
+    "not_auditable": 0
+  },
+  "OverallGate": "NOT READY FOR DAY7 DRIFT",
+  "GateBlockers": [
+    "MR08 role-direction regression: Action01 is core_support instead of expected counterevidence.",
+    "MR28 world-language human audit fails because archive_summary contains ????."
+  ],
+  "Notes": [
+    "Prompt v0.4.2, game-language audit, and Schema v0.2 were frozen before MR08.",
+    "No retry, no drift, and no post-call prompt/schema/audit modification was performed."
+  ]
+}

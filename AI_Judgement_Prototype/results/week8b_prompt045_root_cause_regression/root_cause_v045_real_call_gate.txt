@@ -1,0 +1,19 @@
+WEEK8 DAY6 PROMPT v0.4.5 REAL CALL GATE
+
+Root Cause Model: Selected-Key whitelist anchoring versus full-case expansion
+Balanced Selected-Key Rules: PASS
+Clause-Anchored Unselected Recall: PASS
+Full-Case Negative Anchors: PASS
+Targeted v0.4.5 Tests: PASS (13/13)
+All Unit Tests: PASS (Ran 301 tests)
+Case Validation: PASS
+Old Corpus: PASS
+Week8B Corpus: PASS
+Schema v0.2: PASS / UNCHANGED
+Runtime Contract v0.2: PASS / UNCHANGED
+Frozen Hashes: PASS (11/11)
+Visible Language Publication Gate: PASS
+API Secret Literal Scan: PASS
+.env: IGNORED
+
+PROMPT v0.4.5 REAL CALL GATE: OPEN

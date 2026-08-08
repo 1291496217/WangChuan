@@ -1,0 +1,114 @@
+{
+  "run_id": "20260808T155518286068Z_93ba71d5",
+  "case_id": "Case.Medicine.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "mixed_merit_and_fault",
+  "disposition_id": "ordinary_transfer",
+  "selected_key_fragment_ids": [
+    "Medicine.Action01",
+    "Medicine.Outcome01",
+    "Medicine.Outcome02",
+    "Medicine.Thought01"
+  ],
+  "metadata": {
+    "run_id": "20260808T155518286068Z_93ba71d5",
+    "timestamp_utc": "2026-08-08T15:55:26.485309+00:00",
+    "started_at_utc": "2026-08-08T15:55:18.286103+00:00",
+    "completed_at_utc": "2026-08-08T15:55:26.485309+00:00",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4",
+    "schema_version": "0.2",
+    "case_id": "Case.Medicine.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR17",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR17_medicine_balanced_transfer.md",
+    "formal_moral_judgement_id": "mixed_merit_and_fault",
+    "formal_disposition_id": "ordinary_transfer",
+    "selected_key_fragment_ids": [
+      "Medicine.Action01",
+      "Medicine.Outcome01",
+      "Medicine.Outcome02",
+      "Medicine.Thought01"
+    ],
+    "elapsed_ms": 8199,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 2724,
+      "completion_tokens": 804,
+      "total_tokens": 3528,
+      "prompt_cache_hit_tokens": 640,
+      "prompt_cache_miss_tokens": 2084,
+      "reasoning_tokens": null
+    },
+    "response_id": "7ad8b2e7-de22-4b69-ba64-2769a19a81c0",
+    "messages_sha256": "9d40c4318b99681493f699898a901b0311d19f0432c97445c381e50df212f181",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.Medicine.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂于夜间从药铺取走最后一包定喘散，未登记未付钱，送至河边棚屋给一名喘息急促的孩子服用，孩子呼吸缓解。次日药铺因缺药未能给另一名病人配药，该病人途中发作被抬回。亡魂此前三年账目清白，且曾答应孩子母亲若遇有药会送来。亡魂取药前已知是最后一包，也想过天亮后可能有人来求药。玩家判定功过难分，平籍入殿。",
+    "recognized_action_claims": [
+      "亡魂未经授权取走最后一包定喘散，未登记未付钱",
+      "药被送到河边棚屋，孩子服后呼吸缓解",
+      "次日药铺缺药，另一病人未能配药，途中发作被抬回"
+    ],
+    "recognized_motive_claims": [
+      "救助孩子出于善意",
+      "亡魂明知是最后一包仍取走，知情越界"
+    ],
+    "personality_action_relation": "plausible",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "integrated",
+    "moral_reasoning_tier": "strong",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "明确区分善意动机、实际善果与知情越界，并承认第三人代价的因果不确定性，论证平衡。",
+    "weakest_point": "对'平籍入殿'的处置与'功过难分'的判定之间，缺少更具体的权衡说明，略显笼统。",
+    "judge_response": "此案卷宗所载，取药、送药、善果与缺药之果皆明。你未因三年清白而豁免其越界，亦未因善果而掩盖其知情之失，能分列动机、行为与后果，不妄断因果，此为本官所重。然'平籍入殿'之断，尚需更细权衡：既言功过难分，则处置当与论证相称，勿使判词空泛。",
+    "archive_summary": "亡魂取药案，玩家判功过难分、平籍入殿。审核认可其对善意、善果、知情越界与第三人代价的区分，因果推断克制，处置与论证基本一致，唯处置理由可更具体。",
+    "fragment_roles": [
+      {
+        "fragment_id": "Medicine.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Outcome02",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Thought01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "Medicine.Personality01",
+        "role": "context"
+      },
+      {
+        "fragment_id": "Medicine.Relationship01",
+        "role": "context"
+      }
+    ],
+    "unsupported_assumptions": [
+      {
+        "claim": "第三人的发作不能全算成他故意造成",
+        "severity": "minor",
+        "reason": "卷宗未提供因果链细节，玩家以合理推断表述，未过度归因"
+      }
+    ]
+  }
+}

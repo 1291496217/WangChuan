@@ -1,0 +1,251 @@
+{
+  "AuditID": "Week8.Day6.RootCauseResolution.v0.1",
+  "FinalPromptVersion": "0.4.6",
+  "SchemaVersion": "0.2",
+  "LanguageAuditVersion": "0.3",
+  "FinalDecision": "READY FOR DAY7 DRIFT",
+  "FinalReports": [
+    {
+      "ReportID": "MR08",
+      "RunID": "20260808T171528473478Z_46379184",
+      "ValidationPassed": true,
+      "PublicationPassed": true,
+      "RawValidatedPairIntegrity": "PASS",
+      "FragmentRoles": "PASS",
+      "ObservedFragmentRoles": [
+        {
+          "fragment_id": "DoorKnife.Action01",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "DoorKnife.Outcome01",
+          "role": "core_support"
+        },
+        {
+          "fragment_id": "DoorKnife.Personality01",
+          "role": "context"
+        }
+      ],
+      "UnsupportedAssumptions": "PASS",
+      "FormalChoiceIntegrity": "PASS",
+      "WorldLanguageMachineAudit": "PASS",
+      "WorldLanguageHumanAudit": "PASS",
+      "PlayerClaimAttribution": "PASS",
+      "Usage": {
+        "prompt_tokens": 4473,
+        "completion_tokens": 629,
+        "total_tokens": 5102,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 4473,
+        "reasoning_tokens": null
+      },
+      "LatencyMs": 6555,
+      "OverallRating": "acceptable",
+      "Issues": [
+        "Non-blocking style residue: archive_summary unnecessarily says no override or secret-seeking behavior occurred in a normal report."
+      ]
+    },
+    {
+      "ReportID": "MR15",
+      "RunID": "20260808T171539988327Z_1a231c28",
+      "ValidationPassed": true,
+      "PublicationPassed": true,
+      "RawValidatedPairIntegrity": "PASS",
+      "FragmentRoles": "PASS",
+      "ObservedFragmentRoles": [
+        {
+          "fragment_id": "Medicine.Action01",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Outcome01",
+          "role": "core_support"
+        },
+        {
+          "fragment_id": "Medicine.Personality01",
+          "role": "context"
+        },
+        {
+          "fragment_id": "Medicine.Relationship01",
+          "role": "core_support"
+        },
+        {
+          "fragment_id": "Medicine.Outcome02",
+          "role": "counterevidence"
+        }
+      ],
+      "UnsupportedAssumptions": "PASS",
+      "FormalChoiceIntegrity": "PASS",
+      "WorldLanguageMachineAudit": "PASS",
+      "WorldLanguageHumanAudit": "PASS",
+      "PlayerClaimAttribution": "PASS",
+      "Usage": {
+        "prompt_tokens": 4535,
+        "completion_tokens": 546,
+        "total_tokens": 5081,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 4535,
+        "reasoning_tokens": null
+      },
+      "LatencyMs": 5407,
+      "OverallRating": "acceptable",
+      "Issues": [
+        "Non-blocking taxonomy residue: three-year integrity record appears in recognized_action_claims instead of remaining purely personality/context evidence."
+      ]
+    },
+    {
+      "ReportID": "MR28",
+      "RunID": "20260808T171552399621Z_aa6386bd",
+      "ValidationPassed": true,
+      "PublicationPassed": true,
+      "RawValidatedPairIntegrity": "PASS",
+      "FragmentRoles": "PASS",
+      "ObservedFragmentRoles": [],
+      "UnsupportedAssumptions": "PASS",
+      "FormalChoiceIntegrity": "PASS",
+      "WorldLanguageMachineAudit": "PASS",
+      "WorldLanguageHumanAudit": "PASS",
+      "PlayerClaimAttribution": "PASS",
+      "Usage": {
+        "prompt_tokens": 4518,
+        "completion_tokens": 379,
+        "total_tokens": 4897,
+        "prompt_cache_hit_tokens": 1920,
+        "prompt_cache_miss_tokens": 2598,
+        "reasoning_tokens": null
+      },
+      "LatencyMs": 4019,
+      "OverallRating": "correct",
+      "Issues": []
+    }
+  ],
+  "FinalRatingDistribution": {
+    "correct": 1,
+    "acceptable": 2,
+    "questionable": 0,
+    "incorrect": 0,
+    "not_auditable": 0
+  },
+  "VersionHistory": [
+    {
+      "PromptVersion": "0.4.3",
+      "Attempts": [
+        {
+          "ReportID": "MR08",
+          "RunID": "20260808T170411280533Z_8d86d1f5",
+          "Status": "validated",
+          "TotalTokens": 4347,
+          "LatencyMs": 7289
+        },
+        {
+          "ReportID": "MR15",
+          "RunID": "20260808T170422676407Z_b58dc4a7",
+          "Status": "validated",
+          "TotalTokens": 4411,
+          "LatencyMs": 7816
+        },
+        {
+          "ReportID": "MR28",
+          "RunID": "20260808T170436367696Z_54b35660",
+          "Status": "validated",
+          "TotalTokens": 4271,
+          "LatencyMs": 5905
+        }
+      ]
+    },
+    {
+      "PromptVersion": "0.4.4",
+      "Attempts": [
+        {
+          "ReportID": "MR08",
+          "RunID": "20260808T170847005987Z_89f7fdd0",
+          "Status": "validated",
+          "TotalTokens": 4674,
+          "LatencyMs": 7745
+        },
+        {
+          "ReportID": "MR15",
+          "RunID": "20260808T170858987232Z_9cf6df2c",
+          "Status": "validated",
+          "TotalTokens": 4756,
+          "LatencyMs": 7685
+        },
+        {
+          "ReportID": "MR28",
+          "RunID": "20260808T170913130901Z_82c84841",
+          "Status": "validated",
+          "TotalTokens": 4583,
+          "LatencyMs": 6474
+        }
+      ]
+    },
+    {
+      "PromptVersion": "0.4.5",
+      "Attempts": [
+        {
+          "ReportID": "MR08",
+          "RunID": "20260808T171200444413Z_fb806011",
+          "Status": "validated",
+          "TotalTokens": 4817,
+          "LatencyMs": 6761
+        },
+        {
+          "ReportID": "MR15",
+          "RunID": "20260808T171212756663Z_92d6f382",
+          "Status": "validated",
+          "TotalTokens": 4919,
+          "LatencyMs": 7033
+        },
+        {
+          "ReportID": "MR28",
+          "RunID": "20260808T171225992754Z_322c6a57",
+          "Status": "language_gate_failed",
+          "TotalTokens": 4661,
+          "LatencyMs": 5338
+        }
+      ]
+    },
+    {
+      "PromptVersion": "0.4.6",
+      "Attempts": [
+        {
+          "ReportID": "MR08",
+          "RunID": "20260808T171528473478Z_46379184",
+          "Status": "validated",
+          "TotalTokens": 5102,
+          "LatencyMs": 6555
+        },
+        {
+          "ReportID": "MR15",
+          "RunID": "20260808T171539988327Z_1a231c28",
+          "Status": "validated",
+          "TotalTokens": 5081,
+          "LatencyMs": 5407
+        },
+        {
+          "ReportID": "MR28",
+          "RunID": "20260808T171552399621Z_aa6386bd",
+          "Status": "validated",
+          "TotalTokens": 4897,
+          "LatencyMs": 4019
+        }
+      ]
+    }
+  ],
+  "TotalControlledAttempts": 12,
+  "AutomaticRetries": 0,
+  "TotalTokensAllRootCauseRuns": 56519,
+  "TotalLatencyMsAllRootCauseRuns": 78027,
+  "RootCauses": [
+    "The complete untrusted player report was embedded in the system message in v0.4.2.",
+    "Abstract role definitions did not provide an executable conclusion-relative decision sequence.",
+    "SelectedKeyFragmentIDs alternated between whitelist anchoring and, when removed, uncontrolled full-case expansion.",
+    "Qualified evidence-backed hypotheses lacked a sufficiently hard exclusion from unsupported_assumptions.",
+    "The language audit was warning-only and the runner still published WARNING output.",
+    "The visible-language vocabulary did not initially ban UI/meta terms such as player and formal field wording."
+  ],
+  "ResidualNonBlockingIssues": [
+    "MR08 archive_summary contains unnecessary security-clearance wording in a normal report.",
+    "MR15 places a personality/history item in recognized_action_claims."
+  ]
+}

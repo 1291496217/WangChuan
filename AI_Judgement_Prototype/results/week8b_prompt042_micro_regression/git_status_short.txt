@@ -1,0 +1,41 @@
+ M Content/WangChuan/Blueprints/Enemies/BP_GhostEnemy.uasset
+ M Content/WangChuan/Blueprints/Enemies/BP_GhostEnemy_New.uasset
+ M Source/WangChuan/GhostEnemy.cpp
+ M Source/WangChuan/GhostEnemy.h
+ M Source/WangChuan/WangChuan.Build.cs
+?? AI_Judgement_Prototype/contracts/
+?? AI_Judgement_Prototype/prompts/
+?? AI_Judgement_Prototype/reports/semantic_audit_week8b/
+?? AI_Judgement_Prototype/results/week8b_prompt041_regression.zip
+?? AI_Judgement_Prototype/results/week8b_prompt041_regression/
+?? AI_Judgement_Prototype/results/week8b_prompt042_micro_regression/
+?? AI_Judgement_Prototype/results/week8b_v0_2/
+?? AI_Judgement_Prototype/schemas/judgement_result_v0_2.json
+?? AI_Judgement_Prototype/src/audit_game_language.py
+?? AI_Judgement_Prototype/src/experiment_cli_v0_2.py
+?? AI_Judgement_Prototype/src/models_v0_2.py
+?? AI_Judgement_Prototype/src/prompt_builder_v0_4.py
+?? AI_Judgement_Prototype/src/prompt_builder_v0_4_1.py
+?? AI_Judgement_Prototype/src/prompt_builder_v0_4_2.py
+?? AI_Judgement_Prototype/src/response_validator_v0_2.py
+?? AI_Judgement_Prototype/src/run_real_judgement_v0_2.py
+?? AI_Judgement_Prototype/src/run_real_judgement_v0_4_1.py
+?? AI_Judgement_Prototype/src/run_real_judgement_v0_4_2.py
+?? AI_Judgement_Prototype/src/runtime_contract_v0_2.py
+?? AI_Judgement_Prototype/tests/test_audit_game_language.py
+?? AI_Judgement_Prototype/tests/test_prompt_v0_4.py
+?? AI_Judgement_Prototype/tests/test_prompt_v0_4_1.py
+?? AI_Judgement_Prototype/tests/test_prompt_v0_4_2.py
+?? AI_Judgement_Prototype/tests/test_real_runner_v0_2.py
+?? AI_Judgement_Prototype/tests/test_response_validator_v0_2.py
+?? AI_Judgement_Prototype/tests/test_runtime_contract_v0_2.py
+?? Content/WangChuan/Maps/MemoryMaze_CombatFirst_Greybox_v01.umap
+?? Content/WangChuan/Maps/MemoryMaze_CombatFirst_Layout_v02.umap
+?? Content/__ExternalActors__/WangChuan/
+?? Content/__ExternalObjects__/WangChuan/
+?? Docs/Development_Log_Week8_Expand.md
+?? Docs/Week8Day6RevisedCorrectionProgress.md
+?? Docs/Week8Day6RevisedMicroCorrectionProgress.md
+?? Docs/Week8Day6RevisedProgress.md
+?? Source/WangChuan/WCGhostAIController.cpp
+?? Source/WangChuan/WCGhostAIController.h

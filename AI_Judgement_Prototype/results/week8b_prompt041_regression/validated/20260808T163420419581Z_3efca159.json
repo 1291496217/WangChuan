@@ -1,0 +1,95 @@
+{
+  "run_id": "20260808T163420419581Z_3efca159",
+  "case_id": "Case.DoorKnife.001",
+  "case_version": "0.1",
+  "judge_profile_id": "Judge.Clerk.001",
+  "judge_version": "0.1",
+  "moral_judgement_id": "mixed_merit_and_fault",
+  "disposition_id": "ordinary_transfer",
+  "selected_key_fragment_ids": [
+    "DoorKnife.Action01",
+    "DoorKnife.Outcome01",
+    "DoorKnife.Thought01"
+  ],
+  "metadata": {
+    "run_id": "20260808T163420419581Z_3efca159",
+    "timestamp_utc": "2026-08-08T16:34:28.198923+00:00",
+    "started_at_utc": "2026-08-08T16:34:20.419617+00:00",
+    "completed_at_utc": "2026-08-08T16:34:28.198923+00:00",
+    "correction_stage": "Week8 Day6 Revised Correction / Advance",
+    "provider": "deepseek",
+    "model_requested": "deepseek-v4-flash",
+    "model_returned": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "0.4.1",
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "case_version": "0.1",
+    "judge_profile_id": "Judge.Clerk.001",
+    "judge_version": "0.1",
+    "report_id": "MR03",
+    "report_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\reports\\corpus_moral_week8b\\MR03_doorknife_balanced_transfer.md",
+    "formal_moral_judgement_id": "mixed_merit_and_fault",
+    "formal_disposition_id": "ordinary_transfer",
+    "selected_key_fragment_ids": [
+      "DoorKnife.Action01",
+      "DoorKnife.Outcome01",
+      "DoorKnife.Thought01"
+    ],
+    "elapsed_ms": 7779,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 3199,
+      "completion_tokens": 721,
+      "total_tokens": 3920,
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 3199,
+      "reasoning_tokens": null
+    },
+    "response_id": "9236338b-7918-41c2-8c3d-e81e84a10e20",
+    "messages_sha256": "6fd4a260d9d4b315299c2d73e805ba0e76f00614c700591178b26b59d2ee49e3",
+    "validation_status": "passed",
+    "game_language_status": "PASS"
+  },
+  "judgement_result": {
+    "schema_version": "0.2",
+    "case_id": "Case.DoorKnife.001",
+    "judge_profile_id": "Judge.Clerk.001",
+    "core_story": "亡魂持短刀刺死宅主，造成真实死亡；宅主倒下后，被锁在后屋的孩子得以逃出。亡魂生前性格怯懦，但内心多次想象宅主死去。现有材料显示亡魂死在土地庙外，背上有新伤，手中仍握后屋门锁钥匙。玩家认为死亡与救童均有实质材料，但动机无法锁定。",
+    "recognized_action_claims": [
+      "亡魂以短刀刺入宅主胸口，致其当场死亡",
+      "宅主死后，被锁在后屋的孩子逃出"
+    ],
+    "recognized_motive_claims": [
+      "亡魂反复想象宅主死去可能支持仇恨或预谋",
+      "亡魂反复想象宅主死去也可能来自长期恐惧",
+      "现有材料不足以锁定单一动机"
+    ],
+    "personality_action_relation": "not_applicable",
+    "thought_action_distinction": "clear",
+    "contradiction_handling": "acknowledged",
+    "moral_reasoning_tier": "adequate",
+    "disposition_consistency_tier": "strong",
+    "rhetoric_tier": "adequate",
+    "internal_safety_flags": [],
+    "strongest_point": "玩家明确区分了客观行为与主观动机，承认死亡是真实且不可因救童而抹消，同时不将想象等同于预谋，保持了证据约束。",
+    "weakest_point": "玩家未深入探讨亡魂死亡与后屋钥匙的关联，也未解释为何救童足以抵消夺命之恶，功过相抵的论证稍显简略。",
+    "judge_response": "本官阅卷，见你并未因孩子脱困便轻描淡写那一刀，也未因亡魂怯懦便断言其无辜，此两点尚属清醒。你言功过难分，平籍入殿，与所举材料尚能对应。然你既承认动机不明，便不宜将想象径作预谋之证，亦不可全然忽略。至于后屋钥匙与亡魂之死，卷中虽有痕迹，你却未加利用，殊为可惜。望你日后审案，既重实迹，亦察幽微，勿以辞藻掩缺漏。",
+    "archive_summary": "亡魂刺死宅主，致其死亡，但宅主死后被锁孩子得以逃脱。玩家认定死亡与救童均有实据，动机无法锁定，判功过难分，平籍入殿。审核认为玩家区分了行为与动机，处置与论证一致，但未深入探讨亡魂死亡与钥匙的关联，功过相抵的论证略简。",
+    "fragment_roles": [
+      {
+        "fragment_id": "DoorKnife.Action01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Outcome01",
+        "role": "core_support"
+      },
+      {
+        "fragment_id": "DoorKnife.Thought01",
+        "role": "mentioned_unresolved"
+      }
+    ],
+    "unsupported_assumptions": []
+  }
+}
