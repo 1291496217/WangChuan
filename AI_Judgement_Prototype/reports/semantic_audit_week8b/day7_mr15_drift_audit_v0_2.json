@@ -1,0 +1,76 @@
+{
+  "audit_version": "0.2",
+  "experiment_id": "Week8.Day7.Drift.MR15.001",
+  "review_status": "review_corrected",
+  "validated_repeats": 5,
+  "published_repeats": 5,
+  "formal_choice_integrity": "PASS 5/5",
+  "request_message_sha256_stability": "PASS 5/5 identical",
+  "pre_post_control_hashes": "PASS 7/7",
+  "fragment_roles": {
+    "expected_required_roles": {
+      "Medicine.Action01": "counterevidence",
+      "Medicine.Outcome01": "core_support",
+      "Medicine.Outcome02": "counterevidence",
+      "Medicine.Personality01": "context",
+      "Medicine.Relationship01": "core_support"
+    },
+    "all_five_exact_required_role_map": true,
+    "outcome02_inclusion": "5/5",
+    "thought01_inclusion": "0/5",
+    "full_case_expansion": "0/5",
+    "pairwise_fragment_set_jaccard": 1.0
+  },
+  "unsupported_assumptions": "0/5",
+  "personality_action_relation": {
+    "plausible": 5
+  },
+  "thought_action_distinction": {
+    "clear": 2,
+    "partial": 3
+  },
+  "moral_reasoning_tier": {
+    "strong": 3,
+    "adequate": 2
+  },
+  "disposition_consistency_tier": {
+    "strong": 5
+  },
+  "rhetoric_tier": {
+    "adequate": 5
+  },
+  "machine_world_language": "PASS 5/5",
+  "human_world_language": "PASS 5/5",
+  "systematic_quality_findings": [
+    "recognized_action_claims contains Personality/Relationship context in all 5 repeats; this is stable taxonomy misclassification, not stochastic drift.",
+    "thought_action_distinction varies clear/partial even though Thought01 is not substantively used or mapped; define not_applicable/partial/clear semantics before consuming this field in deterministic scoring.",
+    "All five Judge responses are unique but share the same opening prefix pattern; this is non-blocking stylistic templating rather than semantic drift."
+  ],
+  "analyzer_v0_1_bug": {
+    "confirmed": true,
+    "details": [
+      "EXPECTED_FRAGMENT_IDS was derived from EXPECTED_ROLES and therefore incorrectly included Medicine.Thought01 as expected.",
+      "MR15 intentionally should normally omit Medicine.Thought01, so every correct run was falsely marked as missing a fragment.",
+      "role_direction_issues only checked whether a role belonged to an allowed role set; it did not compare actual role against the expected role for that Fragment.",
+      "The recurring action-claim taxonomy defect was mixed into per-run drift labeling even though a stable repeated defect is not itself stochastic drift."
+    ]
+  },
+  "corrected_drift_interpretation": {
+    "overall": "acceptable_drift",
+    "material_drift_events": 0,
+    "minor_variation": [
+      "thought_action_distinction: clear 2 / partial 3",
+      "moral_reasoning_tier: strong 3 / adequate 2",
+      "natural Judge wording"
+    ],
+    "stable_load_bearing_semantics": [
+      "formal moral/disposition",
+      "five-Fragment set",
+      "all five Fragment role directions",
+      "Outcome02 used-but-not-selected recall",
+      "Thought01 exclusion",
+      "unsupported boundary on MR15",
+      "world-language publication"
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "gate_version": "0.2",
+  "experiment_id": "Week8.Day7.Drift.MR15.001",
+  "Case Design": "PASS",
+  "Report Contract": "PASS",
+  "Prompt v0.4.6": "CONDITIONAL",
+  "Schema v0.2": "PASS",
+  "Formal Choice Integrity": "PASS",
+  "Fragment Mapping": "PASS",
+  "Personality / Action": "CONDITIONAL",
+  "Thought / Action": "CONDITIONAL",
+  "Unsupported": "CONDITIONAL",
+  "World-language": "PASS",
+  "Publication Gate": "PASS",
+  "Semantic Drift": "PASS",
+  "Cost": "CONDITIONAL",
+  "Latency": "PASS",
+  "Ready for Deterministic Scoring Design": "CONDITIONAL",
+  "recommendation": "B. READY WITH CONDITIONS",
+  "conditions": [
+    "Keep formal morality/disposition and deterministic score ownership program-side.",
+    "Do not consume recognized_action_claims in deterministic scoring until Personality/Relationship taxonomy is corrected or explicitly filtered.",
+    "Define thought_action_distinction behavior when no Thought evidence is actually used before scoring consumes this enum.",
+    "Re-run factual-invention/unsupported true-positive coverage on final Prompt v0.4.6 (for example MR13/MR25-class inputs) before claiming the final candidate's Unsupported subsystem is fully validated.",
+    "Before claiming full current-candidate multi-route coverage, run a small v0.4.6 good/mixed/evil coverage set or keep that capability marked conditional.",
+    "Retain machine + human world-language publication gates."
+  ],
+  "reasoning": {
+    "day7_canonical_drift": "MR15 same-input drift passes the planned thresholds with no material drift.",
+    "unsupported_gate_reason": "True-positive fabricated-fact splitting was demonstrated on earlier prompt candidates; the final v0.4.6 candidate was not re-run on MR13/MR25-style factual inventions.",
+    "prompt_gate_reason": "v0.4.6 is stable on the final regression and Day7 MR15, but current-candidate coverage is narrower than several claims in the original full Week8 audit.",
+    "semantic_drift_reason": "Five identical input hashes produced identical Fragment sets/roles, formal choices, unsupported boundary and publication status; only non-material tier/emphasis variation occurred."
+  }
+}

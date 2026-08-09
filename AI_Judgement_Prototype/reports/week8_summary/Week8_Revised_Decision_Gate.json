@@ -1,0 +1,197 @@
+{
+  "gate_version": "0.1",
+  "experiment_id": "Week8.Day7.Drift.MR15.001",
+  "Case Design": "PASS",
+  "Report Contract": "PASS",
+  "Prompt v0.4.6": "PASS",
+  "Schema v0.2": "PASS",
+  "Formal Choice Integrity": "PASS",
+  "Fragment Mapping": "PASS",
+  "Personality / Action": "CONDITIONAL",
+  "Thought / Action": "CONDITIONAL",
+  "Unsupported": "PASS",
+  "World-language": "PASS",
+  "Publication Gate": "PASS",
+  "Semantic Drift": "CONDITIONAL",
+  "Cost": "CONDITIONAL — pricing unavailable; token usage recorded without invented pricing",
+  "Latency": "PASS — five calls completed; average 6678.8 ms, median 6411 ms, range 5895–7883 ms",
+  "Ready for Deterministic Scoring Design": "CONDITIONAL",
+  "recommendation": "B. READY WITH CONDITIONS",
+  "conditions": [
+    "Keep formal morality/disposition program-owned.",
+    "Treat AI output as semantic explanation and evidence-role interpretation, not the sole hidden morality scorer.",
+    "Track the recurring three-year integrity action-claim taxonomy boundary.",
+    "Keep Thought/action emphasis variation under human review before deterministic scoring design is finalized.",
+    "Retain machine + human world-language publication gates."
+  ],
+  "metrics": {
+    "overall_drift_label": "acceptable_drift_with_minor_findings",
+    "stable_runs": 0,
+    "minor_drift_runs": 5,
+    "material_drift_runs": 0,
+    "all_validation_passed": true,
+    "all_publication_passed": true,
+    "world_language_status": {
+      "PASS": 5
+    },
+    "fragment_set_frequency": {
+      "Medicine.Action01|Medicine.Outcome01|Medicine.Outcome02|Medicine.Personality01|Medicine.Relationship01": 5
+    },
+    "fragment_inclusion_frequency": {
+      "Medicine.Action01": 5,
+      "Medicine.Outcome01": 5,
+      "Medicine.Outcome02": 5,
+      "Medicine.Personality01": 5,
+      "Medicine.Relationship01": 5
+    },
+    "fragment_role_frequency": {
+      "context": 5,
+      "core_support": 10,
+      "counterevidence": 10
+    },
+    "pairwise_jaccard": [
+      {
+        "left_repeat": 1,
+        "right_repeat": 2,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 1,
+        "right_repeat": 3,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 1,
+        "right_repeat": 4,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 1,
+        "right_repeat": 5,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 2,
+        "right_repeat": 3,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 2,
+        "right_repeat": 4,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 2,
+        "right_repeat": 5,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 3,
+        "right_repeat": 4,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 3,
+        "right_repeat": 5,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 4,
+        "right_repeat": 5,
+        "jaccard": 1.0
+      }
+    ],
+    "pairwise_jaccard_average": 1.0,
+    "unsupported_count_distribution": {
+      "0": 5
+    },
+    "unsupported_severity_distribution": {},
+    "personality_action_relation_distribution": {
+      "plausible": 5
+    },
+    "thought_action_distinction_distribution": {
+      "clear": 2,
+      "partial": 3
+    },
+    "contradiction_handling_distribution": {
+      "integrated": 5
+    },
+    "moral_reasoning_tier_distribution": {
+      "adequate": 2,
+      "strong": 3
+    },
+    "disposition_consistency_tier_distribution": {
+      "strong": 5
+    },
+    "rhetoric_tier_distribution": {
+      "adequate": 5
+    },
+    "outcome02_inclusion_count": 5,
+    "thought01_unexpected_inclusion_count": 0,
+    "security_commentary_residue_count": 0,
+    "action_claim_taxonomy_issue_count": 5,
+    "judge_response_unique_count": 5,
+    "archive_summary_unique_count": 5,
+    "judge_response_length": {
+      "min": 70,
+      "max": 116,
+      "average": 91.6
+    },
+    "archive_summary_length": {
+      "min": 57,
+      "max": 74,
+      "average": 66.8
+    },
+    "judge_response_question_count": 0,
+    "judge_response_opening_prefix_unique_count": 1,
+    "latency_ms": {
+      "sum": 33394,
+      "average": 6678.8,
+      "median": 6411,
+      "min": 5895,
+      "max": 7883
+    },
+    "usage": {
+      "prompt_tokens": {
+        "sum": 22675,
+        "average": 4535,
+        "median": 4535,
+        "min": 4535,
+        "max": 4535
+      },
+      "completion_tokens": {
+        "sum": 3057,
+        "average": 611.4,
+        "median": 575,
+        "min": 571,
+        "max": 701
+      },
+      "total_tokens": {
+        "sum": 25732,
+        "average": 5146.4,
+        "median": 5110,
+        "min": 5106,
+        "max": 5236
+      },
+      "prompt_cache_hit_tokens": {
+        "sum": 22400,
+        "average": 4480,
+        "median": 4480,
+        "min": 4480,
+        "max": 4480
+      },
+      "prompt_cache_miss_tokens": {
+        "sum": 275,
+        "average": 55,
+        "median": 55,
+        "min": 55,
+        "max": 55
+      }
+    }
+  },
+  "no_deterministic_score_implemented": true,
+  "no_ue_integration": true,
+  "no_commit": true,
+  "no_push": true,
+  "api_key_never_exposed": true
+}

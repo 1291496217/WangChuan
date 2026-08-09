@@ -1,0 +1,102 @@
+{
+  "audit_version": "0.1",
+  "audit_type": "full_week8b_semantic_consolidation",
+  "current_candidate": {
+    "prompt": "0.4.6",
+    "schema": "0.2",
+    "runtime_contract": "0.2",
+    "language_audit": "0.3",
+    "judge": "Judge.Clerk.001 v0.1"
+  },
+  "historical_superseded_candidates": [
+    "Prompt v0.4",
+    "v0.4.1",
+    "v0.4.2",
+    "v0.4.3",
+    "v0.4.4",
+    "v0.4.5"
+  ],
+  "historical_boundary": "v0.4-v0.4.5 are development evidence and not current candidate-quality evidence",
+  "day6_final": {
+    "reports": [
+      "MR08",
+      "MR15",
+      "MR28"
+    ],
+    "validated": "3/3",
+    "formal_choice": "PASS",
+    "world_language": "PASS",
+    "remaining_observations": [
+      "non-blocking three-year integrity action-claim taxonomy residue",
+      "style variation tracked in Day7"
+    ]
+  },
+  "day7": {
+    "validated": "5/5",
+    "published": "5/5",
+    "formal_choice": "5/5 preserved",
+    "fragment_selectivity": "5/5 selective five-fragment set; no six-fragment expansion",
+    "outcome02": "5/5 included",
+    "thought01": "0/5 included",
+    "unsupported": "0/5 unsupported assumptions",
+    "machine_and_human_language": "5/5 PASS",
+    "human_audit": {
+      "formal_choice_integrity": "PASS 5/5",
+      "fragment_set_stability": "PASS 5/5 identical unordered set",
+      "fragment_role_stability": "PASS 5/5 expected directions",
+      "core_story_semantic_integrity": "PASS 5/5: unauthorized last-medicine removal, genuine child benefit, real resource cost, non-family aid/long-term honesty and non-erased responsibility remain intact",
+      "used_but_not_selected_stability": "PASS 5/5 Outcome02 recalled; Thought01 absent",
+      "unsupported_stability": "PASS 5/5 empty",
+      "personality_stability": "PASS 5/5 plausible/contextual",
+      "thought_stability": "CONDITIONAL: clear 2/5, partial 3/5; no unjustified Thought01 mapping",
+      "moral_reasoning_stability": "CONDITIONAL: strong 3/5, adequate 2/5; formal choice unchanged",
+      "disposition_stability": "PASS 5/5 strong",
+      "rhetoric_stability": "PASS 5/5 adequate with natural sentence variation",
+      "judge_response_diversity": "5 unique responses; diversity is surface/prose variation, not semantic drift",
+      "archive_summary_diversity": "5 unique summaries; all preserve the same decision and evidence boundary",
+      "security_commentary_residue": "PASS 0/5",
+      "action_claim_taxonomy": "CONDITIONAL: three-year integrity/context is repeatedly classified as an action claim; track for future taxonomy refinement",
+      "overall": "stable_semantic_minor_nonblocking_variation"
+    }
+  },
+  "week8_questions": {
+    "1_case_multiple_moral_interpretations": "PASS: the corpus intentionally includes mixed, compassionate, rhetorical, sophistic and adversarial arguments.",
+    "2_no_hidden_truth_claims": "PASS: AI returns interpretation, not a hidden correct morality or true life story.",
+    "3_formal_moral_preserved": "PASS: program-owned choice is preserved in all current candidate samples.",
+    "4_formal_disposition_preserved": "PASS: program-owned disposition is preserved in all current candidate samples.",
+    "5_fragment_mapping_follows_player_use": "PASS for Day7 MR15 5/5; older candidates are explicitly historical.",
+    "6_used_unselected_recognized": "PASS: Outcome02 recalled 5/5 from player clauses.",
+    "7_personality_context": "PASS: Personality01 remains contextual, not direct moral proof.",
+    "8_thought_vs_action": "CONDITIONAL: no unjustified Thought01 mapping; clear/partial explanation varies.",
+    "9_evidence_backed_possibilities": "PASS: no unsupported assumptions in the five Day7 outputs.",
+    "10_factual_inventions_caught": "PASS in current regression and corpus tests; continue adversarial monitoring.",
+    "11_independent_unsupported_split": "PASS in prior correction evidence; Day7 had none to split.",
+    "12_medicine_causality": "PASS: no new medical certainty beyond the case material in Day7.",
+    "13_doorknife_certainty": "PASS in final MR08 regression; no new DoorKnife call was needed for Day7.",
+    "14_judge_world_internal": "PASS 5/5 human and machine language audit.",
+    "15_adversarial_safe_failure": "PASS in final MR28 regression; formal choice and safety flags remain separate.",
+    "16_publication_gate": "PASS: Language WARNING would remain raw-only and blocked.",
+    "17_same_input_drift": "CONDITIONAL: semantic core stable; tier/emphasis variation is minor and observable.",
+    "18_ordinary_transfer": "SUBSTANTIVE but can be safe-biased when evidence is weak; see design check.",
+    "19_strong_vs_weak_reports": "PASS: corpus and current outputs expose differences in reasoning quality without changing program-owned choice.",
+    "20_architecture_stage": "PASS: program core plus AI semantic explanation remains appropriately simple for prototype stage."
+  },
+  "ordinary_transfer_design_check": {
+    "source_reports": [
+      "MR03",
+      "MR17",
+      "MR04",
+      "MR18",
+      "MR26"
+    ],
+    "api_calls": 0,
+    "judgement": "substantive_but_safe_biased",
+    "reason": "MR03 and MR17 use ordinary_transfer for a genuine mixed-merit balance; MR04/MR18 explicitly use it as a cautious hedge, while MR26 shows rhetoric can pair a harsher moral reading with transfer. It is not merely thoughtless, but weak/uncertain arguments can make it a safe refuge."
+  },
+  "deterministic_scoring_recommendation": "B",
+  "expected_revised_controlled_attempts": 39,
+  "no_automatic_retry": true,
+  "no_prompt_edit_during_drift": true,
+  "no_deterministic_score_implemented": true,
+  "no_ue_integration": true
+}

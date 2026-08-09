@@ -1,0 +1,30 @@
+{
+  "experiment_id": "Week8.Day7.Drift.MR15.001",
+  "freeze_point": "2026-08-09 pre-call gate",
+  "frozen_artifacts": {
+    "prompts/prompt_v0_4_6.md": "3b45ab0282d0e6e253fd811ad969ce6c113669c842c56fc8c13f620fd34ba72d",
+    "schemas/judgement_result_v0_2.json": "8a523de1c263a63d5d915e134b6dbcb99fd927a7c21b85b96081ad91df575d98",
+    "contracts/runtime_contract_v0_2.md": "713c8520d93479ac053dc0d011891a0cfea9cb8549935f786361888263640653",
+    "src/audit_game_language_v0_3.py": "52792c7effba9a2d983f05b9ab9b46ac97f940a663413e794273b5ca82fc1d8d",
+    "cases/case_medicine_001.json": "26077c5fbb7c46435a689e2b6ea2bf293d29ac6df6f087a49b4a123ef3554155",
+    "judges/judge_clerk_001.json": "13e3d41b493e9d33f876621f70e25f1cb47e78679cbccf693e232625cabb3a9a",
+    "reports/corpus_moral_week8b/MR15_medicine_rigorous_rebirth.md": "6a27e892c5d79f85f361ae098bfdd4fcee807d989d00ae0d6f41f2b73577b904"
+  },
+  "runtime_settings": {
+    "provider": "deepseek",
+    "temperature": 0.2,
+    "thinking": "disabled",
+    "stream": false,
+    "retry": false,
+    "history": false,
+    "memory": false,
+    "model": "deepseek-v4-flash"
+  },
+  "report": {
+    "report_id": "MR15",
+    "case_id": "Case.Medicine.001",
+    "moral_judgement_id": "more_good_than_evil",
+    "disposition_id": "recommend_rebirth",
+    "repeat_count": 5
+  }
+}

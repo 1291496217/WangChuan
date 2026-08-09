@@ -1,0 +1,622 @@
+{
+  "analyzer": "analyze_semantic_drift_v0_1",
+  "analyzer_mode": "local_deterministic_no_api",
+  "experiment_id": "Week8.Day7.Drift.MR15.001",
+  "results_root": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\results\\week8b_day7_drift_mr15_v0_1",
+  "expected_repeat_count": 5,
+  "validated_repeat_count": 5,
+  "raw_nonvalidated_count": 0,
+  "raw_nonvalidated_paths": [],
+  "run_records": [
+    {
+      "repeat_index": 1,
+      "run_id": "20260809T151629404116Z_5e37123b",
+      "source_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\results\\week8b_day7_drift_mr15_v0_1\\validated\\20260809T151629404116Z_5e37123b.json",
+      "validation_passed": true,
+      "publication_passed": true,
+      "case_id": "Case.Medicine.001",
+      "formal_moral_judgement_id": "more_good_than_evil",
+      "formal_disposition_id": "recommend_rebirth",
+      "core_story": "亡魂夜间从药铺取走最后一包定喘散，未登记未付钱；药被送至河边棚屋，一名喘息急促的孩子服药后呼吸缓和。次日清晨，药铺因无药未能给另一病人配药，该病人归途发作被抬回。亡魂在药铺工作三年，账目清白，从未私取药材；取药前他已知是最后一包，也想过天亮后可能有人来求药。孩子的母亲称他们并非亲故，亡魂去年见过孩子发病，曾答应若再遇到有药时会送来。",
+      "fragment_ids": [
+        "Medicine.Action01",
+        "Medicine.Outcome01",
+        "Medicine.Outcome02",
+        "Medicine.Personality01",
+        "Medicine.Relationship01"
+      ],
+      "fragment_roles": [
+        {
+          "fragment_id": "Medicine.Action01",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Outcome01",
+          "role": "core_support"
+        },
+        {
+          "fragment_id": "Medicine.Outcome02",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Personality01",
+          "role": "context"
+        },
+        {
+          "fragment_id": "Medicine.Relationship01",
+          "role": "core_support"
+        }
+      ],
+      "missing_fragment_ids": [
+        "Medicine.Thought01"
+      ],
+      "unexpected_fragment_ids": [],
+      "full_case_six_fragment_expansion": false,
+      "thought01_included": false,
+      "role_direction_issues": {},
+      "unsupported_count": 0,
+      "unsupported_assumptions": [],
+      "unsupported_severity": {},
+      "personality_action_relation": "plausible",
+      "thought_action_distinction": "partial",
+      "contradiction_handling": "integrated",
+      "moral_reasoning_tier": "strong",
+      "disposition_consistency_tier": "strong",
+      "rhetoric_tier": "adequate",
+      "internal_safety_flags": [],
+      "recognized_action_claims": [
+        "亡魂未经登记取走最后一包药",
+        "孩子服药后呼吸缓和",
+        "亡魂三年账目清白，从未私取药材",
+        "亡魂救助的并非亲属"
+      ],
+      "recognized_motive_claims": [
+        "救人动机较重",
+        "三年诚信支持这更像一次紧急选择"
+      ],
+      "action_claim_taxonomy_issue": true,
+      "security_commentary_residue_terms": [],
+      "world_language_status": "PASS",
+      "world_language_warnings": [],
+      "judge_response": "呈文所陈，擅取之责与救人之善并置，判善多于恶，荐生，并记明擅取责任。所引三年诚信与救助非亲故，皆可支撑救人动机；然善果不能抹去资源代价，此点已明。惟呈文未及取药前之思虑，若补此节，则论证更全。",
+      "archive_summary": "呈文人主张亡魂擅取有责，但救助非亲故且孩子好转，三年诚信支持紧急选择，善果更实，判善多于恶，荐生并记责。论证兼顾代价与善果，惟未及取药前之预见。",
+      "judge_response_characters": 96,
+      "archive_summary_characters": 72,
+      "drift_label": "minor_drift",
+      "material_drift_reasons": [],
+      "minor_drift_reasons": [
+        "fragment_coverage_varies",
+        "action_claim_taxonomy_boundary"
+      ],
+      "usage": {
+        "prompt_tokens": 4535,
+        "completion_tokens": 701,
+        "total_tokens": 5236,
+        "prompt_cache_hit_tokens": 4480,
+        "prompt_cache_miss_tokens": 55,
+        "reasoning_tokens": null
+      },
+      "elapsed_ms": 7883
+    },
+    {
+      "repeat_index": 2,
+      "run_id": "20260809T151640260016Z_0777a120",
+      "source_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\results\\week8b_day7_drift_mr15_v0_1\\validated\\20260809T151640260016Z_0777a120.json",
+      "validation_passed": true,
+      "publication_passed": true,
+      "case_id": "Case.Medicine.001",
+      "formal_moral_judgement_id": "more_good_than_evil",
+      "formal_disposition_id": "recommend_rebirth",
+      "core_story": "亡魂夜取药铺最后一包定喘散，未登记未付钱；药救了一个喘息的孩子，但次日药铺缺药致另一病人发作。亡魂三年账目清白，且曾答应孩子母亲若再有药会送来。",
+      "fragment_ids": [
+        "Medicine.Action01",
+        "Medicine.Outcome01",
+        "Medicine.Outcome02",
+        "Medicine.Personality01",
+        "Medicine.Relationship01"
+      ],
+      "fragment_roles": [
+        {
+          "fragment_id": "Medicine.Action01",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Outcome01",
+          "role": "core_support"
+        },
+        {
+          "fragment_id": "Medicine.Outcome02",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Personality01",
+          "role": "context"
+        },
+        {
+          "fragment_id": "Medicine.Relationship01",
+          "role": "core_support"
+        }
+      ],
+      "missing_fragment_ids": [
+        "Medicine.Thought01"
+      ],
+      "unexpected_fragment_ids": [],
+      "full_case_six_fragment_expansion": false,
+      "thought01_included": false,
+      "role_direction_issues": {},
+      "unsupported_count": 0,
+      "unsupported_assumptions": [],
+      "unsupported_severity": {},
+      "personality_action_relation": "plausible",
+      "thought_action_distinction": "clear",
+      "contradiction_handling": "integrated",
+      "moral_reasoning_tier": "strong",
+      "disposition_consistency_tier": "strong",
+      "rhetoric_tier": "adequate",
+      "internal_safety_flags": [],
+      "recognized_action_claims": [
+        "亡魂未经登记取走最后一包药",
+        "孩子服药后呼吸缓了下来",
+        "亡魂三年账目从未少过一文"
+      ],
+      "recognized_motive_claims": [
+        "救助非亲非故的孩子",
+        "救人动机较重"
+      ],
+      "action_claim_taxonomy_issue": true,
+      "security_commentary_residue_terms": [],
+      "world_language_status": "PASS",
+      "world_language_warnings": [],
+      "judge_response": "呈文所陈，擅取之责与救人之善并置，未以善果掩过，亦未因旧日清白而免其责。三年诚信与应诺送药，皆可佐证救人动机之实。然药铺缺药致他人发作一节，虽未明言，亦在善果不能抹去资源代价一语之中。判善多于恶，荐生，并记擅取之责，处置与论证相符。",
+      "archive_summary": "呈文人主张亡魂擅取有责，但救助非亲非故的孩子且三年诚信，救人动机较重；善果不能抹去资源代价，故判善多于恶，荐生并记责。论证兼顾责任与善果，处置一致。",
+      "judge_response_characters": 116,
+      "archive_summary_characters": 74,
+      "drift_label": "minor_drift",
+      "material_drift_reasons": [],
+      "minor_drift_reasons": [
+        "fragment_coverage_varies",
+        "action_claim_taxonomy_boundary"
+      ],
+      "usage": {
+        "prompt_tokens": 4535,
+        "completion_tokens": 635,
+        "total_tokens": 5170,
+        "prompt_cache_hit_tokens": 4480,
+        "prompt_cache_miss_tokens": 55,
+        "reasoning_tokens": null
+      },
+      "elapsed_ms": 7220
+    },
+    {
+      "repeat_index": 3,
+      "run_id": "20260809T151652137996Z_8257c248",
+      "source_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\results\\week8b_day7_drift_mr15_v0_1\\validated\\20260809T151652137996Z_8257c248.json",
+      "validation_passed": true,
+      "publication_passed": true,
+      "case_id": "Case.Medicine.001",
+      "formal_moral_judgement_id": "more_good_than_evil",
+      "formal_disposition_id": "recommend_rebirth",
+      "core_story": "亡魂取走最后一包定喘散，未登记未付钱；药救了一个孩子，但导致另一病人缺药发作。亡魂三年诚信，且曾承诺相助。",
+      "fragment_ids": [
+        "Medicine.Action01",
+        "Medicine.Outcome01",
+        "Medicine.Outcome02",
+        "Medicine.Personality01",
+        "Medicine.Relationship01"
+      ],
+      "fragment_roles": [
+        {
+          "fragment_id": "Medicine.Action01",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Outcome01",
+          "role": "core_support"
+        },
+        {
+          "fragment_id": "Medicine.Outcome02",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Personality01",
+          "role": "context"
+        },
+        {
+          "fragment_id": "Medicine.Relationship01",
+          "role": "core_support"
+        }
+      ],
+      "missing_fragment_ids": [
+        "Medicine.Thought01"
+      ],
+      "unexpected_fragment_ids": [],
+      "full_case_six_fragment_expansion": false,
+      "thought01_included": false,
+      "role_direction_issues": {},
+      "unsupported_count": 0,
+      "unsupported_assumptions": [],
+      "unsupported_severity": {},
+      "personality_action_relation": "plausible",
+      "thought_action_distinction": "partial",
+      "contradiction_handling": "integrated",
+      "moral_reasoning_tier": "adequate",
+      "disposition_consistency_tier": "strong",
+      "rhetoric_tier": "adequate",
+      "internal_safety_flags": [],
+      "recognized_action_claims": [
+        "亡魂未经登记取走最后一包药",
+        "孩子服药后好转",
+        "亡魂有三年诚信记录"
+      ],
+      "recognized_motive_claims": [
+        "救助非亲属的孩子",
+        "救人动机较重"
+      ],
+      "action_claim_taxonomy_issue": true,
+      "security_commentary_residue_terms": [],
+      "world_language_status": "PASS",
+      "world_language_warnings": [],
+      "judge_response": "呈文所陈，擅取之过与救人之实并见。你既认越界之责，又举非亲救助与三年诚信为凭，判善多于恶，荐生并记责，处置与论证相合。然资源代价一节，你虽言善果不能抹去，却未深究另一病人缺药之苦，此点尚可再酌。",
+      "archive_summary": "呈文人主张亡魂取药有过，但救助非亲且三年诚信，救人动机较重，判善多于恶，荐生并记责。已承认资源代价，但未充分展开。",
+      "judge_response_characters": 97,
+      "archive_summary_characters": 57,
+      "drift_label": "minor_drift",
+      "material_drift_reasons": [],
+      "minor_drift_reasons": [
+        "fragment_coverage_varies",
+        "action_claim_taxonomy_boundary"
+      ],
+      "usage": {
+        "prompt_tokens": 4535,
+        "completion_tokens": 575,
+        "total_tokens": 5110,
+        "prompt_cache_hit_tokens": 4480,
+        "prompt_cache_miss_tokens": 55,
+        "reasoning_tokens": null
+      },
+      "elapsed_ms": 6411
+    },
+    {
+      "repeat_index": 4,
+      "run_id": "20260809T151702933671Z_6e8f219b",
+      "source_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\results\\week8b_day7_drift_mr15_v0_1\\validated\\20260809T151702933671Z_6e8f219b.json",
+      "validation_passed": true,
+      "publication_passed": true,
+      "case_id": "Case.Medicine.001",
+      "formal_moral_judgement_id": "more_good_than_evil",
+      "formal_disposition_id": "recommend_rebirth",
+      "core_story": "亡魂取走药铺最后一包定喘散，未登记未付钱；药救了一个孩子的喘息，但次日药铺缺药致另一病人发作。亡魂三年诚信，且与孩子非亲故，曾答应送药。",
+      "fragment_ids": [
+        "Medicine.Action01",
+        "Medicine.Outcome01",
+        "Medicine.Outcome02",
+        "Medicine.Personality01",
+        "Medicine.Relationship01"
+      ],
+      "fragment_roles": [
+        {
+          "fragment_id": "Medicine.Action01",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Outcome01",
+          "role": "core_support"
+        },
+        {
+          "fragment_id": "Medicine.Outcome02",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Personality01",
+          "role": "context"
+        },
+        {
+          "fragment_id": "Medicine.Relationship01",
+          "role": "core_support"
+        }
+      ],
+      "missing_fragment_ids": [
+        "Medicine.Thought01"
+      ],
+      "unexpected_fragment_ids": [],
+      "full_case_six_fragment_expansion": false,
+      "thought01_included": false,
+      "role_direction_issues": {},
+      "unsupported_count": 0,
+      "unsupported_assumptions": [],
+      "unsupported_severity": {},
+      "personality_action_relation": "plausible",
+      "thought_action_distinction": "clear",
+      "contradiction_handling": "integrated",
+      "moral_reasoning_tier": "strong",
+      "disposition_consistency_tier": "strong",
+      "rhetoric_tier": "adequate",
+      "internal_safety_flags": [],
+      "recognized_action_claims": [
+        "亡魂未经登记取走最后一包药",
+        "孩子服药后呼吸缓了下来",
+        "亡魂三年账目从未少过一文"
+      ],
+      "recognized_motive_claims": [
+        "救助非亲属的孩子",
+        "救人动机较重"
+      ],
+      "action_claim_taxonomy_issue": true,
+      "security_commentary_residue_terms": [],
+      "world_language_status": "PASS",
+      "world_language_warnings": [],
+      "judge_response": "呈文所陈，擅取之责与救人之实俱在。你既认越界，又举非亲救助与三年诚信，善果虽不能抹去资源代价，但救人动机较重，判善多于恶，荐生并记明擅取责任，处置与论证相符。",
+      "archive_summary": "呈文人主张亡魂取药有责，但救助非亲且三年诚信，善果更实，判善多于恶，荐生并记明擅取责任。材料对应完整，矛盾已整合。",
+      "judge_response_characters": 79,
+      "archive_summary_characters": 57,
+      "drift_label": "minor_drift",
+      "material_drift_reasons": [],
+      "minor_drift_reasons": [
+        "fragment_coverage_varies",
+        "action_claim_taxonomy_boundary"
+      ],
+      "usage": {
+        "prompt_tokens": 4535,
+        "completion_tokens": 575,
+        "total_tokens": 5110,
+        "prompt_cache_hit_tokens": 4480,
+        "prompt_cache_miss_tokens": 55,
+        "reasoning_tokens": null
+      },
+      "elapsed_ms": 5895
+    },
+    {
+      "repeat_index": 5,
+      "run_id": "20260809T151712312505Z_7b549a24",
+      "source_path": "C:\\Users\\sunji\\UnrealProjects\\WangChuan\\AI_Judgement_Prototype\\results\\week8b_day7_drift_mr15_v0_1\\validated\\20260809T151712312505Z_7b549a24.json",
+      "validation_passed": true,
+      "publication_passed": true,
+      "case_id": "Case.Medicine.001",
+      "formal_moral_judgement_id": "more_good_than_evil",
+      "formal_disposition_id": "recommend_rebirth",
+      "core_story": "亡魂未经登记取走药铺最后一包定喘散，孩子服药后好转，但另一病人因缺药发作。亡魂三年诚信，且与孩子非亲故，曾承诺送药。",
+      "fragment_ids": [
+        "Medicine.Action01",
+        "Medicine.Outcome01",
+        "Medicine.Outcome02",
+        "Medicine.Personality01",
+        "Medicine.Relationship01"
+      ],
+      "fragment_roles": [
+        {
+          "fragment_id": "Medicine.Action01",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Outcome01",
+          "role": "core_support"
+        },
+        {
+          "fragment_id": "Medicine.Outcome02",
+          "role": "counterevidence"
+        },
+        {
+          "fragment_id": "Medicine.Personality01",
+          "role": "context"
+        },
+        {
+          "fragment_id": "Medicine.Relationship01",
+          "role": "core_support"
+        }
+      ],
+      "missing_fragment_ids": [
+        "Medicine.Thought01"
+      ],
+      "unexpected_fragment_ids": [],
+      "full_case_six_fragment_expansion": false,
+      "thought01_included": false,
+      "role_direction_issues": {},
+      "unsupported_count": 0,
+      "unsupported_assumptions": [],
+      "unsupported_severity": {},
+      "personality_action_relation": "plausible",
+      "thought_action_distinction": "partial",
+      "contradiction_handling": "integrated",
+      "moral_reasoning_tier": "adequate",
+      "disposition_consistency_tier": "strong",
+      "rhetoric_tier": "adequate",
+      "internal_safety_flags": [],
+      "recognized_action_claims": [
+        "亡魂未经登记取走最后一包药",
+        "孩子服药后呼吸缓了下来",
+        "亡魂与孩子并非亲故"
+      ],
+      "recognized_motive_claims": [
+        "救人动机较重"
+      ],
+      "action_claim_taxonomy_issue": true,
+      "security_commentary_residue_terms": [],
+      "world_language_status": "PASS",
+      "world_language_warnings": [],
+      "judge_response": "呈文所陈，擅取之责与救人之实并见。善果虽实，不能掩去资源代价，此点已明。三年诚信与救助非亲故，足见动机之重。判善多于恶，荐生，并记擅取之责。",
+      "archive_summary": "呈文人主张亡魂取药有越界之责，但救助非亲故且孩子好转，三年诚信支持紧急选择。善果不能抹去资源代价，整体救人动机较重。判善多于恶，荐生，记明擅取责任。",
+      "judge_response_characters": 70,
+      "archive_summary_characters": 74,
+      "drift_label": "minor_drift",
+      "material_drift_reasons": [],
+      "minor_drift_reasons": [
+        "fragment_coverage_varies",
+        "action_claim_taxonomy_boundary"
+      ],
+      "usage": {
+        "prompt_tokens": 4535,
+        "completion_tokens": 571,
+        "total_tokens": 5106,
+        "prompt_cache_hit_tokens": 4480,
+        "prompt_cache_miss_tokens": 55,
+        "reasoning_tokens": null
+      },
+      "elapsed_ms": 5985
+    }
+  ],
+  "aggregate": {
+    "overall_drift_label": "acceptable_drift_with_minor_findings",
+    "stable_runs": 0,
+    "minor_drift_runs": 5,
+    "material_drift_runs": 0,
+    "all_validation_passed": true,
+    "all_publication_passed": true,
+    "world_language_status": {
+      "PASS": 5
+    },
+    "fragment_set_frequency": {
+      "Medicine.Action01|Medicine.Outcome01|Medicine.Outcome02|Medicine.Personality01|Medicine.Relationship01": 5
+    },
+    "fragment_inclusion_frequency": {
+      "Medicine.Action01": 5,
+      "Medicine.Outcome01": 5,
+      "Medicine.Outcome02": 5,
+      "Medicine.Personality01": 5,
+      "Medicine.Relationship01": 5
+    },
+    "fragment_role_frequency": {
+      "context": 5,
+      "core_support": 10,
+      "counterevidence": 10
+    },
+    "pairwise_jaccard": [
+      {
+        "left_repeat": 1,
+        "right_repeat": 2,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 1,
+        "right_repeat": 3,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 1,
+        "right_repeat": 4,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 1,
+        "right_repeat": 5,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 2,
+        "right_repeat": 3,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 2,
+        "right_repeat": 4,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 2,
+        "right_repeat": 5,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 3,
+        "right_repeat": 4,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 3,
+        "right_repeat": 5,
+        "jaccard": 1.0
+      },
+      {
+        "left_repeat": 4,
+        "right_repeat": 5,
+        "jaccard": 1.0
+      }
+    ],
+    "pairwise_jaccard_average": 1.0,
+    "unsupported_count_distribution": {
+      "0": 5
+    },
+    "unsupported_severity_distribution": {},
+    "personality_action_relation_distribution": {
+      "plausible": 5
+    },
+    "thought_action_distinction_distribution": {
+      "clear": 2,
+      "partial": 3
+    },
+    "contradiction_handling_distribution": {
+      "integrated": 5
+    },
+    "moral_reasoning_tier_distribution": {
+      "adequate": 2,
+      "strong": 3
+    },
+    "disposition_consistency_tier_distribution": {
+      "strong": 5
+    },
+    "rhetoric_tier_distribution": {
+      "adequate": 5
+    },
+    "outcome02_inclusion_count": 5,
+    "thought01_unexpected_inclusion_count": 0,
+    "security_commentary_residue_count": 0,
+    "action_claim_taxonomy_issue_count": 5,
+    "judge_response_unique_count": 5,
+    "archive_summary_unique_count": 5,
+    "judge_response_length": {
+      "min": 70,
+      "max": 116,
+      "average": 91.6
+    },
+    "archive_summary_length": {
+      "min": 57,
+      "max": 74,
+      "average": 66.8
+    },
+    "judge_response_question_count": 0,
+    "judge_response_opening_prefix_unique_count": 1,
+    "latency_ms": {
+      "sum": 33394,
+      "average": 6678.8,
+      "median": 6411,
+      "min": 5895,
+      "max": 7883
+    },
+    "usage": {
+      "prompt_tokens": {
+        "sum": 22675,
+        "average": 4535,
+        "median": 4535,
+        "min": 4535,
+        "max": 4535
+      },
+      "completion_tokens": {
+        "sum": 3057,
+        "average": 611.4,
+        "median": 575,
+        "min": 571,
+        "max": 701
+      },
+      "total_tokens": {
+        "sum": 25732,
+        "average": 5146.4,
+        "median": 5110,
+        "min": 5106,
+        "max": 5236
+      },
+      "prompt_cache_hit_tokens": {
+        "sum": 22400,
+        "average": 4480,
+        "median": 4480,
+        "min": 4480,
+        "max": 4480
+      },
+      "prompt_cache_miss_tokens": {
+        "sum": 275,
+        "average": 55,
+        "median": 55,
+        "min": 55,
+        "max": 55
+      }
+    }
+  }
+}
