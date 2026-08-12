@@ -90,7 +90,10 @@ void AWCGhostAIController::Tick(float DeltaSeconds)
 		BeginReturnHome();
 		GetWorldTimerManager().SetTimer(LeashHysteresisTimerHandle, this,
 			&AWCGhostAIController::FinishLeashHysteresis, 1.0f, false);
+		return;
 	}
+
+	RecoverInterruptedChaseMove();
 }
 
 void AWCGhostAIController::OnMoveCompleted(FAIRequestID RequestID,
@@ -122,6 +125,20 @@ void AWCGhostAIController::OnMoveCompleted(FAIRequestID RequestID,
 		{
 			GetWorldTimerManager().SetTimer(MoveRetryTimerHandle, this,
 				&AWCGhostAIController::RetryReturnHome, 0.5f, false);
+		}
+	}
+	else if (GhostPawn->GetAIState() == EGhostAIState::Chasing &&
+		!GhostPawn->GetIsHitReacting() && !GhostPawn->GetIsAttacking() &&
+		(Result.Code == EPathFollowingResult::Blocked ||
+			Result.Code == EPathFollowingResult::OffPath ||
+			Result.Code == EPathFollowingResult::Invalid))
+	{
+		// A MoveTo request can be accepted and fail asynchronously. Pace the
+		// recovery so a blocked target cannot cause a request every frame.
+		if (!GetWorldTimerManager().IsTimerActive(MoveRetryTimerHandle))
+		{
+			GetWorldTimerManager().SetTimer(MoveRetryTimerHandle, this,
+				&AWCGhostAIController::RetryChaseMove, 0.5f, false);
 		}
 	}
 }
@@ -361,9 +378,35 @@ void AWCGhostAIController::IssueChaseMove()
 	}
 }
 
+void AWCGhostAIController::RecoverInterruptedChaseMove()
+{
+	if (!GhostPawn || GhostPawn->GetAIState() != EGhostAIState::Chasing ||
+		GhostPawn->GetIsHitReacting() || GhostPawn->GetIsAttacking() ||
+		!bCurrentlySeesPlayer || !IsTargetUsable() ||
+		GetWorldTimerManager().IsTimerActive(MoveRetryTimerHandle))
+	{
+		return;
+	}
+
+	const UPathFollowingComponent* PathFollowing = GetPathFollowingComponent();
+	if (!PathFollowing ||
+		PathFollowing->GetStatus() != EPathFollowingStatus::Idle ||
+		FVector::Dist2D(GhostPawn->GetActorLocation(), TargetPlayer->GetActorLocation()) <=
+			GhostPawn->AttackRange)
+	{
+		return;
+	}
+
+	// StopMovement during hit reaction aborts the active path. A request that
+	// was accepted after recovery can also finish later as Blocked or OffPath.
+	// Both cases leave the Pawn in Chasing with an idle path follower.
+	IssueChaseMove();
+}
+
 void AWCGhostAIController::RetryChaseMove()
 {
 	if (GhostPawn && GhostPawn->GetAIState() == EGhostAIState::Chasing &&
+		!GhostPawn->GetIsHitReacting() && !GhostPawn->GetIsAttacking() &&
 		bCurrentlySeesPlayer && IsTargetUsable())
 	{
 		IssueChaseMove();

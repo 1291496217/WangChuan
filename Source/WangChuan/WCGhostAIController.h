@@ -75,6 +75,7 @@ private:
 	void FinishInvestigation();
 	void FinishLeashHysteresis();
 	void IssueChaseMove();
+	void RecoverInterruptedChaseMove();
 	void RetryChaseMove();
 	void RetryReturnHome();
 	void ClearAITimers();

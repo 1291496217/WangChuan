@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "NavigationSystem.h"
 
 AGhostEnemy::AGhostEnemy()
 {
@@ -243,7 +244,30 @@ void AGhostEnemy::ApplyKnockback(FVector KnockbackDirection, float KnockbackStre
 		return;
 	}
 
-	SetActorLocation(GetActorLocation() + KnockbackDirection * KnockbackStrength, true);
+	const FVector CurrentLocation = GetActorLocation();
+	FVector SafeDestination = CurrentLocation + KnockbackDirection * KnockbackStrength;
+
+	if (UNavigationSystemV1* NavigationSystem =
+		UNavigationSystemV1::GetCurrent(GetWorld()))
+	{
+		FNavLocation ProjectedDestination;
+		if (!NavigationSystem->ProjectPointToNavigation(
+			SafeDestination, ProjectedDestination, FVector(200.0f, 200.0f, 300.0f)))
+		{
+			if (bShowAIDebug)
+			{
+				UE_LOG(LogTemp, Warning,
+					TEXT("Ghost [%s] rejected knockback destination outside NavMesh: %s"),
+					*GetName(), *SafeDestination.ToCompactString());
+			}
+			return;
+		}
+
+		SafeDestination.X = ProjectedDestination.Location.X;
+		SafeDestination.Y = ProjectedDestination.Location.Y;
+	}
+
+	SetActorLocation(SafeDestination, true);
 }
 
 AWCCharacter* AGhostEnemy::GetPlayerCharacter() const
