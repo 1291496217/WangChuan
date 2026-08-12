@@ -5,7 +5,7 @@
 #include "TutorialLevelTransitionTrigger.generated.h"
 
 class APlayerController;
-class AWCTutorialGate;
+class AWCProgressionGate;
 class UBoxComponent;
 
 UCLASS()
@@ -24,7 +24,7 @@ protected:
 	TObjectPtr<UBoxComponent> TransitionBox;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Tutorial Transition")
-	TObjectPtr<AWCTutorialGate> RequiredOpenGate;
+	TObjectPtr<AWCProgressionGate> RequiredOpenGate;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tutorial Transition")
 	FName TargetLevelName = TEXT("LandTemple_Prologue_Greybox");

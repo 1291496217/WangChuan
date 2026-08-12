@@ -1,6 +1,6 @@
 #include "TutorialLevelTransitionTrigger.h"
 
-#include "WCTutorialGate.h"
+#include "WCProgressionGate.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/Pawn.h"
