@@ -28,6 +28,9 @@ class UMemoryJournalWidget;
 class UWCCheckpointMenuWidget;
 class AWCPlayerCheckpoint;
 class AWCStoryPersistenceCoordinator;
+class UTutorialFragmentWidget;
+class UTutorialHUDWidget;
+class UTutorialInstructionWidget;
 
 USTRUCT(BlueprintType)
 struct FPlayerAttackData
@@ -112,6 +115,59 @@ public:
 	void ShowInteractionPrompt(const FString& Prompt);
 
 	void HideInteractionPrompt();
+
+	// ******************** Tutorial Session ********************
+
+	void InitializeTutorialSession(
+		TSubclassOf<UTutorialHUDWidget> InHUDWidgetClass,
+		TSubclassOf<UTutorialFragmentWidget> InFragmentWidgetClass,
+		TSubclassOf<UTutorialInstructionWidget> InInstructionWidgetClass,
+		int32 InTotalFragmentCount
+	);
+
+	UFUNCTION(BlueprintCallable, Category = "Tutorial Instruction")
+	bool ShowTutorialInstruction(
+		FName InstructionID,
+		const FText& InstructionTitle,
+		const FText& InstructionBody);
+
+	UFUNCTION(BlueprintCallable, Category = "Tutorial Instruction")
+	void EndTutorialInstruction();
+
+	UFUNCTION(BlueprintPure, Category = "Tutorial Instruction")
+	bool GetIsViewingTutorialInstruction() const;
+
+	bool CollectTutorialFragment(
+		FName FragmentID,
+		const FText& DisplayTitle,
+		const FText& DisplayText
+	);
+
+	UFUNCTION(BlueprintCallable, Category = "Tutorial Fragment|Testing")
+	bool TryCollectTutorialFragmentForTest(FName FragmentID);
+
+	UFUNCTION(BlueprintCallable, Category = "Tutorial Fragment")
+	void EndTutorialFragmentView();
+
+	UFUNCTION(BlueprintPure, Category = "Tutorial Fragment")
+	bool GetIsViewingTutorialFragment() const;
+
+	UFUNCTION(BlueprintPure, Category = "Tutorial Fragment")
+	bool HasCollectedTutorialFragment(FName FragmentID) const;
+
+	UFUNCTION(BlueprintPure, Category = "Tutorial Fragment")
+	int32 GetCollectedTutorialFragmentCount() const;
+
+	UFUNCTION(BlueprintPure, Category = "Tutorial Fragment")
+	int32 GetTutorialFragmentTotal() const;
+
+	bool ShowTutorialHintOnce(
+		FName HintID,
+		const FText& HintText,
+		float Duration
+	);
+
+	bool CanReceiveTutorialInteraction() const;
 
 	// ******************** Dialogue ********************
 
@@ -559,6 +615,52 @@ protected:
 	)
 	bool bIsCheckpointMenuOpen = false;
 
+	UPROPERTY(Transient)
+	TObjectPtr<UTutorialHUDWidget> ActiveTutorialHUDWidget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTutorialFragmentWidget> ActiveTutorialFragmentWidget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTutorialInstructionWidget> ActiveTutorialInstructionWidget;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient,
+		Category = "Tutorial Fragment")
+	bool bIsTutorialSessionActive = false;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient,
+		Category = "Tutorial Fragment")
+	bool bIsViewingTutorialFragment = false;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient,
+		Category = "Tutorial Instruction")
+	bool bIsViewingTutorialInstruction = false;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient,
+		Category = "Tutorial Fragment")
+	TSet<FName> CollectedTutorialFragmentIDs;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient,
+		Category = "Tutorial Fragment")
+	TSet<FName> ShownTutorialHintIDs;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient,
+		Category = "Tutorial Instruction")
+	TSet<FName> ShownTutorialInstructionIDs;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient,
+		Category = "Tutorial Fragment")
+	int32 TutorialFragmentTotal = 3;
+
+	UPROPERTY(Transient)
+	TSubclassOf<UTutorialFragmentWidget> TutorialFragmentWidgetClass;
+
+	UPROPERTY(Transient)
+	TSubclassOf<UTutorialInstructionWidget> TutorialInstructionWidgetClass;
+
+	bool bInstructionOwnsPause = false;
+	bool bWorldWasPausedBeforeInstruction = false;
+
 	/*
 	* 当前 Gameplay Session 中，
 	* 玩家最近激活的 Checkpoint。
@@ -587,6 +689,11 @@ protected:
 	void ToggleMemoryJournal();
 
 	bool OpenMemoryJournal();
+
+	bool StartTutorialFragmentView(
+		const FText& DisplayTitle,
+		const FText& DisplayText
+	);
 
 	void Attack();
 

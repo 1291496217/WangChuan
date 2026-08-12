@@ -24,6 +24,9 @@
 #include "MemoryJournalWidget.h"
 #include "WCCheckpointMenuWidget.h"
 #include "WCStoryPersistenceCoordinator.h"
+#include "TutorialFragmentWidget.h"
+#include "TutorialHUDWidget.h"
+#include "TutorialInstructionWidget.h"
 
 // ******************** Construction ********************
 
@@ -110,6 +113,27 @@ void AWCCharacter::BeginPlay()
 
 void AWCCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (bIsViewingTutorialInstruction || ActiveTutorialInstructionWidget)
+	{
+		EndTutorialInstruction();
+	}
+
+	if (ActiveTutorialFragmentWidget)
+	{
+		ActiveTutorialFragmentWidget->RemoveFromParent();
+	}
+
+	ActiveTutorialFragmentWidget = nullptr;
+	bIsViewingTutorialFragment = false;
+
+	if (ActiveTutorialHUDWidget)
+	{
+		ActiveTutorialHUDWidget->RemoveFromParent();
+	}
+
+	ActiveTutorialHUDWidget = nullptr;
+	bIsTutorialSessionActive = false;
+
 	if (ActiveCheckpointMenuWidget)
 	{
 		ActiveCheckpointMenuWidget->RemoveFromParent();
@@ -253,12 +277,24 @@ void AWCCharacter::Look(const FInputActionValue& Value)
 
 void AWCCharacter::Interact()
 {
+	if (bIsViewingTutorialInstruction)
+	{
+		EndTutorialInstruction();
+		return;
+	}
+
 	/*
 	 * Checkpoint Menu 打开时，E 键只负责关闭菜单。
 	 */
 	if (bIsCheckpointMenuOpen)
 	{
 		CloseCheckpointMenu();
+		return;
+	}
+
+	if (bIsViewingTutorialFragment)
+	{
+		EndTutorialFragmentView();
 		return;
 	}
 
@@ -328,6 +364,362 @@ void AWCCharacter::HideInteractionPrompt()
 	GEngine->RemoveOnScreenDebugMessage(1);
 }
 
+// ******************** Tutorial Session ********************
+
+void AWCCharacter::InitializeTutorialSession(
+	TSubclassOf<UTutorialHUDWidget> InHUDWidgetClass,
+	TSubclassOf<UTutorialFragmentWidget> InFragmentWidgetClass,
+	TSubclassOf<UTutorialInstructionWidget> InInstructionWidgetClass,
+	int32 InTotalFragmentCount)
+{
+	if (bIsTutorialSessionActive)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("Duplicate Tutorial Session initialization was ignored."));
+		return;
+	}
+
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (!PlayerController)
+	{
+		return;
+	}
+
+	TSubclassOf<UTutorialHUDWidget> EffectiveHUDClass = InHUDWidgetClass;
+	if (!EffectiveHUDClass)
+	{
+		EffectiveHUDClass = UTutorialHUDWidget::StaticClass();
+	}
+
+	TSubclassOf<UTutorialFragmentWidget> EffectiveFragmentClass = InFragmentWidgetClass;
+	if (!EffectiveFragmentClass)
+	{
+		EffectiveFragmentClass = UTutorialFragmentWidget::StaticClass();
+	}
+
+	TSubclassOf<UTutorialInstructionWidget> EffectiveInstructionClass =
+		InInstructionWidgetClass;
+	if (!EffectiveInstructionClass)
+	{
+		EffectiveInstructionClass = UTutorialInstructionWidget::StaticClass();
+	}
+
+	UTutorialHUDWidget* NewHUD = CreateWidget<UTutorialHUDWidget>(
+		PlayerController, EffectiveHUDClass);
+	if (!NewHUD)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Tutorial Session failed to create its HUD."));
+		return;
+	}
+
+	bIsTutorialSessionActive = true;
+	TutorialFragmentTotal = FMath::Max(1, InTotalFragmentCount);
+	TutorialFragmentWidgetClass = EffectiveFragmentClass;
+	TutorialInstructionWidgetClass = EffectiveInstructionClass;
+	CollectedTutorialFragmentIDs.Reset();
+	ShownTutorialHintIDs.Reset();
+	ShownTutorialInstructionIDs.Reset();
+	ActiveTutorialHUDWidget = NewHUD;
+
+	ActiveTutorialHUDWidget->AddToViewport(15);
+	ActiveTutorialHUDWidget->SetFragmentProgress(0, TutorialFragmentTotal);
+
+	UE_LOG(LogTemp, Display,
+		TEXT("Tutorial Session initialized with %d fragment(s)."),
+		TutorialFragmentTotal);
+}
+
+bool AWCCharacter::ShowTutorialInstruction(
+	FName InstructionID,
+	const FText& InstructionTitle,
+	const FText& InstructionBody)
+{
+	if (!bIsTutorialSessionActive || bIsDead || InstructionID.IsNone() ||
+		InstructionTitle.IsEmpty() || InstructionBody.IsEmpty() ||
+		ShownTutorialInstructionIDs.Contains(InstructionID) ||
+		bIsViewingTutorialInstruction || ActiveTutorialInstructionWidget ||
+		bIsViewingTutorialFragment || bIsInDialogue || bIsViewingMemoryEcho ||
+		bIsMemoryJournalOpen || bIsCheckpointMenuOpen || bIsAttacking)
+	{
+		return false;
+	}
+
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (!PlayerController || !TutorialInstructionWidgetClass)
+	{
+		return false;
+	}
+
+	UTutorialInstructionWidget* NewWidget =
+		CreateWidget<UTutorialInstructionWidget>(
+			PlayerController, TutorialInstructionWidgetClass);
+	if (!NewWidget)
+	{
+		return false;
+	}
+
+	if (bIsLockedOn)
+	{
+		UnlockTarget();
+	}
+	ExitCombatState();
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+	StopJumping();
+	HideInteractionPrompt();
+
+	bWorldWasPausedBeforeInstruction = UGameplayStatics::IsGamePaused(this);
+	bInstructionOwnsPause = false;
+	if (!bWorldWasPausedBeforeInstruction)
+	{
+		bInstructionOwnsPause = PlayerController->SetPause(true);
+		if (!bInstructionOwnsPause)
+		{
+			NewWidget->RemoveFromParent();
+			return false;
+		}
+	}
+
+	bIsViewingTutorialInstruction = true;
+	ActiveTutorialInstructionWidget = NewWidget;
+	NewWidget->AddToViewport(30);
+	NewWidget->InitializeInstruction(this, InstructionTitle, InstructionBody);
+
+	FInputModeUIOnly InputMode;
+	InputMode.SetWidgetToFocus(NewWidget->TakeWidget());
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	PlayerController->SetInputMode(InputMode);
+	PlayerController->bShowMouseCursor = true;
+	PlayerController->SetIgnoreMoveInput(true);
+	PlayerController->SetIgnoreLookInput(true);
+	NewWidget->SetKeyboardFocus();
+
+	ShownTutorialInstructionIDs.Add(InstructionID);
+	return true;
+}
+
+void AWCCharacter::EndTutorialInstruction()
+{
+	if (!bIsViewingTutorialInstruction && !ActiveTutorialInstructionWidget)
+	{
+		return;
+	}
+
+	if (ActiveTutorialInstructionWidget)
+	{
+		ActiveTutorialInstructionWidget->RemoveFromParent();
+	}
+	ActiveTutorialInstructionWidget = nullptr;
+	bIsViewingTutorialInstruction = false;
+
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		if (bInstructionOwnsPause)
+		{
+			PlayerController->SetPause(false);
+		}
+
+		PlayerController->bShowMouseCursor = false;
+		FInputModeGameOnly InputMode;
+		PlayerController->SetInputMode(InputMode);
+
+		if (!bIsDead && !bIsInDialogue && !bIsViewingMemoryEcho &&
+			!bIsViewingTutorialFragment && !bIsMemoryJournalOpen &&
+			!bIsCheckpointMenuOpen)
+		{
+			PlayerController->SetIgnoreMoveInput(false);
+			PlayerController->SetIgnoreLookInput(false);
+		}
+	}
+
+	bInstructionOwnsPause = false;
+	bWorldWasPausedBeforeInstruction = false;
+
+	if (!bIsDead && CurrentInteractable)
+	{
+		ShowInteractionPrompt(CurrentInteractable->GetInteractionPrompt());
+	}
+}
+
+bool AWCCharacter::GetIsViewingTutorialInstruction() const
+{
+	return bIsViewingTutorialInstruction;
+}
+
+bool AWCCharacter::CollectTutorialFragment(
+	FName FragmentID,
+	const FText& DisplayTitle,
+	const FText& DisplayText)
+{
+	if (!bIsTutorialSessionActive || FragmentID.IsNone())
+	{
+		return false;
+	}
+
+	if (CollectedTutorialFragmentIDs.Contains(FragmentID))
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("Duplicate Tutorial Fragment ID [%s] was rejected."),
+			*FragmentID.ToString());
+		return false;
+	}
+
+	if (!StartTutorialFragmentView(DisplayTitle, DisplayText))
+	{
+		return false;
+	}
+
+	CollectedTutorialFragmentIDs.Add(FragmentID);
+	if (ActiveTutorialHUDWidget)
+	{
+		ActiveTutorialHUDWidget->SetFragmentProgress(
+			CollectedTutorialFragmentIDs.Num(), TutorialFragmentTotal);
+	}
+
+	UE_LOG(LogTemp, Display,
+		TEXT("Tutorial Fragment [%s] collected (%d/%d)."),
+		*FragmentID.ToString(),
+		CollectedTutorialFragmentIDs.Num(),
+		TutorialFragmentTotal);
+
+	return true;
+}
+
+bool AWCCharacter::TryCollectTutorialFragmentForTest(FName FragmentID)
+{
+	return CollectTutorialFragment(
+		FragmentID,
+		FText::FromString(TEXT("Duplicate Test")),
+		FText::FromString(TEXT("This UI must not open.")));
+}
+
+bool AWCCharacter::StartTutorialFragmentView(
+	const FText& DisplayTitle,
+	const FText& DisplayText)
+{
+	if (bIsDead || !bIsTutorialSessionActive ||
+		bIsViewingTutorialFragment || bIsViewingTutorialInstruction || bIsInDialogue ||
+		bIsViewingMemoryEcho || bIsMemoryJournalOpen ||
+		bIsCheckpointMenuOpen || bIsAttacking)
+	{
+		return false;
+	}
+
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (!PlayerController || !TutorialFragmentWidgetClass)
+	{
+		return false;
+	}
+
+	UTutorialFragmentWidget* NewWidget = CreateWidget<UTutorialFragmentWidget>(
+		PlayerController, TutorialFragmentWidgetClass);
+	if (!NewWidget)
+	{
+		return false;
+	}
+
+	if (bIsLockedOn)
+	{
+		UnlockTarget();
+	}
+	ExitCombatState();
+
+	bIsViewingTutorialFragment = true;
+	ActiveTutorialFragmentWidget = NewWidget;
+
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+	StopJumping();
+	HideInteractionPrompt();
+
+	NewWidget->AddToViewport(28);
+	NewWidget->InitializeFragment(this, DisplayTitle, DisplayText);
+
+	FInputModeGameAndUI InputMode;
+	InputMode.SetWidgetToFocus(NewWidget->TakeWidget());
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	InputMode.SetHideCursorDuringCapture(false);
+	PlayerController->SetInputMode(InputMode);
+	PlayerController->bShowMouseCursor = true;
+	PlayerController->SetIgnoreMoveInput(true);
+	PlayerController->SetIgnoreLookInput(true);
+
+	return true;
+}
+
+void AWCCharacter::EndTutorialFragmentView()
+{
+	if (!bIsViewingTutorialFragment && !ActiveTutorialFragmentWidget)
+	{
+		return;
+	}
+
+	if (ActiveTutorialFragmentWidget)
+	{
+		ActiveTutorialFragmentWidget->RemoveFromParent();
+	}
+
+	ActiveTutorialFragmentWidget = nullptr;
+	bIsViewingTutorialFragment = false;
+
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		PlayerController->bShowMouseCursor = false;
+		FInputModeGameOnly InputMode;
+		PlayerController->SetInputMode(InputMode);
+
+		if (!bIsDead && !bIsInDialogue && !bIsViewingMemoryEcho &&
+			!bIsMemoryJournalOpen && !bIsCheckpointMenuOpen)
+		{
+			PlayerController->SetIgnoreMoveInput(false);
+			PlayerController->SetIgnoreLookInput(false);
+		}
+	}
+}
+
+bool AWCCharacter::GetIsViewingTutorialFragment() const
+{
+	return bIsViewingTutorialFragment;
+}
+
+bool AWCCharacter::HasCollectedTutorialFragment(FName FragmentID) const
+{
+	return !FragmentID.IsNone() && CollectedTutorialFragmentIDs.Contains(FragmentID);
+}
+
+int32 AWCCharacter::GetCollectedTutorialFragmentCount() const
+{
+	return CollectedTutorialFragmentIDs.Num();
+}
+
+int32 AWCCharacter::GetTutorialFragmentTotal() const
+{
+	return TutorialFragmentTotal;
+}
+
+bool AWCCharacter::ShowTutorialHintOnce(
+	FName HintID,
+	const FText& HintText,
+	float Duration)
+{
+	if (!bIsTutorialSessionActive || HintID.IsNone() || HintText.IsEmpty() ||
+		ShownTutorialHintIDs.Contains(HintID) || !ActiveTutorialHUDWidget)
+	{
+		return false;
+	}
+
+	ShownTutorialHintIDs.Add(HintID);
+	ActiveTutorialHUDWidget->ShowTimedHint(HintText, Duration);
+	return true;
+}
+
+bool AWCCharacter::CanReceiveTutorialInteraction() const
+{
+	return CanAct() && !bIsAttacking;
+}
+
 // ******************** Memory Journal ********************
 
 void AWCCharacter::ToggleMemoryJournal()
@@ -351,7 +743,8 @@ void AWCCharacter::ToggleMemoryJournal()
 
 bool AWCCharacter::OpenMemoryJournal()
 {
-	if (bIsDead || bIsInDialogue || bIsViewingMemoryEcho || bIsMemoryJournalOpen ||
+	if (bIsDead || bIsInDialogue || bIsViewingMemoryEcho || bIsViewingTutorialFragment ||
+		bIsViewingTutorialInstruction || bIsMemoryJournalOpen ||
 		bIsCheckpointMenuOpen || bIsAttacking ||
 		bIsInCombat || bIsLockedOn)
 	{
@@ -456,7 +849,8 @@ bool AWCCharacter::StartDialogue(AWCStoryNPC* StoryNPC, const FDialogueSequence&
 		return false;
 	}
 
-	if (bIsInDialogue || bIsViewingMemoryEcho || bIsMemoryJournalOpen ||
+	if (bIsInDialogue || bIsViewingMemoryEcho || bIsViewingTutorialFragment ||
+		bIsViewingTutorialInstruction || bIsMemoryJournalOpen ||
 		bIsCheckpointMenuOpen)
 	{
 		return false;
@@ -626,7 +1020,8 @@ bool AWCCharacter::StartMemoryEcho(const FMemoryEchoData& EchoData, AEchoRelic* 
 		return false;
 	}
 
-	if (bIsInDialogue || bIsViewingMemoryEcho || bIsMemoryJournalOpen ||
+	if (bIsInDialogue || bIsViewingMemoryEcho || bIsViewingTutorialFragment ||
+		bIsViewingTutorialInstruction || bIsMemoryJournalOpen ||
 		bIsCheckpointMenuOpen)
 	{
 		return false;
@@ -1335,6 +1730,16 @@ void AWCCharacter::Die()
 		CloseMemoryJournal();
 	}
 
+	if (bIsViewingTutorialFragment || ActiveTutorialFragmentWidget)
+	{
+		EndTutorialFragmentView();
+	}
+
+	if (bIsViewingTutorialInstruction || ActiveTutorialInstructionWidget)
+	{
+		EndTutorialInstruction();
+	}
+
 	if (bIsCheckpointMenuOpen || ActiveCheckpointMenuWidget)
 	{
 		CloseCheckpointMenu();
@@ -1406,6 +1811,16 @@ bool AWCCharacter::CanAct() const
 	}
 
 	if (bIsMemoryJournalOpen)
+	{
+		return false;
+	}
+
+	if (bIsViewingTutorialFragment)
+	{
+		return false;
+	}
+
+	if (bIsViewingTutorialInstruction)
 	{
 		return false;
 	}
@@ -2188,6 +2603,8 @@ bool AWCCharacter::CanUseCheckpoint() const
 		!bIsDead &&
 		!bIsInDialogue &&
 		!bIsViewingMemoryEcho &&
+		!bIsViewingTutorialFragment &&
+		!bIsViewingTutorialInstruction &&
 		!bIsMemoryJournalOpen &&
 		!bIsCheckpointMenuOpen &&
 		!bIsAttacking &&
@@ -2204,6 +2621,8 @@ bool AWCCharacter::OpenCheckpointMenu(
 	if (bIsDead ||
 		bIsInDialogue ||
 		bIsViewingMemoryEcho ||
+		bIsViewingTutorialFragment ||
+		bIsViewingTutorialInstruction ||
 		bIsMemoryJournalOpen ||
 		bIsCheckpointMenuOpen ||
 		bIsAttacking ||
@@ -2309,6 +2728,8 @@ void AWCCharacter::CloseCheckpointMenu()
 		if (!bIsDead &&
 			!bIsInDialogue &&
 			!bIsViewingMemoryEcho &&
+			!bIsViewingTutorialFragment &&
+			!bIsViewingTutorialInstruction &&
 			!bIsMemoryJournalOpen)
 		{
 			PlayerController->SetIgnoreMoveInput(false);

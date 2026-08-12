@@ -1,54 +1,85 @@
-﻿#include "GhostEnemy.h"
+#include "GhostEnemy.h"
+
+#include "WCGhostAIController.h"
 #include "WCCharacter.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "EnemyHealthBarWidget.h"
-#include "Materials/MaterialInstanceDynamic.h"
-#include "Math/UnrealMathUtility.h"
+#include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Engine/Engine.h"
-
-// ******************** Construction ********************
+#include "Materials/MaterialInstanceDynamic.h"
 
 AGhostEnemy::AGhostEnemy()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	CollisionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollisionCapsule"));
+	CollisionCapsule->InitCapsuleSize(50.0f, 100.0f);
+	CollisionCapsule->SetCollisionProfileName(TEXT("Pawn"));
+	CollisionCapsule->SetCanEverAffectNavigation(false);
+	RootComponent = CollisionCapsule;
+
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
-	RootComponent = SceneRoot;
+	SceneRoot->SetupAttachment(CollisionCapsule);
+	// The legacy actor origin was at its feet. Keep the visuals in that space while
+	// the Pawn's actor origin correctly represents the center of its collision capsule.
+	SceneRoot->SetRelativeLocation(FVector(0.0f, 0.0f, -103.0f));
 
 	EnemyMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("EnemyMesh"));
 	EnemyMesh->SetupAttachment(SceneRoot);
+	EnemyMesh->SetCanEverAffectNavigation(false);
 
 	HealthWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthWidgetComponent"));
 	HealthWidgetComponent->SetupAttachment(SceneRoot);
-
+	HealthWidgetComponent->SetCanEverAffectNavigation(false);
 	HealthWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
-
 	HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
-
 	HealthWidgetComponent->SetDrawSize(FVector2D(220.0f, 18.0f));
+	HealthWidgetComponent->SetRelativeScale3D(FVector(0.25f));
 
-	HealthWidgetComponent->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
+	FloatingMovement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("FloatingMovement"));
+	FloatingMovement->UpdatedComponent = CollisionCapsule;
+	FloatingMovement->Acceleration = 800.0f;
+	FloatingMovement->Deceleration = 1200.0f;
+	FloatingMovement->TurningBoost = 8.0f;
+
+	AIControllerClass = AWCGhostAIController::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	bUseControllerRotationYaw = true;
 
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
 }
-
-// ******************** Lifecycle ********************
 
 void AGhostEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
 	Health = MaxHealth;
+	// Existing Ghost Blueprints can retain the old SceneRoot transform after the
+	// native root changed from a scene component to a capsule. Enforce the intended
+	// feet-at-ground relationship for those existing assets at runtime.
+	if (SceneRoot && CollisionCapsule)
+	{
+		SceneRoot->SetRelativeLocation(FVector(0.0f, 0.0f,
+			-CollisionCapsule->GetUnscaledCapsuleHalfHeight() + VisualGroundOffset));
+	}
+	SnapToGround();
+	HomeLocation = GetActorLocation();
+	HomeRotation = GetActorRotation();
+	SetAIState(EGhostAIState::Idle);
+
+	if (FloatingMovement)
+	{
+		FloatingMovement->MaxSpeed = MoveSpeed;
+	}
 
 	if (EnemyMesh)
 	{
 		DynamicMaterial = EnemyMesh->CreateAndSetMaterialInstanceDynamic(0);
-
 		if (DynamicMaterial)
 		{
 			DynamicMaterial->SetVectorParameterValue(TEXT("BaseColor"), NormalColor);
@@ -57,21 +88,28 @@ void AGhostEnemy::BeginPlay()
 
 	if (HealthWidgetComponent)
 	{
-		UEnemyHealthBarWidget* HealthWidget =
-			Cast<UEnemyHealthBarWidget>(HealthWidgetComponent->GetUserWidgetObject());
-
-		if (HealthWidget)
+		if (UEnemyHealthBarWidget* HealthWidget =
+			Cast<UEnemyHealthBarWidget>(HealthWidgetComponent->GetUserWidgetObject()))
 		{
 			HealthWidget->SetEnemyOwner(this);
 		}
 	}
 }
 
-// ******************** Combat ********************
+void AGhostEnemy::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	UpdateEnemyBehavior();
+	UpdateHealthWidgetFacingCamera();
+}
+
+UPawnMovementComponent* AGhostEnemy::GetMovementComponent() const
+{
+	return FloatingMovement;
+}
 
 void AGhostEnemy::TakeHit(float DamageAmount, FVector HitDirection, float KnockbackStrength)
 {
-
 	if (bIsDead)
 	{
 		return;
@@ -79,16 +117,19 @@ void AGhostEnemy::TakeHit(float DamageAmount, FVector HitDirection, float Knockb
 
 	Health -= DamageAmount;
 
+	// Damage is explicit hostility: a back attack must wake an otherwise idle enemy.
+	if (AWCGhostAIController* GhostController = GetGhostAIController())
+	{
+		GhostController->HandleDamageAggro(GetPlayerCharacter());
+	}
+
 	if (Health <= 0.0f)
 	{
-		// 致命一击直接进入死亡流程，不再播放普通受击反馈。
 		Die();
 		return;
 	}
 
 	PlayEvilGhostHurtSound();
-
-	// ShowHitFeedback();
 	StartHitReaction();
 	ApplyKnockback(HitDirection, KnockbackStrength);
 }
@@ -113,6 +154,12 @@ void AGhostEnemy::Die()
 	bIsAttacking = false;
 	bCanAttackPlayer = false;
 	bIsHitReacting = false;
+	SetAIState(EGhostAIState::Dead);
+
+	if (AWCGhostAIController* GhostController = GetGhostAIController())
+	{
+		GhostController->HandlePawnDeath();
+	}
 
 	if (EvilGhostDeathSound)
 	{
@@ -126,20 +173,19 @@ void AGhostEnemy::Die()
 		HealthWidgetComponent->SetVisibility(false);
 	}
 
-	// 死亡后立即关闭碰撞，避免继续阻挡玩家。
 	if (EnemyMesh)
 	{
 		EnemyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
-	/*
-	 * 此时敌人已经进入稳定死亡状态。
-	 * Encounter 可以安全处理叙事事件。
-	 */
-	OnEnemyDefeated.Broadcast(this);
+	if (CollisionCapsule)
+	{
+		CollisionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 
+	OnEnemyDefeated.Broadcast(this);
 	GetWorldTimerManager().SetTimer(DeathTimerHandle, this, &AGhostEnemy::FinishDeath,
-									DeathDestroyDelay, false);
+		DeathDestroyDelay, false);
 }
 
 void AGhostEnemy::FinishDeath()
@@ -147,8 +193,6 @@ void AGhostEnemy::FinishDeath()
 	GetWorldTimerManager().ClearTimer(DeathTimerHandle);
 	Destroy();
 }
-
-// ******************** Hit Reaction ********************
 
 void AGhostEnemy::StartHitReaction()
 {
@@ -161,12 +205,15 @@ void AGhostEnemy::StartHitReaction()
 	bIsMoving = false;
 	bIsAttacking = false;
 
+	if (AWCGhostAIController* GhostController = GetGhostAIController())
+	{
+		GhostController->PauseForHitReaction();
+	}
+
 	GetWorldTimerManager().ClearTimer(HitReactionTimerHandle);
-
 	GetWorldTimerManager().ClearTimer(EnemyAttackDurationTimerHandle);
-
-	GetWorldTimerManager().SetTimer(HitReactionTimerHandle, this, &AGhostEnemy::EndHitReaction,
-									HitReactionDuration, false);
+	GetWorldTimerManager().SetTimer(HitReactionTimerHandle, this,
+		&AGhostEnemy::EndHitReaction, HitReactionDuration, false);
 }
 
 void AGhostEnemy::EndHitReaction()
@@ -175,242 +222,134 @@ void AGhostEnemy::EndHitReaction()
 	{
 		return;
 	}
+
 	bIsHitReacting = false;
+	if (AWCGhostAIController* GhostController = GetGhostAIController())
+	{
+		GhostController->ResumeAfterAttack();
+	}
 }
 
 void AGhostEnemy::ApplyKnockback(FVector KnockbackDirection, float KnockbackStrength)
 {
-
 	if (bIsDead)
 	{
 		return;
 	}
 
 	KnockbackDirection.Z = 0.0f;
-
-	if (KnockbackDirection.IsNearlyZero())
+	if (!KnockbackDirection.Normalize())
 	{
 		return;
 	}
 
-	KnockbackDirection.Normalize();
-
-	FVector NewLocation = GetActorLocation() + KnockbackDirection * KnockbackStrength;
-
-	SetActorLocation(NewLocation);
+	SetActorLocation(GetActorLocation() + KnockbackDirection * KnockbackStrength, true);
 }
-
-// ******************** State Queries ********************
 
 AWCCharacter* AGhostEnemy::GetPlayerCharacter() const
 {
-	UWorld* World = GetWorld();
-
-	if (World == nullptr)
+	const UWorld* World = GetWorld();
+	if (!World)
 	{
 		return nullptr;
 	}
 
-	APlayerController* PlayerController = World->GetFirstPlayerController();
-
-	if (PlayerController == nullptr)
-	{
-		return nullptr;
-	}
-
-	APawn* PlayerPawn = PlayerController->GetPawn();
-
-	if (PlayerPawn == nullptr)
-	{
-		return nullptr;
-	}
-
-	return Cast<AWCCharacter>(PlayerPawn);
+	const APlayerController* PlayerController = World->GetFirstPlayerController();
+	return PlayerController ? Cast<AWCCharacter>(PlayerController->GetPawn()) : nullptr;
 }
 
 bool AGhostEnemy::IsPlayerValidAndAlive() const
 {
-	AWCCharacter* PlayerCharacter = GetPlayerCharacter();
-
-	if (PlayerCharacter == nullptr)
-	{
-		return false;
-	}
-
-	if (PlayerCharacter->GetIsDead())
-	{
-		return false;
-	}
-	return true;
+	const AWCCharacter* PlayerCharacter = GetPlayerCharacter();
+	return PlayerCharacter && !PlayerCharacter->GetIsDead();
 }
 
 bool AGhostEnemy::CanUpdateBehavior() const
 {
-	if (bIsDead)
-	{
-		return false;
-	}
-	if (bIsHitReacting)
-	{
-		return false;
-	}
-	if (bIsAttacking)
-	{
-		return false;
-	}
-	return true;
+	return !bIsDead && !bIsHitReacting && !bIsAttacking;
 }
 
 bool AGhostEnemy::CanStartAttack() const
 {
-	if (bIsDead)
-	{
-		return false;
-	}
-	if (bIsHitReacting)
-	{
-		return false;
-	}
-	if (bIsAttacking)
-	{
-		return false;
-	}
-	if (!bCanAttackPlayer)
-	{
-		return false;
-	}
-	return true;
+	return !bIsDead && !bIsHitReacting && !bIsAttacking && bCanAttackPlayer;
 }
 
 void AGhostEnemy::ApplyPersistentDefeatedState()
 {
-	/*
-	* 重复调用时，所有赋值和组件操作仍得到相同结果。
-	*/
 	ClearCombatTimers();
-
-	GetWorldTimerManager().ClearTimer(
-		DeathTimerHandle
-	);
-
+	GetWorldTimerManager().ClearTimer(DeathTimerHandle);
 	Health = 0.0f;
-
 	bIsDead = true;
 	bIsMoving = false;
 	bIsAttacking = false;
 	bIsHitReacting = false;
 	bCanAttackPlayer = false;
+	SetAIState(EGhostAIState::Dead);
+
+	if (AWCGhostAIController* GhostController = GetGhostAIController())
+	{
+		GhostController->HandlePawnDeath();
+	}
 
 	if (HealthWidgetComponent)
 	{
-		HealthWidgetComponent->SetVisibility(
-			false
-		);
+		HealthWidgetComponent->SetVisibility(false);
 	}
-
 	if (EnemyMesh)
 	{
-		EnemyMesh->SetCollisionEnabled(
-			ECollisionEnabled::NoCollision
-		);
+		EnemyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	if (CollisionCapsule)
+	{
+		CollisionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
 	SetActorEnableCollision(false);
 	SetActorTickEnabled(false);
 	SetActorHiddenInGame(true);
 
-	UE_LOG(
-		LogTemp,
-		Log,
-		TEXT(
-			"Ghost Enemy [%s] silently restored "
-			"to persistent defeated state."
-		),
-		*GetName()
-	);
+	UE_LOG(LogTemp, Log, TEXT("Ghost Enemy [%s] silently restored to persistent defeated state."),
+		*GetName());
 }
 
-// ******************** Enemy Behavior ********************
-
-void AGhostEnemy::Tick(float DeltaTime)
+void AGhostEnemy::UpdateEnemyBehavior()
 {
-	Super::Tick(DeltaTime);
+	AWCGhostAIController* GhostController = GetGhostAIController();
+	AWCCharacter* PlayerCharacter = GhostController ? GhostController->GetTargetPlayer() : nullptr;
 
-	UpdateEnemyBehavior(DeltaTime);
-
-	UpdateHealthWidgetFacingCamera();
-}
-
-// 根据玩家距离在攻击、追逐和待机状态之间更新行为。
-void AGhostEnemy::UpdateEnemyBehavior(float DeltaTime)
-{
-	// 状态优先级：死亡、受击、攻击、移动。
 	if (!CanUpdateBehavior())
 	{
 		bIsMoving = false;
 		return;
 	}
 
-	if (!IsPlayerValidAndAlive())
+	if (AIState != EGhostAIState::Chasing)
 	{
-		bIsMoving = false;
+		bIsMoving = AIState == EGhostAIState::Investigating ||
+			AIState == EGhostAIState::ReturningHome;
 		return;
 	}
 
-	AWCCharacter* PlayerCharacter = GetPlayerCharacter();
-
-	if (PlayerCharacter == nullptr)
+	if (!IsValid(PlayerCharacter) || PlayerCharacter->GetIsDead())
 	{
 		bIsMoving = false;
+		if (GhostController)
+		{
+			GhostController->BeginReturnHome();
+		}
 		return;
 	}
 
-	float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
-
+	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
 	if (DistanceToPlayer <= AttackRange)
 	{
 		bIsMoving = false;
+		GhostController->StopMovement();
 		TryAttackPlayer();
 		return;
 	}
 
-	if (DistanceToPlayer <= ChaseRange)
-	{
-		bIsMoving = true;
-		MoveTowardPlayer(PlayerCharacter, DeltaTime);
-		return;
-	}
-
-	bIsMoving = false;
-}
-
-// 向玩家位置移动，并保持朝向玩家。
-void AGhostEnemy::MoveTowardPlayer(APawn* PlayerPawn, float DeltaTime)
-{
-	if (PlayerPawn == nullptr)
-	{
-		return;
-	}
-	FVector Direction = PlayerPawn->GetActorLocation() - GetActorLocation();
-
-	Direction.Z = 0.0f;
-
-	if (Direction.IsNearlyZero())
-	{
-		return;
-	}
-
-	Direction.Normalize();
-
-	FVector NewLocation = GetActorLocation() + Direction * MoveSpeed * DeltaTime;
-
-	SetActorLocation(NewLocation);
-
-	SnapToGround();
-
-	FRotator NewRotation = Direction.Rotation();
-
-	SetActorRotation(FRotator(0.0f, NewRotation.Yaw, 0.0f));
+	bIsMoving = true;
 }
 
 void AGhostEnemy::TryAttackPlayer()
@@ -423,15 +362,12 @@ void AGhostEnemy::TryAttackPlayer()
 	bCanAttackPlayer = false;
 	bIsAttacking = true;
 	bIsMoving = false;
+	SetAIState(EGhostAIState::Attacking);
 
-	// DealDamageToPlayer();
-
-	// 攻击动画结束后解除攻击状态。
 	GetWorldTimerManager().SetTimer(EnemyAttackDurationTimerHandle, this,
-									&AGhostEnemy::EndEnemyAttack, EnemyAttackDuration, false);
-	// 冷却结束后允许下一次攻击。
+		&AGhostEnemy::EndEnemyAttack, EnemyAttackDuration, false);
 	GetWorldTimerManager().SetTimer(EnemyAttackCooldownTimerHandle, this,
-									&AGhostEnemy::ResetEnemyAttack, AttackCooldown, false);
+		&AGhostEnemy::ResetEnemyAttack, AttackCooldown, false);
 }
 
 void AGhostEnemy::EndEnemyAttack()
@@ -440,225 +376,160 @@ void AGhostEnemy::EndEnemyAttack()
 	{
 		return;
 	}
+
 	bIsAttacking = false;
+	if (AWCGhostAIController* GhostController = GetGhostAIController())
+	{
+		GhostController->ResumeAfterAttack();
+	}
 }
 
 void AGhostEnemy::ResetEnemyAttack()
 {
-	if (bIsDead)
+	if (!bIsDead)
 	{
-		return;
+		bCanAttackPlayer = true;
 	}
-	bCanAttackPlayer = true;
 }
 
 void AGhostEnemy::DealDamageToPlayer()
 {
 	AWCCharacter* PlayerCharacter = GetPlayerCharacter();
-
-	if (PlayerCharacter == nullptr)
+	if (PlayerCharacter && !PlayerCharacter->GetIsDead())
 	{
-		return;
+		PlayerCharacter->ReceiveDamage(EnemyAttackDamage);
 	}
-
-	if (PlayerCharacter->GetIsDead())
-	{
-		return;
-	}
-
-	PlayerCharacter->ReceiveDamage(EnemyAttackDamage);
 }
 
 void AGhostEnemy::OnEnemyAttackHit()
 {
-	if (bIsDead)
-	{
-		return;
-	}
-
-	if (bIsHitReacting)
-	{
-		return;
-	}
-
-	if (!bIsAttacking)
+	if (bIsDead || bIsHitReacting || !bIsAttacking)
 	{
 		return;
 	}
 
 	AWCCharacter* PlayerCharacter = GetPlayerCharacter();
-
-	if (PlayerCharacter == nullptr)
+	if (!PlayerCharacter || PlayerCharacter->GetIsDead())
 	{
 		return;
 	}
 
-	if (PlayerCharacter->GetIsDead())
-	{
-		return;
-	}
-
-	float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
-
-	if (DistanceToPlayer > AttackRange)
+	if (FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation()) > AttackRange)
 	{
 		PlayEvilGhostAttackWhiffSound();
 		return;
 	}
 
 	PlayEvilGhostAttackHitSound();
-
 	DealDamageToPlayer();
 }
 
-// ******************** Getters ********************
-
-bool AGhostEnemy::GetIsMoving() const
-{
-	return bIsMoving;
-}
-
-bool AGhostEnemy::GetIsDead() const
-{
-	return bIsDead;
-}
-
-bool AGhostEnemy::GetIsAttacking() const
-{
-	return bIsAttacking;
-}
-
-bool AGhostEnemy::GetIsHitReacting() const
-{
-	return bIsHitReacting;
-}
-
-float AGhostEnemy::GetHealth() const
-{
-	return Health;
-}
+bool AGhostEnemy::GetIsMoving() const { return bIsMoving; }
+bool AGhostEnemy::GetIsDead() const { return bIsDead; }
+bool AGhostEnemy::GetIsAttacking() const { return bIsAttacking; }
+bool AGhostEnemy::GetIsHitReacting() const { return bIsHitReacting; }
+float AGhostEnemy::GetHealth() const { return Health; }
+EGhostAIState AGhostEnemy::GetAIState() const { return AIState; }
+FVector AGhostEnemy::GetHomeLocation() const { return HomeLocation; }
 
 float AGhostEnemy::GetHealthPercent() const
 {
-	if (MaxHealth <= 0.0f)
-	{
-		return 0.0f;
-	}
-	return FMath::Clamp(Health / MaxHealth, 0.0f, 1.0f);
-	;
+	return MaxHealth > 0.0f ? FMath::Clamp(Health / MaxHealth, 0.0f, 1.0f) : 0.0f;
 }
-
-// ******************** UI ********************
 
 void AGhostEnemy::UpdateHealthWidgetFacingCamera()
 {
-	if (HealthWidgetComponent == nullptr)
+	if (!HealthWidgetComponent)
 	{
 		return;
 	}
 
-	UWorld* World = GetWorld();
-
-	if (World == nullptr)
-	{
-		return;
-	}
-
-	APlayerController* PlayerController = World->GetFirstPlayerController();
-
-	if (PlayerController == nullptr)
+	APlayerController* PlayerController = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+	if (!PlayerController)
 	{
 		return;
 	}
 
 	FVector CameraLocation;
 	FRotator CameraRotation;
-
 	PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
-
-	FVector WidgetLocation = HealthWidgetComponent->GetComponentLocation();
-
-	FVector DirectionToCamera = CameraLocation - WidgetLocation;
-
-	if (DirectionToCamera.IsNearlyZero())
+	const FVector DirectionToCamera = CameraLocation - HealthWidgetComponent->GetComponentLocation();
+	if (!DirectionToCamera.IsNearlyZero())
 	{
-		return;
+		HealthWidgetComponent->SetWorldRotation(
+			FRotator(0.0f, DirectionToCamera.Rotation().Yaw, 0.0f));
 	}
-
-	FRotator LookAtRotation = DirectionToCamera.Rotation();
-
-	HealthWidgetComponent->SetWorldRotation(FRotator(0.0f, LookAtRotation.Yaw, 0.0f));
 }
-
-// ******************** Audio ********************
 
 void AGhostEnemy::PlayEvilGhostAttackHitSound()
 {
-	USoundBase* SelectedSound = nullptr;
-
-	int32 RandomIndex = FMath::RandRange(0, 1);
-
-	if (RandomIndex == 0)
+	USoundBase* SelectedSound = FMath::RandBool() ? EvilGhostAttackHitSound01 : EvilGhostAttackHitSound02;
+	if (SelectedSound)
 	{
-		SelectedSound = EvilGhostAttackHitSound01;
+		UGameplayStatics::PlaySoundAtLocation(this, SelectedSound, GetActorLocation());
 	}
-	else
-	{
-		SelectedSound = EvilGhostAttackHitSound02;
-	}
-
-	if (SelectedSound == nullptr)
-	{
-		return;
-	}
-
-	UGameplayStatics::PlaySoundAtLocation(this, SelectedSound, GetActorLocation());
 }
 
 void AGhostEnemy::PlayEvilGhostAttackWhiffSound()
 {
-	if (EvilGhostAttackWhiffSound == nullptr)
+	if (EvilGhostAttackWhiffSound)
 	{
-		return;
+		UGameplayStatics::PlaySoundAtLocation(this, EvilGhostAttackWhiffSound, GetActorLocation());
 	}
-	UGameplayStatics::PlaySoundAtLocation(this, EvilGhostAttackWhiffSound, GetActorLocation());
 }
 
 void AGhostEnemy::PlayEvilGhostHurtSound()
 {
-	if (EvilGhostHurtSound == nullptr)
+	if (EvilGhostHurtSound)
 	{
-		return;
+		UGameplayStatics::PlaySoundAtLocation(this, EvilGhostHurtSound, GetActorLocation());
 	}
-	UGameplayStatics::PlaySoundAtLocation(this, EvilGhostHurtSound, GetActorLocation());
 }
-
-// ******************** Movement ********************
 
 void AGhostEnemy::SnapToGround()
 {
-	FVector ActorLocation = GetActorLocation();
-
-	FVector TraceStart = ActorLocation + FVector(0.0f, 0.0f, GroundTraceStartHeight);
-
-	FVector TraceEnd = ActorLocation - FVector(0.0f, 0.0f, GroundTraceEndDepth);
-
-	TArray<AActor*> ActorToIgnore;
-	ActorToIgnore.Add(this);
-
+	const FVector ActorLocation = GetActorLocation();
+	const FVector TraceStart = ActorLocation + FVector(0.0f, 0.0f, GroundTraceStartHeight);
+	const FVector TraceEnd = ActorLocation - FVector(0.0f, 0.0f, GroundTraceEndDepth);
+	TArray<AActor*> ActorsToIgnore{this};
 	FHitResult HitResult;
 
-	bool bHitGround = UKismetSystemLibrary::LineTraceSingle(
+	const bool bHitGround = UKismetSystemLibrary::LineTraceSingle(
 		this, TraceStart, TraceEnd, UEngineTypes::ConvertToTraceType(ECC_Visibility), false,
-		ActorToIgnore, EDrawDebugTrace::None, HitResult, true);
+		ActorsToIgnore, EDrawDebugTrace::None, HitResult, true);
+	if (bHitGround)
+	{
+		// A Pawn's location is the capsule center, not its feet. Placing the center
+		// directly on the floor leaves half the capsule embedded; movement collision
+		// then depenetrates it upward and makes the mesh appear to float.
+		const float CapsuleHalfHeight = CollisionCapsule
+			? CollisionCapsule->GetScaledCapsuleHalfHeight()
+			: 0.0f;
+		SetActorLocation(FVector(ActorLocation.X, ActorLocation.Y,
+			HitResult.ImpactPoint.Z + CapsuleHalfHeight + GroundOffset), true);
+	}
+}
 
-	if (!bHitGround)
+void AGhostEnemy::SetAIState(EGhostAIState NewState)
+{
+	if (AIState == NewState)
 	{
 		return;
 	}
 
-	FVector NewLocation = ActorLocation;
-	NewLocation.Z = HitResult.ImpactPoint.Z + GroundOffset;
+	if (bShowAIDebug)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Ghost [%s] state %d -> %d"), *GetName(),
+			static_cast<int32>(AIState), static_cast<int32>(NewState));
+	}
 
-	SetActorLocation(NewLocation);
+	AIState = NewState;
+	bIsMoving = NewState == EGhostAIState::Chasing ||
+		NewState == EGhostAIState::Investigating ||
+		NewState == EGhostAIState::ReturningHome;
+}
+
+AWCGhostAIController* AGhostEnemy::GetGhostAIController() const
+{
+	return Cast<AWCGhostAIController>(GetController());
 }
