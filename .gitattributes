@@ -1,0 +1,44 @@
+# Normalize text files and keep source/document formats stable across platforms.
+* text=auto
+
+# C / C++ / C# source
+*.h text eol=lf
+*.hpp text eol=lf
+*.c text eol=lf
+*.cpp text eol=lf
+*.cc text eol=lf
+*.cs text eol=lf
+
+# Project text / docs / scripts
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.py text eol=lf
+*.ps1 text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Unreal / common project binary assets
+*.uasset binary
+*.umap binary
+*.ubulk binary
+*.uexp binary
+*.uptnl binary
+
+# Common binary media / archives / model assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.mp4 binary
+*.mov binary
+*.fbx binary
+*.glb binary
+*.gltf binary
+*.zip binary
+*.7z binary
+*.pdf binary

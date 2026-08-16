@@ -1831,3 +1831,487 @@ Week9 的核心成果不是“做完了一张新手地图”，而是建立了�
 ```
 
 这三者共同构成后续正式内容开发的新基线。
+
+---
+
+# 23. Post-Week9 Repository Hygiene & Codex Scratch Policy
+
+Week9 收尾后对项目 `Saved` 目录进行了一次单独审计，确认 Codex 在自动化执行、截图、静态审计和 PIE 验证过程中留下了较多一次性任务产物。
+
+审计样本：
+
+```text
+Saved total:
+约 135.7 MiB
+841 个条目
+
+Saved/Codex:
+约 23.3 MiB
+168 个实际文件
+```
+
+`Saved/Codex` 中主要包含：
+
+```text
+67 × Python scripts
+54 × JSON audit / validation files
+17 × PNG screenshots
+18 × txt marker files
+10 × lock files
+少量 log / pyc
+```
+
+其中截图约占：
+
+```text
+22.4 MiB
+```
+
+并存在已经明确标记为：
+
+```text
+obsolete_screenshots
+```
+
+的旧证据图，以及多轮任务遗留的一次性 Python / JSON / lock 文件。
+
+这类文件在：
+
+```text
+Codex 执行
+→ 自动验证
+→ Result Package 制作
+→ Human / Technical Review
+```
+
+期间具有价值，但在任务已经：
+
+```text
+PASS
+→ Progress recorded
+→ Git committed
+```
+
+之后不应长期堆积在项目目录。
+
+---
+
+## 23.1 Unreal Generated Saved Data 与 Codex Scratch 的区别
+
+`Saved` 中并非所有体积都属于 Codex 手动生成。
+
+本次审计还观察到：
+
+```text
+Saved/Crashes:
+约 94.3 MiB
+
+Saved/Logs:
+约 9.27 MiB
+```
+
+其中最大的一批 Crash Dump 来自 Week9 之前的旧日期，因此不能全部归因于 Codex。
+
+但 Codex 高频：
+
+```text
+启动 Editor
+运行 Python automation
+PIE
+Map reload
+Commandlet / audit
+```
+
+会间接产生额外：
+
+```text
+UE Logs
+Crash / Ensure data
+```
+
+因此以后应分别管理：
+
+```text
+Codex scratch
+vs
+UE generated diagnostic data
+```
+
+---
+
+## 23.2 Default Preservation Rules
+
+默认保留：
+
+```text
+Saved/Config/
+Saved/SaveGames/
+Saved/Autosaves/
+```
+
+原因：
+
+```text
+Saved/Config
+→ Editor / per-project user settings
+
+Saved/SaveGames
+→ 实际 Gameplay persistence 测试数据
+
+Saved/Autosaves
+→ Editor 恢复价值
+```
+
+不要在普通 Codex cleanup 中自动删除。
+
+---
+
+## 23.3 Default Disposable / Reviewable Data
+
+任务完成后通常可清理：
+
+```text
+Saved/Codex/<Task>/
+obsolete screenshots
+one-off Python scripts
+temporary audit JSON
+marker / lock files
+temporary capture files
+ShaderDebugInfo
+old UE Logs
+AutoScreenshot / tmp files
+```
+
+`Saved/Crashes`：
+
+```text
+先记录日期 / crash identity
+→ 确认不再用于 active debugging
+→ 再清理
+```
+
+不要为了磁盘整洁而删除仍在调查中的 crash evidence。
+
+---
+
+## 23.4 Codex Scratch Lifecycle
+
+以后 Codex 使用：
+
+```text
+Saved/Codex/<TaskName>/
+```
+
+只能作为 temporary workspace。
+
+推荐生命周期：
+
+```text
+Codex executes
+↓
+Saved/Codex/<TaskName>
+temporary scripts / JSON / screenshots
+↓
+Result Package created
+↓
+Human Review
+↓
+Technical Review
+↓
+PASS
+↓
+formal source / assets committed
+↓
+delete task scratch
+```
+
+禁止形成：
+
+```text
+Week8 scratch
++
+Week9 Day1 scratch
++
+Day2 scratch
++
+Day3 scratch
++
+Pre-Final scratch
++
+obsolete screenshots
+→ indefinitely accumulated
+```
+
+---
+
+## 23.5 Result Package Rule
+
+在清理 `Saved/Codex/<TaskName>` 前：
+
+```text
+only required evidence
+→ copy into Result Package
+```
+
+Result Package 应包含：
+
+```text
+final report
+必要 screenshot
+必要 source patch / source_review
+必要 technical evidence
+```
+
+不应把全部中间脚本、全部重复截图和所有临时 JSON 原样复制过去。
+
+---
+
+## 23.6 One-Off Script Rule
+
+一次性 Python 脚本应默认视为 disposable。
+
+只有满足以下条件时才考虑保留为正式工具：
+
+```text
+跨任务可复用
+命名稳定
+输入 / 输出明确
+不依赖某次地图临时 Actor 名
+有实际维护价值
+```
+
+否则：
+
+```text
+task complete
+→ delete
+```
+
+不要因为 Codex 曾经执行过一个脚本，就把它永久当成项目工具。
+
+---
+
+## 23.7 Git Hygiene Rule
+
+永远不要 Commit：
+
+```text
+Saved/Codex/
+Saved/Logs/
+Saved/Crashes/
+ResultPackage screenshots
+technical_evidence
+temporary patch review files
+one-off automation scripts
+```
+
+除非未来某个文件被明确提升为正式、可维护的项目工具。
+
+Week9 Git Prompt 已坚持：
+
+```text
+explicit per-path staging
+```
+
+而不是：
+
+```text
+git add .
+git add -A
+```
+
+该规则后续继续保持。
+
+---
+
+## 23.8 Tutorial Dead-Code Cleanup After Encounter Revision
+
+Week9 Pre-Final 已将多个早期 Tutorial-specific progression glue 迁移至：
+
+```text
+Condition
+→ AWCMemoryMazeEncounter
+→ Action
+```
+
+因此以下早期类型当前地图 placed runtime refs 已为：
+
+```text
+0
+```
+
+已知 cleanup candidates：
+
+```text
+ATutorialEnemyDefeatFragmentLink
+ATutorialPuzzleCompletionLink
+ATutorialBossEncounter
+```
+
+以及其对应 Blueprint wrappers。
+
+此前为了降低 Pre-Final 风险，它们被暂时作为：
+
+```text
+unplaced compatibility code / assets
+```
+
+保留。
+
+Week9 完成后可以进行正式 dead-code audit。
+
+删除前必须同时验证：
+
+```text
+C++ references = 0
+Blueprint asset references = 0
+Map / ExternalActor references = 0
+Serialized asset references = 0
+```
+
+不能仅凭：
+
+```text
+text search returns 0
+```
+
+就删除 Unreal 类。
+
+---
+
+## 23.9 Tutorial Code That Must Not Be Blindly Removed
+
+以下系统仍属于 Week9 最终正式流程，应默认保留：
+
+```text
+ATutorialMemoryFragment
+UTutorialFragmentWidget
+UTutorialHUDWidget
+ATutorialDungeonBootstrap
+
+UTutorialInstructionWidget
+ATutorialInstructionTrigger
+
+ATutorialLevelTransitionTrigger
+```
+
+这些类虽然名称包含 `Tutorial`，但职责本身仍然是当前 Tutorial Vertical Slice 的有效功能，不属于 dead code。
+
+---
+
+## 23.10 AWCTutorialGate Compatibility Audit
+
+当前架构：
+
+```text
+AWCProgressionGate
+↑
+AWCTutorialGate
+↑
+BP_TutorialGate
+```
+
+`AWCTutorialGate` 已经只承担 compatibility role。
+
+未来 cleanup 可以审计：
+
+```text
+BP_TutorialGate
+```
+
+是否能够安全 reparent 到：
+
+```text
+AWCProgressionGate
+```
+
+且保持：
+
+```text
+Boss Gate
+Exit Gate
+OpenOffset
+Collision
+Transition Trigger gate reference
+```
+
+完全一致。
+
+只有经过：
+
+```text
+Reference audit
+→ Reparent
+→ Save / Reload
+→ Build
+→ MapCheck
+→ PIE regression
+```
+
+之后，才允许删除：
+
+```text
+WCTutorialGate.h/.cpp
+```
+
+否则继续保留 compatibility subclass。
+
+---
+
+## 23.11 Test-Only Runtime API Cleanup
+
+此前 Day3 automation 曾增加：
+
+```text
+TriggerLanternInteractionForTest()
+```
+
+到 `LanternPuzzlePiece`。
+
+正式 Tutorial / Encounter runtime 不依赖该 API。
+
+如果该 test-only diff 当前仍在工作区或尚未正式进入需要维护的 test framework：
+
+```text
+audit references
+→ remove from production runtime source
+```
+
+不要因为 Codex automation 曾使用过，就长期扩大 production gameplay API surface。
+
+---
+
+## 23.12 Post-Week9 Cleanup Principle
+
+Week9 之后的 cleanup 目标不是：
+
+```text
+删除所有名字里有 Tutorial 的东西
+```
+
+而是：
+
+```text
+删除已经被 Revised / Encounter v0.1 替代、
+且能够证明零正式引用的实现。
+```
+
+最终原则：
+
+```text
+Keep:
+currently exercised gameplay architecture
+
+Delete:
+obsolete duplicated glue
+temporary automation artifacts
+unused compatibility code proven safe to remove
+
+Preserve:
+user settings
+save data
+autosaves
+unresolved diagnostic evidence
+```
+
+这项 cleanup 应作为 Week9 完成后的独立 maintenance pass 执行，而不是混入新玩法开发。
