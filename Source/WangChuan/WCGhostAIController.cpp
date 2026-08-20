@@ -1,7 +1,7 @@
 #include "WCGhostAIController.h"
 
 #include "GhostEnemy.h"
-#include "WCCharacter.h"
+#include "WCCombatantInterface.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "NavigationSystem.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -13,10 +13,8 @@ AWCGhostAIController::AWCGhostAIController()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bSetControlRotationFromPawnOrientation = true;
-
 	SightPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("SightPerception"));
 	SetPerceptionComponent(*SightPerception);
-
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 	SightConfig->SightRadius = 1200.0f;
 	SightConfig->LoseSightRadius = 1500.0f;
@@ -25,7 +23,6 @@ AWCGhostAIController::AWCGhostAIController()
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
-
 	SightPerception->ConfigureSense(*SightConfig);
 	SightPerception->SetDominantSense(SightConfig->GetSenseImplementation());
 }
@@ -33,17 +30,14 @@ AWCGhostAIController::AWCGhostAIController()
 void AWCGhostAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-
 	GhostPawn = Cast<AGhostEnemy>(InPawn);
-	TargetPlayer = nullptr;
-	bCurrentlySeesPlayer = false;
+	CurrentTarget = nullptr;
+	bCurrentlySeesTarget = false;
 	bLeashReturnLocked = false;
-
 	if (!GhostPawn)
 	{
 		return;
 	}
-
 	ConfigureSightFromPawn();
 	SetControlRotation(GhostPawn->GetActorRotation());
 	GhostPawn->SetAIState(EGhostAIState::Idle);
@@ -58,30 +52,25 @@ void AWCGhostAIController::OnUnPossess()
 		SightPerception->OnTargetPerceptionUpdated.RemoveDynamic(
 			this, &AWCGhostAIController::HandleTargetPerceptionUpdated);
 	}
-
 	ClearAITimers();
-	ClearFocus(EAIFocusPriority::Gameplay);
+	ClearCurrentTarget();
 	GhostPawn = nullptr;
-	TargetPlayer = nullptr;
 	Super::OnUnPossess();
 }
 
 void AWCGhostAIController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
 	if (!GhostPawn || GhostPawn->GetIsDead() || bLeashReturnLocked)
 	{
 		return;
 	}
-
 	const EGhostAIState State = GhostPawn->GetAIState();
 	if (State != EGhostAIState::Chasing && State != EGhostAIState::Investigating &&
 		State != EGhostAIState::Attacking)
 	{
 		return;
 	}
-
 	const float DistanceFromHome = FVector::Dist2D(
 		GhostPawn->GetActorLocation(), GhostPawn->HomeLocation);
 	if (DistanceFromHome > GhostPawn->MaxChaseDistanceFromHome)
@@ -92,7 +81,16 @@ void AWCGhostAIController::Tick(float DeltaSeconds)
 			&AWCGhostAIController::FinishLeashHysteresis, 1.0f, false);
 		return;
 	}
-
+	if (!IsTargetUsable())
+	{
+		const FVector PreviousTargetLocation = LastSeenTargetLocation;
+		ClearCurrentTarget();
+		if (!SelectNearestPerceivedHostile())
+		{
+			BeginInvestigation(PreviousTargetLocation);
+		}
+		return;
+	}
 	RecoverInterruptedChaseMove();
 }
 
@@ -100,12 +98,10 @@ void AWCGhostAIController::OnMoveCompleted(FAIRequestID RequestID,
 	const FPathFollowingResult& Result)
 {
 	Super::OnMoveCompleted(RequestID, Result);
-
 	if (!GhostPawn || GhostPawn->GetIsDead())
 	{
 		return;
 	}
-
 	if (GhostPawn->GetAIState() == EGhostAIState::ReturningHome)
 	{
 		if (FVector::Dist2D(GhostPawn->GetActorLocation(), GhostPawn->HomeLocation) <= 100.0f)
@@ -113,8 +109,7 @@ void AWCGhostAIController::OnMoveCompleted(FAIRequestID RequestID,
 			GhostPawn->SetActorRotation(GhostPawn->HomeRotation);
 			SetControlRotation(GhostPawn->HomeRotation);
 			GhostPawn->SetAIState(EGhostAIState::Idle);
-			TargetPlayer = nullptr;
-			bCurrentlySeesPlayer = false;
+			ClearCurrentTarget();
 			if (SightPerception)
 			{
 				SightPerception->ForgetAll();
@@ -133,8 +128,6 @@ void AWCGhostAIController::OnMoveCompleted(FAIRequestID RequestID,
 			Result.Code == EPathFollowingResult::OffPath ||
 			Result.Code == EPathFollowingResult::Invalid))
 	{
-		// A MoveTo request can be accepted and fail asynchronously. Pace the
-		// recovery so a blocked target cannot cause a request every frame.
 		if (!GetWorldTimerManager().IsTimerActive(MoveRetryTimerHandle))
 		{
 			GetWorldTimerManager().SetTimer(MoveRetryTimerHandle, this,
@@ -143,20 +136,24 @@ void AWCGhostAIController::OnMoveCompleted(FAIRequestID RequestID,
 	}
 }
 
-AWCCharacter* AWCGhostAIController::GetTargetPlayer() const
+AActor* AWCGhostAIController::GetTargetActor() const
 {
-	return TargetPlayer;
+	return CurrentTarget;
 }
 
-void AWCGhostAIController::HandleDamageAggro(AWCCharacter* DamageInstigator)
+void AWCGhostAIController::HandleDamageAggro(AActor* DamageInstigator)
 {
-	if (!GhostPawn || GhostPawn->GetIsDead() || !IsValid(DamageInstigator))
+	if (!GhostPawn || GhostPawn->GetIsDead() ||
+		!WCCombatant::AreHostile(GhostPawn, DamageInstigator))
 	{
 		return;
 	}
-
-	bCurrentlySeesPlayer = true;
-	LastSeenPlayerLocation = DamageInstigator->GetActorLocation();
+	if (IsTargetUsable())
+	{
+		return;
+	}
+	bCurrentlySeesTarget = true;
+	LastSeenTargetLocation = DamageInstigator->GetActorLocation();
 	EnterChase(DamageInstigator);
 }
 
@@ -171,32 +168,29 @@ void AWCGhostAIController::ResumeAfterAttack()
 	{
 		return;
 	}
-
-	// If the player died during this attack, let the current attack timer finish
-	// naturally, then disengage. Do not start a fixed corpse-attack sequence.
-	if (IsValid(TargetPlayer) && TargetPlayer->GetIsDead())
+	if (!IsTargetUsable())
 	{
-		BeginReturnHome();
+		ClearCurrentTarget();
+		if (!SelectNearestPerceivedHostile())
+		{
+			BeginReturnHome();
+		}
 		return;
 	}
-
-	if (bCurrentlySeesPlayer && IsTargetUsable())
+	if (bCurrentlySeesTarget)
 	{
 		GhostPawn->SetAIState(EGhostAIState::Chasing);
 		IssueChaseMove();
 		return;
 	}
-
-	BeginInvestigation(LastSeenPlayerLocation);
+	BeginInvestigation(LastSeenTargetLocation);
 }
 
 void AWCGhostAIController::HandlePawnDeath()
 {
 	ClearAITimers();
 	StopMovement();
-	ClearFocus(EAIFocusPriority::Gameplay);
-	TargetPlayer = nullptr;
-	bCurrentlySeesPlayer = false;
+	ClearCurrentTarget();
 	if (SightPerception)
 	{
 		SightPerception->SetSenseEnabled(UAISense_Sight::StaticClass(), false);
@@ -209,13 +203,10 @@ void AWCGhostAIController::BeginReturnHome()
 	{
 		return;
 	}
-
 	GetWorldTimerManager().ClearTimer(LostSightTimerHandle);
 	GetWorldTimerManager().ClearTimer(InvestigationTimerHandle);
 	GetWorldTimerManager().ClearTimer(MoveRetryTimerHandle);
-	bCurrentlySeesPlayer = false;
-	TargetPlayer = nullptr;
-	ClearFocus(EAIFocusPriority::Gameplay);
+	ClearCurrentTarget();
 	StopMovement();
 	GhostPawn->SetAIState(EGhostAIState::ReturningHome);
 	const EPathFollowingRequestResult::Type MoveResult = MoveToLocation(
@@ -229,37 +220,35 @@ void AWCGhostAIController::BeginReturnHome()
 
 void AWCGhostAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-	AWCCharacter* PlayerCharacter = Cast<AWCCharacter>(Actor);
-	if (!GhostPawn || GhostPawn->GetIsDead() || !PlayerCharacter || bLeashReturnLocked)
+	if (!GhostPawn || GhostPawn->GetIsDead() || bLeashReturnLocked ||
+		!WCCombatant::AreHostile(GhostPawn, Actor))
 	{
 		return;
 	}
-
-	// A dead player can remain visible to AI Perception. Never let that stimulus
-	// restart Chase while the Ghost is finishing its attack or returning home.
-	if (PlayerCharacter->GetIsDead())
-	{
-		bCurrentlySeesPlayer = false;
-		return;
-	}
-
 	if (Stimulus.WasSuccessfullySensed())
 	{
-		bCurrentlySeesPlayer = true;
-		LastSeenPlayerLocation = PlayerCharacter->GetActorLocation();
-		EnterChase(PlayerCharacter);
+		if (CurrentTarget == Actor)
+		{
+			bCurrentlySeesTarget = true;
+			LastSeenTargetLocation = Actor->GetActorLocation();
+			return;
+		}
+		if (!IsTargetUsable())
+		{
+			SelectNearestPerceivedHostile();
+		}
 		return;
 	}
-
-	if (TargetPlayer == PlayerCharacter)
+	if (CurrentTarget == Actor)
 	{
-		bCurrentlySeesPlayer = false;
-		LastSeenPlayerLocation = Stimulus.StimulusLocation;
-		if (LastSeenPlayerLocation.IsNearlyZero())
+		LastSeenTargetLocation = Stimulus.StimulusLocation.IsNearlyZero()
+			? Actor->GetActorLocation()
+			: Stimulus.StimulusLocation;
+		ClearCurrentTarget();
+		if (!SelectNearestPerceivedHostile())
 		{
-			LastSeenPlayerLocation = PlayerCharacter->GetActorLocation();
+			BeginInvestigation(LastSeenTargetLocation);
 		}
-		BeginInvestigation(LastSeenPlayerLocation);
 	}
 }
 
@@ -273,19 +262,22 @@ void AWCGhostAIController::ConfigureSightFromPawn()
 	SightPerception->RequestStimuliListenerUpdate();
 }
 
-void AWCGhostAIController::EnterChase(AWCCharacter* PlayerCharacter)
+void AWCGhostAIController::EnterChase(AActor* TargetActor)
 {
-	if (!GhostPawn || !IsValid(PlayerCharacter))
+	if (!GhostPawn || !WCCombatant::AreHostile(GhostPawn, TargetActor))
 	{
 		return;
 	}
-
 	GetWorldTimerManager().ClearTimer(LostSightTimerHandle);
 	GetWorldTimerManager().ClearTimer(InvestigationTimerHandle);
 	GetWorldTimerManager().ClearTimer(MoveRetryTimerHandle);
-	TargetPlayer = PlayerCharacter;
+	CurrentTarget = TargetActor;
+	LastSeenTargetLocation = TargetActor->GetActorLocation();
+	bCurrentlySeesTarget = true;
+	UE_LOG(LogTemp, Display, TEXT("[EnemyEcology] %s acquired target %s"),
+		*GhostPawn->GetName(), *TargetActor->GetName());
 	GhostPawn->SetAIState(EGhostAIState::Chasing);
-	SetFocus(PlayerCharacter, EAIFocusPriority::Gameplay);
+	SetFocus(TargetActor, EAIFocusPriority::Gameplay);
 	IssueChaseMove();
 }
 
@@ -295,7 +287,6 @@ void AWCGhostAIController::BeginInvestigation(const FVector& LastSeenLocation)
 	{
 		return;
 	}
-
 	StopMovement();
 	ClearFocus(EAIFocusPriority::Gameplay);
 	GhostPawn->SetAIState(EGhostAIState::Investigating);
@@ -307,11 +298,10 @@ void AWCGhostAIController::BeginInvestigation(const FVector& LastSeenLocation)
 
 void AWCGhostAIController::FinishLostSightGrace()
 {
-	if (!GhostPawn || GhostPawn->GetIsDead() || bCurrentlySeesPlayer)
+	if (!GhostPawn || GhostPawn->GetIsDead() || bCurrentlySeesTarget)
 	{
 		return;
 	}
-
 	StopMovement();
 	GetWorldTimerManager().SetTimer(InvestigationTimerHandle, this,
 		&AWCGhostAIController::FinishInvestigation, GhostPawn->InvestigateWaitTime, false);
@@ -319,7 +309,7 @@ void AWCGhostAIController::FinishLostSightGrace()
 
 void AWCGhostAIController::FinishInvestigation()
 {
-	if (!bCurrentlySeesPlayer)
+	if (!bCurrentlySeesTarget)
 	{
 		BeginReturnHome();
 	}
@@ -336,11 +326,8 @@ void AWCGhostAIController::IssueChaseMove()
 	{
 		return;
 	}
-
-	// MoveToActor tracks a moving target through PathFollowing; do not rebuild every Tick.
 	const EPathFollowingRequestResult::Type MoveResult = MoveToActor(
-		TargetPlayer, GhostPawn->AttackRange * 0.8f, false, true, true, nullptr, true);
-
+		CurrentTarget, GhostPawn->AttackRange * 0.8f, false, true, true, nullptr, true);
 	if (MoveResult == EPathFollowingRequestResult::Failed)
 	{
 		FNavLocation ProjectedStart;
@@ -349,7 +336,7 @@ void AWCGhostAIController::IssueChaseMove()
 		const bool bStartOnNav = NavigationSystem && NavigationSystem->ProjectPointToNavigation(
 			GhostPawn->GetActorLocation(), ProjectedStart, FVector(200.0f, 200.0f, 300.0f));
 		const bool bGoalOnNav = NavigationSystem && NavigationSystem->ProjectPointToNavigation(
-			TargetPlayer->GetActorLocation(), ProjectedGoal, FVector(200.0f, 200.0f, 300.0f));
+			CurrentTarget->GetActorLocation(), ProjectedGoal, FVector(200.0f, 200.0f, 300.0f));
 		if (!bMoveFailureLogged)
 		{
 			UE_LOG(LogTemp, Warning,
@@ -357,12 +344,9 @@ void AWCGhostAIController::IssueChaseMove()
 				*GhostPawn->GetName(), bStartOnNav ? TEXT("true") : TEXT("false"),
 				bGoalOnNav ? TEXT("true") : TEXT("false"),
 				*GhostPawn->GetActorLocation().ToCompactString(),
-				*TargetPlayer->GetActorLocation().ToCompactString());
+				*CurrentTarget->GetActorLocation().ToCompactString());
 			bMoveFailureLogged = true;
 		}
-
-		// Dynamic NavMesh can still be finishing its initial tiles when PIE begins.
-		// Retry at a low frequency instead of rebuilding a path every Tick.
 		GetWorldTimerManager().SetTimer(MoveRetryTimerHandle, this,
 			&AWCGhostAIController::RetryChaseMove, 0.5f, false);
 	}
@@ -370,11 +354,10 @@ void AWCGhostAIController::IssueChaseMove()
 	{
 		bMoveFailureLogged = false;
 	}
-
 	if (GhostPawn->bShowAIDebug)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Ghost [%s] MoveToActor result: %d"),
-			*GhostPawn->GetName(), static_cast<int32>(MoveResult));
+		UE_LOG(LogTemp, Log, TEXT("Ghost [%s] MoveToActor result: %d target=%s"),
+			*GhostPawn->GetName(), static_cast<int32>(MoveResult), *CurrentTarget->GetName());
 	}
 }
 
@@ -382,24 +365,19 @@ void AWCGhostAIController::RecoverInterruptedChaseMove()
 {
 	if (!GhostPawn || GhostPawn->GetAIState() != EGhostAIState::Chasing ||
 		GhostPawn->GetIsHitReacting() || GhostPawn->GetIsAttacking() ||
-		!bCurrentlySeesPlayer || !IsTargetUsable() ||
+		!bCurrentlySeesTarget || !IsTargetUsable() ||
 		GetWorldTimerManager().IsTimerActive(MoveRetryTimerHandle))
 	{
 		return;
 	}
-
 	const UPathFollowingComponent* PathFollowing = GetPathFollowingComponent();
-	if (!PathFollowing ||
-		PathFollowing->GetStatus() != EPathFollowingStatus::Idle ||
-		FVector::Dist2D(GhostPawn->GetActorLocation(), TargetPlayer->GetActorLocation()) <=
+	if (!PathFollowing || PathFollowing->GetStatus() != EPathFollowingStatus::Idle ||
+		FVector::Dist2D(GhostPawn->GetActorLocation(), CurrentTarget->GetActorLocation()) <=
 			GhostPawn->AttackRange)
 	{
 		return;
 	}
-
-	// StopMovement during hit reaction aborts the active path. A request that
-	// was accepted after recovery can also finish later as Blocked or OffPath.
-	// Both cases leave the Pawn in Chasing with an idle path follower.
+	// Preserve the Week9 recovery after hit reaction, knockback or a failed move.
 	IssueChaseMove();
 }
 
@@ -407,7 +385,7 @@ void AWCGhostAIController::RetryChaseMove()
 {
 	if (GhostPawn && GhostPawn->GetAIState() == EGhostAIState::Chasing &&
 		!GhostPawn->GetIsHitReacting() && !GhostPawn->GetIsAttacking() &&
-		bCurrentlySeesPlayer && IsTargetUsable())
+		bCurrentlySeesTarget && IsTargetUsable())
 	{
 		IssueChaseMove();
 	}
@@ -429,7 +407,63 @@ void AWCGhostAIController::ClearAITimers()
 	GetWorldTimerManager().ClearTimer(MoveRetryTimerHandle);
 }
 
+void AWCGhostAIController::ClearCurrentTarget()
+{
+	CurrentTarget = nullptr;
+	bCurrentlySeesTarget = false;
+	ClearFocus(EAIFocusPriority::Gameplay);
+}
+
+bool AWCGhostAIController::SelectNearestPerceivedHostile()
+{
+	if (!GhostPawn || !SightPerception)
+	{
+		return false;
+	}
+	if (IsTargetUsable())
+	{
+		return true;
+	}
+	TArray<AActor*> PerceivedActors;
+	SightPerception->GetCurrentlyPerceivedActors(
+		UAISense_Sight::StaticClass(), PerceivedActors);
+	AActor* NearestHostile = nullptr;
+	float NearestDistanceSquared = TNumericLimits<float>::Max();
+	for (AActor* Candidate : PerceivedActors)
+	{
+		if (!WCCombatant::AreHostile(GhostPawn, Candidate))
+		{
+			continue;
+		}
+		const float DistanceSquared = FVector::DistSquared2D(
+			GhostPawn->GetActorLocation(), Candidate->GetActorLocation());
+		if (DistanceSquared < NearestDistanceSquared)
+		{
+			NearestDistanceSquared = DistanceSquared;
+			NearestHostile = Candidate;
+		}
+	}
+	if (!NearestHostile)
+	{
+		return false;
+	}
+	EnterChase(NearestHostile);
+	return true;
+}
+
+bool AWCGhostAIController::IsActorCurrentlyPerceived(const AActor* Actor) const
+{
+	if (!SightPerception || !IsValid(Actor))
+	{
+		return false;
+	}
+	TArray<AActor*> PerceivedActors;
+	SightPerception->GetCurrentlyPerceivedActors(
+		UAISense_Sight::StaticClass(), PerceivedActors);
+	return PerceivedActors.Contains(Actor);
+}
+
 bool AWCGhostAIController::IsTargetUsable() const
 {
-	return IsValid(TargetPlayer) && !TargetPlayer->GetIsDead();
+	return GhostPawn && WCCombatant::AreHostile(GhostPawn, CurrentTarget);
 }

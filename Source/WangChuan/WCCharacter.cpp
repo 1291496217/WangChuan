@@ -1624,6 +1624,37 @@ void AWCCharacter::ReceiveDamage(float DamageAmount)
 	PlayPlayerHitFeedback();
 }
 
+float AWCCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+	AController* EventInstigator, AActor* DamageCauser)
+{
+	const float AppliedDamage = Super::TakeDamage(
+		DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	if (AppliedDamage > 0.0f && !bIsDead)
+	{
+		ReceiveDamage(AppliedDamage);
+		UE_LOG(LogTemp, Display,
+			TEXT("[EnemyEcology] %s player took %.1f damage from %s; health=%.1f"),
+			*GetName(), AppliedDamage,
+			DamageCauser ? *DamageCauser->GetName() : TEXT("None"), Health);
+	}
+	return AppliedDamage;
+}
+
+bool AWCCharacter::IsCombatantAlive_Implementation() const
+{
+	return !bIsDead;
+}
+
+EWCCombatFaction AWCCharacter::GetCombatFaction_Implementation() const
+{
+	return EWCCombatFaction::Player;
+}
+
+bool AWCCharacter::CanBeCombatTargeted_Implementation() const
+{
+	return !bIsDead;
+}
+
 // ******************** Combat Audio ********************
 
 void AWCCharacter::PlayAttackHitSound()

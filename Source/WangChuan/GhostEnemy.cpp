@@ -7,7 +7,9 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "EnemyHealthBarWidget.h"
+#include "Engine/DamageEvents.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "GameFramework/DamageType.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -111,17 +113,74 @@ UPawnMovementComponent* AGhostEnemy::GetMovementComponent() const
 
 void AGhostEnemy::TakeHit(float DamageAmount, FVector HitDirection, float KnockbackStrength)
 {
-	if (bIsDead)
+	// Compatibility entry point for the existing player attack trace. Week10
+	// enemy attacks use TakeDamage below so the instigator is preserved.
+	AActor* DamageCauser = nullptr;
+	if (const UWorld* World = GetWorld())
+	{
+		if (const APlayerController* PlayerController = World->GetFirstPlayerController())
+		{
+			DamageCauser = PlayerController->GetPawn();
+		}
+	}
+	ApplyCombatHit(DamageAmount, HitDirection, KnockbackStrength, DamageCauser);
+}
+
+float AGhostEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+	AController* EventInstigator, AActor* DamageCauser)
+{
+	const float AppliedDamage = Super::TakeDamage(
+		DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	if (AppliedDamage <= 0.0f || bIsDead)
+	{
+		return 0.0f;
+	}
+
+	FVector HitDirection = DamageCauser
+		? GetActorLocation() - DamageCauser->GetActorLocation()
+		: FVector::ZeroVector;
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+	{
+		HitDirection = static_cast<const FPointDamageEvent&>(DamageEvent).ShotDirection;
+	}
+
+	ApplyCombatHit(AppliedDamage, HitDirection, 0.0f, DamageCauser);
+	return AppliedDamage;
+}
+
+bool AGhostEnemy::IsCombatantAlive_Implementation() const
+{
+	return !bIsDead;
+}
+
+EWCCombatFaction AGhostEnemy::GetCombatFaction_Implementation() const
+{
+	return CombatFaction;
+}
+
+bool AGhostEnemy::CanBeCombatTargeted_Implementation() const
+{
+	return bCanBeCombatTargeted && !bIsDead;
+}
+
+void AGhostEnemy::ApplyCombatHit(float DamageAmount, FVector HitDirection,
+	float KnockbackStrength, AActor* DamageCauser)
+{
+	if (bIsDead || DamageAmount <= 0.0f)
 	{
 		return;
 	}
 
-	Health -= DamageAmount;
+	Health = FMath::Max(0.0f, Health - DamageAmount);
+	UE_LOG(LogTemp, Display,
+		TEXT("[EnemyEcology] %s combatTeam=%d took %.1f damage from %s; health=%.1f"),
+		*GetName(), static_cast<int32>(CombatFaction), DamageAmount,
+		DamageCauser ? *DamageCauser->GetName() : TEXT("None"), Health);
 
-	// Damage is explicit hostility: a back attack must wake an otherwise idle enemy.
+	// Damage is explicit hostility: a hostile back attack must wake an idle enemy.
 	if (AWCGhostAIController* GhostController = GetGhostAIController())
 	{
-		GhostController->HandleDamageAggro(GetPlayerCharacter());
+		GhostController->HandleDamageAggro(DamageCauser);
 	}
 
 	if (Health <= 0.0f)
@@ -141,6 +200,7 @@ void AGhostEnemy::ClearCombatTimers()
 	GetWorldTimerManager().ClearTimer(HitReactionTimerHandle);
 	GetWorldTimerManager().ClearTimer(EnemyAttackCooldownTimerHandle);
 	GetWorldTimerManager().ClearTimer(EnemyAttackDurationTimerHandle);
+	GetWorldTimerManager().ClearTimer(EnemyAttackHitTimerHandle);
 }
 
 void AGhostEnemy::Die()
@@ -151,9 +211,11 @@ void AGhostEnemy::Die()
 	}
 
 	bIsDead = true;
+	UE_LOG(LogTemp, Display, TEXT("[EnemyEcology] %s combatTeam=%d died"),
+		*GetName(), static_cast<int32>(CombatFaction));
 	bIsMoving = false;
 	bIsAttacking = false;
-	bCanAttackPlayer = false;
+	bCanAttackTarget = false;
 	bIsHitReacting = false;
 	SetAIState(EGhostAIState::Dead);
 
@@ -205,6 +267,7 @@ void AGhostEnemy::StartHitReaction()
 	bIsHitReacting = true;
 	bIsMoving = false;
 	bIsAttacking = false;
+	UE_LOG(LogTemp, Display, TEXT("[EnemyEcology] %s hit reaction started"), *GetName());
 
 	if (AWCGhostAIController* GhostController = GetGhostAIController())
 	{
@@ -213,6 +276,7 @@ void AGhostEnemy::StartHitReaction()
 
 	GetWorldTimerManager().ClearTimer(HitReactionTimerHandle);
 	GetWorldTimerManager().ClearTimer(EnemyAttackDurationTimerHandle);
+	GetWorldTimerManager().ClearTimer(EnemyAttackHitTimerHandle);
 	GetWorldTimerManager().SetTimer(HitReactionTimerHandle, this,
 		&AGhostEnemy::EndHitReaction, HitReactionDuration, false);
 }
@@ -225,6 +289,7 @@ void AGhostEnemy::EndHitReaction()
 	}
 
 	bIsHitReacting = false;
+	UE_LOG(LogTemp, Display, TEXT("[EnemyEcology] %s hit reaction recovered"), *GetName());
 	if (AWCGhostAIController* GhostController = GetGhostAIController())
 	{
 		GhostController->ResumeAfterAttack();
@@ -270,24 +335,6 @@ void AGhostEnemy::ApplyKnockback(FVector KnockbackDirection, float KnockbackStre
 	SetActorLocation(SafeDestination, true);
 }
 
-AWCCharacter* AGhostEnemy::GetPlayerCharacter() const
-{
-	const UWorld* World = GetWorld();
-	if (!World)
-	{
-		return nullptr;
-	}
-
-	const APlayerController* PlayerController = World->GetFirstPlayerController();
-	return PlayerController ? Cast<AWCCharacter>(PlayerController->GetPawn()) : nullptr;
-}
-
-bool AGhostEnemy::IsPlayerValidAndAlive() const
-{
-	const AWCCharacter* PlayerCharacter = GetPlayerCharacter();
-	return PlayerCharacter && !PlayerCharacter->GetIsDead();
-}
-
 bool AGhostEnemy::CanUpdateBehavior() const
 {
 	return !bIsDead && !bIsHitReacting && !bIsAttacking;
@@ -295,7 +342,7 @@ bool AGhostEnemy::CanUpdateBehavior() const
 
 bool AGhostEnemy::CanStartAttack() const
 {
-	return !bIsDead && !bIsHitReacting && !bIsAttacking && bCanAttackPlayer;
+	return !bIsDead && !bIsHitReacting && !bIsAttacking && bCanAttackTarget;
 }
 
 void AGhostEnemy::ApplyPersistentDefeatedState()
@@ -307,7 +354,7 @@ void AGhostEnemy::ApplyPersistentDefeatedState()
 	bIsMoving = false;
 	bIsAttacking = false;
 	bIsHitReacting = false;
-	bCanAttackPlayer = false;
+	bCanAttackTarget = false;
 	SetAIState(EGhostAIState::Dead);
 
 	if (AWCGhostAIController* GhostController = GetGhostAIController())
@@ -339,7 +386,7 @@ void AGhostEnemy::ApplyPersistentDefeatedState()
 void AGhostEnemy::UpdateEnemyBehavior()
 {
 	AWCGhostAIController* GhostController = GetGhostAIController();
-	AWCCharacter* PlayerCharacter = GhostController ? GhostController->GetTargetPlayer() : nullptr;
+	AActor* TargetActor = GhostController ? GhostController->GetTargetActor() : nullptr;
 
 	if (!CanUpdateBehavior())
 	{
@@ -354,7 +401,7 @@ void AGhostEnemy::UpdateEnemyBehavior()
 		return;
 	}
 
-	if (!IsValid(PlayerCharacter) || PlayerCharacter->GetIsDead())
+	if (!WCCombatant::AreHostile(this, TargetActor))
 	{
 		bIsMoving = false;
 		if (GhostController)
@@ -364,32 +411,39 @@ void AGhostEnemy::UpdateEnemyBehavior()
 		return;
 	}
 
-	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
-	if (DistanceToPlayer <= AttackRange)
+	const float DistanceToTarget = FVector::Dist(GetActorLocation(), TargetActor->GetActorLocation());
+	if (DistanceToTarget <= AttackRange)
 	{
 		bIsMoving = false;
 		GhostController->StopMovement();
-		TryAttackPlayer();
+		TryAttackTarget();
 		return;
 	}
 
 	bIsMoving = true;
 }
 
-void AGhostEnemy::TryAttackPlayer()
+void AGhostEnemy::TryAttackTarget()
 {
 	if (!CanStartAttack())
 	{
 		return;
 	}
 
-	bCanAttackPlayer = false;
+	bCanAttackTarget = false;
 	bIsAttacking = true;
+	bAttackHitProcessed = false;
 	bIsMoving = false;
 	SetAIState(EGhostAIState::Attacking);
 
 	GetWorldTimerManager().SetTimer(EnemyAttackDurationTimerHandle, this,
 		&AGhostEnemy::EndEnemyAttack, EnemyAttackDuration, false);
+	// Existing Blueprint animation notifies can call OnEnemyAttackHit first. This
+	// one-shot native fallback keeps placeholder combatants functional even when
+	// an inherited test AnimBP does not dispatch the notify after reparenting.
+	GetWorldTimerManager().SetTimer(EnemyAttackHitTimerHandle, this,
+		&AGhostEnemy::OnEnemyAttackHit,
+		FMath::Max(0.01f, EnemyAttackDuration * 0.5f), false);
 	GetWorldTimerManager().SetTimer(EnemyAttackCooldownTimerHandle, this,
 		&AGhostEnemy::ResetEnemyAttack, AttackCooldown, false);
 }
@@ -412,40 +466,45 @@ void AGhostEnemy::ResetEnemyAttack()
 {
 	if (!bIsDead)
 	{
-		bCanAttackPlayer = true;
+		bCanAttackTarget = true;
 	}
 }
 
-void AGhostEnemy::DealDamageToPlayer()
+void AGhostEnemy::DealDamageToTarget()
 {
-	AWCCharacter* PlayerCharacter = GetPlayerCharacter();
-	if (PlayerCharacter && !PlayerCharacter->GetIsDead())
+	AWCGhostAIController* GhostController = GetGhostAIController();
+	AActor* TargetActor = GhostController ? GhostController->GetTargetActor() : nullptr;
+	if (WCCombatant::AreHostile(this, TargetActor))
 	{
-		PlayerCharacter->ReceiveDamage(EnemyAttackDamage);
+		UGameplayStatics::ApplyDamage(TargetActor, EnemyAttackDamage,
+			GetController(), this, UDamageType::StaticClass());
 	}
 }
 
 void AGhostEnemy::OnEnemyAttackHit()
 {
-	if (bIsDead || bIsHitReacting || !bIsAttacking)
+	if (bIsDead || bIsHitReacting || !bIsAttacking || bAttackHitProcessed)
+	{
+		return;
+	}
+	bAttackHitProcessed = true;
+	GetWorldTimerManager().ClearTimer(EnemyAttackHitTimerHandle);
+
+	AWCGhostAIController* GhostController = GetGhostAIController();
+	AActor* TargetActor = GhostController ? GhostController->GetTargetActor() : nullptr;
+	if (!WCCombatant::AreHostile(this, TargetActor))
 	{
 		return;
 	}
 
-	AWCCharacter* PlayerCharacter = GetPlayerCharacter();
-	if (!PlayerCharacter || PlayerCharacter->GetIsDead())
-	{
-		return;
-	}
-
-	if (FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation()) > AttackRange)
+	if (FVector::Dist(GetActorLocation(), TargetActor->GetActorLocation()) > AttackRange)
 	{
 		PlayEvilGhostAttackWhiffSound();
 		return;
 	}
 
 	PlayEvilGhostAttackHitSound();
-	DealDamageToPlayer();
+	DealDamageToTarget();
 }
 
 bool AGhostEnemy::GetIsMoving() const { return bIsMoving; }

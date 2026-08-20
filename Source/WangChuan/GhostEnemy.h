@@ -5,6 +5,7 @@
 #include "TimerManager.h"
 #include "Components/WidgetComponent.h"
 #include "Sound/SoundBase.h"
+#include "WCCombatantInterface.h"
 #include "GhostEnemy.generated.h"
 
 class USceneComponent;
@@ -31,7 +32,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGhostEnemyDefeatedSignature, AGho
 	DefeatedEnemy);
 
 UCLASS()
-class WANGCHUAN_API AGhostEnemy : public APawn
+class WANGCHUAN_API AGhostEnemy : public APawn, public IWCCombatantInterface
 {
 	GENERATED_BODY()
 
@@ -47,6 +48,11 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 	virtual UPawnMovementComponent* GetMovementComponent() const override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+		AController* EventInstigator, AActor* DamageCauser) override;
+	virtual bool IsCombatantAlive_Implementation() const override;
+	virtual EWCCombatFaction GetCombatFaction_Implementation() const override;
+	virtual bool CanBeCombatTargeted_Implementation() const override;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -72,6 +78,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float DeathDestroyDelay = 2.0f;
+
+	// Serialized v0.1 property name retained for compatibility. This value is
+	// Combat Team membership and is independent of enemy species/archetype.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant",
+		meta = (DisplayName = "Combat Team"))
+	EWCCombatFaction CombatFaction = EWCCombatFaction::Ghost;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant")
+	bool bCanBeCombatTargeted = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Feedback")
 	FLinearColor NormalColor = FLinearColor::White;
@@ -153,7 +168,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Debug")
 	EGhostAIState AIState = EGhostAIState::Idle;
 
-	bool bCanAttackPlayer = true;
+	bool bCanAttackTarget = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|Combat")
 	USoundBase* EvilGhostAttackHitSound01;
@@ -177,7 +192,9 @@ protected:
 	FTimerHandle HitReactionTimerHandle;
 	FTimerHandle EnemyAttackCooldownTimerHandle;
 	FTimerHandle EnemyAttackDurationTimerHandle;
+	FTimerHandle EnemyAttackHitTimerHandle;
 	FTimerHandle DeathTimerHandle;
+	bool bAttackHitProcessed = false;
 
 	FVector HomeLocation = FVector::ZeroVector;
 	FRotator HomeRotation = FRotator::ZeroRotator;
@@ -220,17 +237,17 @@ protected:
 	void Die();
 	void FinishDeath();
 	void ClearCombatTimers();
-	AWCCharacter* GetPlayerCharacter() const;
-	bool IsPlayerValidAndAlive() const;
 	bool CanUpdateBehavior() const;
 	bool CanStartAttack() const;
+	void ApplyCombatHit(float DamageAmount, FVector HitDirection,
+		float KnockbackStrength, AActor* DamageCauser);
 	void ApplyKnockback(FVector KnockbackDirection, float KnockbackStrength);
 	void StartHitReaction();
 	void EndHitReaction();
 	void UpdateHealthWidgetFacingCamera();
 	void UpdateEnemyBehavior();
-	void TryAttackPlayer();
-	void DealDamageToPlayer();
+	void TryAttackTarget();
+	void DealDamageToTarget();
 	void EndEnemyAttack();
 	void ResetEnemyAttack();
 	void PlayEvilGhostAttackHitSound();

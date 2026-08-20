@@ -17,6 +17,7 @@
 #include "Sound/SoundBase.h"
 #include "Particles/ParticleSystem.h"
 #include "Camera/CameraShakeBase.h"
+#include "WCCombatantInterface.h"
 #include "WCCharacter.generated.h"
 
 class AGhostEnemy;
@@ -54,7 +55,7 @@ struct FPlayerAttackData
 };
 
 UCLASS()
-class WANGCHUAN_API AWCCharacter : public ACharacter
+class WANGCHUAN_API AWCCharacter : public ACharacter, public IWCCombatantInterface
 {
 	GENERATED_BODY()
 
@@ -75,6 +76,11 @@ public:
 	// ******************** Lifecycle ********************
 
 	virtual void Tick(float DeltaTime) override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+		AController* EventInstigator, AActor* DamageCauser) override;
+	virtual bool IsCombatantAlive_Implementation() const override;
+	virtual EWCCombatFaction GetCombatFaction_Implementation() const override;
+	virtual bool CanBeCombatTargeted_Implementation() const override;
 
 	// ******************** Input ********************
 

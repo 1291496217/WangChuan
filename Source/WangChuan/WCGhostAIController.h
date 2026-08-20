@@ -8,7 +8,6 @@
 class UAIPerceptionComponent;
 class UAISenseConfig_Sight;
 class AGhostEnemy;
-class AWCCharacter;
 
 /**
  * Minimal Ghost controller. It owns sight, NavMesh requests, lost-sight handling and leash.
@@ -28,8 +27,8 @@ public:
 	virtual void OnMoveCompleted(FAIRequestID RequestID,
 		const FPathFollowingResult& Result) override;
 
-	AWCCharacter* GetTargetPlayer() const;
-	void HandleDamageAggro(AWCCharacter* DamageInstigator);
+	AActor* GetTargetActor() const;
+	void HandleDamageAggro(AActor* DamageInstigator);
 	void PauseForHitReaction();
 	void ResumeAfterAttack();
 	void HandlePawnDeath();
@@ -47,15 +46,15 @@ private:
 	AGhostEnemy* GhostPawn;
 
 	UPROPERTY()
-	AWCCharacter* TargetPlayer;
+	AActor* CurrentTarget;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Debug",
 		meta = (AllowPrivateAccess = "true"))
-	FVector LastSeenPlayerLocation = FVector::ZeroVector;
+	FVector LastSeenTargetLocation = FVector::ZeroVector;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Debug",
 		meta = (AllowPrivateAccess = "true"))
-	bool bCurrentlySeesPlayer = false;
+	bool bCurrentlySeesTarget = false;
 
 	bool bLeashReturnLocked = false;
 	bool bMoveFailureLogged = false;
@@ -69,7 +68,7 @@ private:
 	void HandleTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 	void ConfigureSightFromPawn();
-	void EnterChase(AWCCharacter* PlayerCharacter);
+	void EnterChase(AActor* TargetActor);
 	void BeginInvestigation(const FVector& LastSeenLocation);
 	void FinishLostSightGrace();
 	void FinishInvestigation();
@@ -79,5 +78,8 @@ private:
 	void RetryChaseMove();
 	void RetryReturnHome();
 	void ClearAITimers();
+	void ClearCurrentTarget();
+	bool SelectNearestPerceivedHostile();
+	bool IsActorCurrentlyPerceived(const AActor* Actor) const;
 	bool IsTargetUsable() const;
 };
